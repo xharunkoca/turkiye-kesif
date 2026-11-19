@@ -559,3 +559,14 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
 [class*="score"] span,[class*="big"] span{color:var(--ink-2)!important}
 .burger svg,.burger svg use{color:var(--ink)!important}
 .mobile-menu .nav-link,.mobile-menu a svg{color:var(--ink)}
+
+/* ---------------- 25. Mobil kategori şeridi ---------------- */
+@media (max-width:760px){
+  .cat-card{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 6px;gap:2px}
+  .cat-card::-webkit-scrollbar{display:none}
+  .cat-card{scrollbar-width:none}
+  .cat-item{flex:0 0 96px;border:0!important;border-radius:12px;scroll-snap-align:start;padding:10px 6px}
+  .cat-item span{font-size:10.5px}
+  .cat-item em{font-size:11px}
+  .categories::after{content:"";position:sticky;right:0}
+}
