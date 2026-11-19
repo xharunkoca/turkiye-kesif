@@ -1097,3 +1097,44 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
   .season-hero h1{font-size:26px}
   .season-hero h1 span{font-size:11px}
 }
+
+/* ================================================================ v5 — hava durumu + seyahat puanı */
+.wx-panel{background:#fff;border:1px solid #eaf0f6;border-radius:16px;padding:16px 18px;margin:0 0 22px;box-shadow:0 8px 24px rgba(10,44,82,.05)}
+.wx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.wx-head .block-title{font-size:15px}
+.wx-src{font-size:10.5px;font-weight:800;color:#8ea3b6;background:#f4f8fb;border-radius:999px;padding:3px 9px;letter-spacing:.3px}
+.wx-body{display:grid;grid-template-columns:220px 1fr;gap:18px;align-items:stretch}
+.wx-score{background:linear-gradient(160deg,#f7fbfe,#eef6fc);border:1px solid #e3eef7;border-radius:14px;padding:13px 14px;text-align:left}
+.wx-num{font-size:34px;font-weight:900;color:var(--sc,#0a2c52);line-height:1;letter-spacing:-1.4px}
+.wx-num span{font-size:13px;font-weight:800;color:#8ea3b6;letter-spacing:0}
+.wx-lbl{font-size:12px;font-weight:800;color:var(--sc,#0a2c52);text-transform:uppercase;letter-spacing:.5px;margin:2px 0 8px}
+.wx-bar{height:7px;border-radius:999px;background:#e3edf6;overflow:hidden;margin-bottom:9px}
+.wx-bar i{display:block;height:100%;border-radius:999px;background:var(--sc,#0a2c52);transition:width .5s ease}
+.wx-why{margin:0;font-size:11.5px;color:#5b7186;line-height:1.5}
+.wx-best{margin:6px 0 0;font-size:11.5px;color:#22364a;font-weight:600}
+.wx-days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.wx-day{display:flex;flex-direction:column;align-items:center;gap:4px;background:#f8fbfd;border:1px solid #eaf0f6;border-radius:12px;padding:10px 6px;text-align:center}
+.wx-day.today{background:#fff;border-color:#cfe0ee;box-shadow:0 4px 14px rgba(10,44,82,.07)}
+.wd-name{font-size:10.5px;font-weight:800;color:#78909f;text-transform:uppercase;letter-spacing:.4px}
+.wx-ic{width:26px;height:26px;color:#2a6fa8}
+.wx-day.today .wx-ic{color:var(--navy)}
+.wd-temp{font-size:12px;color:#607d8f;font-weight:600}
+.wd-temp b{color:#22364a;font-weight:800}
+.wd-rain{font-size:10.5px;font-weight:800;color:#3d8ec9}
+.wd-score{font-size:10.5px;font-weight:900;color:var(--sc,#0a2c52);background:#fff;border:1px solid #e3eef7;border-radius:999px;padding:1px 7px}
+.wx-loading,.wx-off{font-size:12px;color:#8ea3b6;font-weight:600}
+.wx-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;color:#41586c;margin:0 0 14px}
+.wx-line .wx-ic{width:18px;height:18px;color:#2a6fa8}
+.wx-pill{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--sc,#0a2c52);background:#f2f8fc;border:1px solid #e1edf6;border-radius:999px;padding:3px 10px}
+.wx-season-note{display:flex;align-items:center;gap:7px;font-size:12px;color:#607d8f;background:#f4f9fd;border:1px solid #e6f0f8;border-radius:10px;padding:9px 12px;margin:0 0 14px}
+.wx-season-note svg{width:15px;height:15px;color:#dcae1f;flex:0 0 auto}
+.weather.kind-partly svg,.weather.kind-cloud svg,.weather.kind-rain svg,.weather.kind-snow svg,.weather.kind-storm svg,.weather.kind-fog svg{color:#cfe3f5}
+@media (max-width:980px){
+  .wx-body{grid-template-columns:1fr}
+  .wx-days{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .wx-days{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .wx-day:nth-child(n+4){display:none}
+  .wx-pill{margin-left:0}
+}

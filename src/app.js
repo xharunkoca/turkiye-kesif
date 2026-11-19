@@ -509,6 +509,27 @@
     </div>`;
   }
 
+  function mountWxLine(ilIdx) {
+    const box = $("#wxLine");
+    if (!box) return;
+    const paint = (d) => {
+      if (!box.isConnected) return;
+      const i = 0;
+      const tmax = Math.round(d.daily.temperature_2m_max[i]);
+      const tmin = Math.round(d.daily.temperature_2m_min[i]);
+      const rain = d.daily.precipitation_probability_max[i];
+      const s = travelScore(tmax, tmin, rain, d.daily.wind_speed_10m_max[i], d.daily.weather_code[i]);
+      const lb = scoreLabel(s.sc);
+      const m = wxMeta(d.daily.weather_code[i]);
+      box.innerHTML = `${wxIcon(m.k)} <b>${esc(m.l)}</b> · ${tmax}° / ${tmin}° · yağış ${rain != null ? "%" + Math.round(rain) : "—"}
+        <span class="wx-pill" style="--sc:${lb.c}">Seyahat puanı ${s.sc}/100 · ${esc(lb.t)}</span>`;
+    };
+    const c = wxCached(ilIdx);
+    if (c) { paint(c); return; }
+    box.innerHTML = `<span class="wx-loading">Hava durumu yükleniyor…</span>`;
+    wxLoad(ilIdx).then(paint).catch(() => { if (box.isConnected) box.innerHTML = `<span class="wx-off">Hava durumu alınamadı</span>`; });
+  }
+
   function openRoute(routeId) {
     const r = ALL_ROUTES.find((x) => x.id === routeId);
     if (!r) return;
@@ -521,6 +542,7 @@
       <div class="modal-body">
         <h3 id="modalTitle">${esc(il.n)} — ${esc(r.theme.label)}</h3>
         <p class="sub">${esc(il.r)} Bölgesi • ${nf(r.km)} km • ${r.days} gün • ${r.level}</p>
+        <div class="wx-line" id="wxLine" data-il="${r.ilIdx}"></div>
         ${routeMapSvg(r, il)}
         <ol class="stop-list">
           ${r.stops.map((s, i) => `<li>
@@ -537,6 +559,7 @@
           <button class="btn btn-ghost" data-toast="Rota dışa aktarma demo sürümde örnek olarak yer alıyor.">${icon("i-route")}Rotayı kaydet</button>
         </div>
       </div>`);
+    mountWxLine(r.ilIdx);
   }
 
   function openMapModal() {
@@ -846,6 +869,7 @@
       </div>
 
       <div class="container">
+        ${wxPanelHtml(ilIdx)}
         <h2 class="block-title"><svg><use href="#i-route"/></svg>${esc(il.n)} için 5 gezi rotası</h2>
         <div class="route-grid">${routes.map((r) => routeCard(r)).join("")}</div>
 
@@ -878,6 +902,7 @@
             </details>`).join("")}
         </div>
       </div>`;
+    mountWx(ilIdx);
   }
 
   /* ---------------------------------------------------------------- ROTALAR */
@@ -933,6 +958,204 @@
   }
 
   /* ---------------------------------------------------------------- KATEGORİ */
+  /* ---------------------------------------------------------------- HAVA DURUMU (Open-Meteo) */
+  const WX_KEY = "tk-weather-v2";
+  const WX_TTL = 3 * 60 * 60 * 1000;   // 3 saat önbellek
+  const wxMem = {};
+
+  function wxCached(ilIdx) {
+    if (wxMem[ilIdx]) return wxMem[ilIdx];
+    try {
+      const c = JSON.parse(localStorage.getItem(WX_KEY) || "{}")[ilIdx];
+      if (c && Date.now() - c.t < WX_TTL) { wxMem[ilIdx] = c.d; return c.d; }
+    } catch (e) { /* yoksay */ }
+    return null;
+  }
+  function wxStore(ilIdx, d) {
+    wxMem[ilIdx] = d;
+    try {
+      const c = JSON.parse(localStorage.getItem(WX_KEY) || "{}");
+      c[ilIdx] = { t: Date.now(), d };
+      localStorage.setItem(WX_KEY, JSON.stringify(c));
+    } catch (e) { /* kota dolu olabilir */ }
+  }
+  function wxLoad(ilIdx) {
+    const il = ILS[ilIdx];
+    const hit = wxCached(ilIdx);
+    if (hit) return Promise.resolve(hit);
+    const url = "https://api.open-meteo.com/v1/forecast"
+      + `?latitude=${il.lat.toFixed(3)}&longitude=${il.lon.toFixed(3)}`
+      + "&current=temperature_2m,weather_code"
+      + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max"
+      + "&timezone=auto&forecast_days=5";
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 8000);
+    return fetch(url, { signal: ctrl.signal })
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then((j) => { wxStore(ilIdx, j); return j; })
+      .finally(() => clearTimeout(to));
+  }
+
+  // WMO hava kodu → ikon + etiket
+  function wxMeta(code) {
+    const c = Number(code);
+    if (c === 0) return { k: "sun", l: "Açık" };
+    if (c === 1) return { k: "sun", l: "Az bulutlu" };
+    if (c === 2) return { k: "partly", l: "Parçalı bulutlu" };
+    if (c === 3) return { k: "cloud", l: "Kapalı" };
+    if (c === 45 || c === 48) return { k: "fog", l: "Puslu" };
+    if (c >= 51 && c <= 57) return { k: "rain", l: "Çisenti" };
+    if (c >= 61 && c <= 67) return { k: "rain", l: "Yağmurlu" };
+    if (c >= 71 && c <= 77) return { k: "snow", l: "Kar yağışlı" };
+    if (c >= 80 && c <= 82) return { k: "rain", l: "Sağanak" };
+    if (c === 85 || c === 86) return { k: "snow", l: "Kar sağanağı" };
+    if (c >= 95) return { k: "storm", l: "Fırtına" };
+    return { k: "cloud", l: "Bulutlu" };
+  }
+
+  const WX_ICONS = {
+    sun: '<circle cx="12" cy="12" r="4.4"/><path d="M12 2.6v2.4M12 19v2.4M2.6 12H5M19 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7"/>',
+    partly: '<circle cx="9" cy="9.4" r="3.4"/><path d="M9 3.2v1.6M3.2 9.4h1.6M4.9 5.3l1.1 1.1M13.1 5.3l-1.1 1.1"/><path d="M8 19.5h8.6a3.4 3.4 0 0 0 .3-6.8 4.6 4.6 0 0 0-8.8 1.1A2.9 2.9 0 0 0 8 19.5z"/>',
+    cloud: '<path d="M6.4 18.5h10.9a3.6 3.6 0 0 0 .4-7.2 4.9 4.9 0 0 0-9.4 1.2 3.1 3.1 0 0 0-1.9 6z"/>',
+    rain: '<path d="M6.4 15.4h10.9a3.6 3.6 0 0 0 .4-7.2 4.9 4.9 0 0 0-9.4 1.2 3.1 3.1 0 0 0-1.9 6z"/><path d="M8.4 18.4l-.9 2.3M12 18.4l-.9 2.3M15.6 18.4l-.9 2.3"/>',
+    snow: '<path d="M6.4 14.6h10.9a3.6 3.6 0 0 0 .4-7.2 4.9 4.9 0 0 0-9.4 1.2 3.1 3.1 0 0 0-1.9 6z"/><path d="M8.6 18.2v2.6M7.4 18.9l2.4 1.2M9.8 18.9l-2.4 1.2M15.4 18.2v2.6M14.2 18.9l2.4 1.2M16.6 18.9l-2.4 1.2"/>',
+    storm: '<path d="M6.4 14.6h10.9a3.6 3.6 0 0 0 .4-7.2 4.9 4.9 0 0 0-9.4 1.2 3.1 3.1 0 0 0-1.9 6z"/><path d="M12.6 15.6l-2 3.4h2.6l-1.4 3"/>',
+    fog: '<path d="M6.4 13.4h10.9a3.6 3.6 0 0 0 .4-7.2 4.9 4.9 0 0 0-9.4 1.2 3.1 3.1 0 0 0-1.9 6z"/><path d="M4.6 17.4h14.8M6.6 20.2h10.8"/>'
+  };
+  const wxIcon = (kind, size) =>
+    `<svg class="wx-ic ${size || ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WX_ICONS[kind] || WX_ICONS.cloud}</svg>`;
+
+  // seyahat uygunluğu puanı (0–100)
+  function travelScore(tmax, tmin, rain, wind, code) {
+    let sc = 100;
+    const why = [];
+    const isSnow = (code >= 71 && code <= 77) || code === 85 || code === 86;
+    const isStorm = code >= 95;
+    const isWet = code >= 51 && !isSnow && !isStorm;
+
+    if (isStorm) { sc -= 40; why.push("fırtına riski"); }
+    else if (isSnow) { sc -= 24; why.push("kar yağışı"); }
+
+    if (rain != null) {
+      if (rain >= 70) { sc -= 26; why.push(`yağış %${Math.round(rain)}`); }
+      else if (rain >= 40) { sc -= 12; why.push(`yağış %${Math.round(rain)}`); }
+      else if (isWet) { sc -= 6; }
+    } else if (isWet) { sc -= 12; why.push("yağış ihtimali"); }
+
+    if (tmax >= 36) { sc -= 22; why.push("aşırı sıcak"); }
+    else if (tmax >= 32) { sc -= 10; why.push("sıcak"); }
+    if (tmin <= -2) { sc -= 16; why.push("don riski"); }
+    else if (tmax <= 4) { sc -= 10; why.push("soğuk"); }
+    if (wind != null && wind >= 55) { sc -= 12; why.push("kuvvetli rüzgâr"); }
+
+    const mid = (tmax + tmin) / 2;
+    if (mid >= 13 && mid <= 25) sc = Math.min(100, sc + 6);
+    return { sc: Math.max(5, Math.min(100, Math.round(sc))), why };
+  }
+
+  const scoreLabel = (sc) =>
+    sc >= 85 ? { t: "Harika", c: "#1f8a53" } :
+    sc >= 70 ? { t: "Uygun", c: "#2f8f63" } :
+    sc >= 55 ? { t: "Orta", c: "#b8781c" } :
+    sc >= 40 ? { t: "Şartlı", c: "#c2673a" } : { t: "Ertelenebilir", c: "#b3312f" };
+
+  const DAY_NAMES = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+
+  function wxPanelHtml(ilIdx) {
+    return `<section class="wx-panel" id="wxPanel" data-il="${ilIdx}">
+      <div class="wx-head">
+        <h2 class="block-title" style="margin:0"><svg><use href="#i-sun"/></svg>Hava durumu ve seyahat uygunluğu</h2>
+        <span class="wx-src">Open-Meteo</span>
+      </div>
+      <div class="wx-body" id="wxBody"><span class="wx-loading">Hava durumu yükleniyor…</span></div>
+    </section>`;
+  }
+
+  function paintWx(ilIdx, data) {
+    const box = $("#wxBody");
+    if (!box || !box.closest("[data-il]") || Number(box.closest("[data-il]").dataset.il) !== ilIdx) return;
+    const d = data.daily, cur = data.current || {};
+    const days = d.time.map((t, i) => ({
+      t, code: d.weather_code[i], tmax: d.temperature_2m_max[i], tmin: d.temperature_2m_min[i],
+      rain: d.precipitation_probability_max[i], wind: d.wind_speed_10m_max[i]
+    }));
+    const scores = days.map((x) => travelScore(x.tmax, x.tmin, x.rain, x.wind, x.code));
+    const bestI = scores.reduce((bi, s, i) => (s.sc > scores[bi].sc ? i : bi), 0);
+    const today = scores[0], best = scores[bestI];
+    const lb = scoreLabel(today.sc);
+    const bestX = days[bestI];
+    const bestDayName = bestI === 0 ? "bugün" : bestI === 1 ? "yarın" : DAY_NAMES[new Date(bestX.t + "T12:00").getDay()];
+
+    box.innerHTML = `
+      <div class="wx-score" style="--sc:${lb.c}">
+        <div class="wx-num">${today.sc}<span>/100</span></div>
+        <div class="wx-lbl">${esc(lb.t)}</div>
+        <div class="wx-bar"><i style="width:${today.sc}%"></i></div>
+        <p class="wx-why">${today.why.length ? esc(today.why.join(" · ")) : "Hava koşulları gezi için elverişli"}</p>
+        ${bestI > 0 ? `<p class="wx-best">En uygun gün: <b>${esc(bestDayName)}</b> (${best.sc}/100)</p>` : ""}
+      </div>
+      <div class="wx-days">
+        ${days.map((x, i) => {
+          const m = wxMeta(x.code);
+          return `<div class="wx-day${i === 0 ? " today" : ""}">
+            <span class="wd-name">${i === 0 ? "Bugün" : i === 1 ? "Yarın" : DAY_NAMES[new Date(x.t + "T12:00").getDay()]}</span>
+            ${wxIcon(m.k)}
+            <span class="wd-temp"><b>${Math.round(x.tmax)}°</b> / ${Math.round(x.tmin)}°</span>
+            <span class="wd-rain">${x.rain != null ? `%${Math.round(x.rain)}` : "—"}</span>
+            <span class="wd-score" style="--sc:${scoreLabel(scores[i].sc).c}">${scores[i].sc}</span>
+          </div>`;
+        }).join("")}
+      </div>`;
+
+    // başlıktaki hava rozetini de güncelle
+    const w = $(".weather");
+    if (w && cur.temperature_2m != null) {
+      const m = wxMeta(cur.weather_code);
+      w.innerHTML = `<svg class="hdr-wx"><use href="#i-sun"/></svg>
+        <span><span class="temp">${Math.round(cur.temperature_2m)}°C</span><span class="city">${esc(ILS[ilIdx].n)}</span></span>`;
+      w.title = `${ILS[ilIdx].n}: ${m.l}, ${Math.round(cur.temperature_2m)}°C`;
+      w.dataset.kind = m.k;
+      w.classList.remove("kind-sun", "kind-partly", "kind-cloud", "kind-rain", "kind-snow", "kind-storm", "kind-fog");
+      w.classList.add("kind-" + m.k);
+    }
+  }
+
+  // başlıktaki hava rozeti: ana sayfada Ankara
+  function mountHeaderWx() {
+    const idx = ilByName["Ankara"];
+    if (idx === undefined) return;
+    const w = $(".weather");
+    if (!w) return;
+    const paint = (d) => {
+      const cur = d.current || {};
+      if (cur.temperature_2m == null) return;
+      const m = wxMeta(cur.weather_code);
+      w.title = `Ankara: ${m.l}, ${Math.round(cur.temperature_2m)}°C (Open-Meteo)`;
+      w.innerHTML = `<svg><use href="#i-sun"/></svg>
+        <span><span class="temp">${Math.round(cur.temperature_2m)}°C</span><span class="city">Ankara</span></span>`;
+      w.dataset.kind = m.k;
+      w.classList.add("kind-" + m.k);
+    };
+    const c = wxCached(idx);
+    if (c) { paint(c); return; }
+    wxLoad(idx).then(paint).catch(() => {});
+  }
+
+  function mountWx(ilIdx) {
+    const panel = $("#wxPanel");
+    if (!panel) return;
+    const cached = wxCached(ilIdx);
+    if (cached) { paintWx(ilIdx, cached); return; }
+    const offline = location.protocol === "file:";
+    wxLoad(ilIdx)
+      .then((d) => paintWx(ilIdx, d))
+      .catch(() => {
+        if (!panel.isConnected) return;
+        const body = $("#wxBody");
+        if (body) body.innerHTML = `<span class="wx-off">Hava durumu alınamadı${offline ? " (çevrimdışı görüntüleniyor)" : ""} — bağlantı kurulunca puan otomatik gelir.</span>`;
+      });
+  }
+
   /* ---------------------------------------------------------------- MEVSİM SAYFASI */
   function renderMevsim(sid) {
     const se = seasonById[sid];
@@ -972,6 +1195,7 @@
         </div>
       </div>
       <div class="container">
+        <p class="wx-season-note">${icon("i-sun")} Bu sayfadaki keşifler ${esc(se.n.toLowerCase())} mevsimi için seçildi; bir ilin güncel hava durumu ve seyahat puanı il sayfasında görünür.</p>
         <h2 class="block-title"><svg><use href="#i-pin"/></svg>Bu mevsimin en uygun illeri</h2>
         <div class="district-chips">
           ${ilScore.map((x) => `<a class="district-chip" href="#/il/${IL_SLUG[x.i]}">
@@ -1324,6 +1548,7 @@
   window.addEventListener("hashchange", router);
   initHeroSearch();
   renderHome();
+  mountHeaderWx();
   router();
   onScroll();
 })();
