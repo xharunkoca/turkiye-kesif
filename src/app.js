@@ -48,6 +48,31 @@
   const villCount = (il) => il.d.reduce((a, d) => a + d.k.length + (d.m ? d.m.length : 0), 0);
   const distCount = (il) => il.d.length;
 
+  // Wikidata sınıf etiketlerini okunur Türkçe rozetlere çevir
+  const TYPE_LABELS = {
+    "harabe": "Ören yeri", "höyük": "Höyük", "antik kent": "Antik kent", "ören yeri": "Ören yeri",
+    "kale": "Kale", "kule": "Kule", "sur": "Sur", "köprü": "Köprü", "su kemeri": "Su kemeri",
+    "sarnıç": "Sarnıç", "tiyatro": "Antik tiyatro", "tapınak": "Tapınak", "bazilika": "Bazilika",
+    "anıt mezar": "Anıt mezar", "tümülüs": "Tümülüs", "nekropol": "Nekropol",
+    "kervansaray": "Kervansaray", "han": "Han", "bedesten": "Bedesten", "arasta": "Arasta",
+    "çarşı": "Çarşı", "pazar": "Pazar", "pazar yeri": "Pazar yeri", "pasaj": "Pasaj",
+    "hamam": "Hamam", "kaplıca": "Kaplıca", "medrese": "Medrese", "konak": "Konak",
+    "cami": "Cami", "mescit": "Mescit", "kilise": "Kilise", "manastır": "Manastır",
+    "sinagog": "Sinagog", "türbe": "Türbe", "ziyaret yeri": "Ziyaret yeri",
+    "müze": "Müze", "millî park": "Millî park", "tabiat parkı": "Tabiat parkı",
+    "tabiat anıtı": "Tabiat anıtı", "göl": "Göl", "baraj": "Baraj", "baraj gölü": "Baraj gölü",
+    "şelale": "Şelale", "mağara": "Mağara", "kanyon": "Kanyon", "vadi": "Vadi",
+    "plaj": "Plaj", "koy": "Koy", "yayla": "Yayla", "kamp alanı": "Kamp alanı",
+    "orman": "Orman", "ada": "Ada", "tepe": "Tepe", "dağ": "Dağ", "anıt": "Anıt",
+    "tarihî bina": "Tarihî bina", "arkeolojik sit": "Arkeolojik sit", "dükkân": "Dükkân"
+  };
+  const typeLabel = (t) => {
+    if (!t) return "";
+    const k = norm(String(t)).trim();
+    if (TYPE_LABELS[k]) return TYPE_LABELS[k];
+    return String(t).charAt(0).toLocaleUpperCase("tr") + String(t).slice(1);
+  };
+
   const dedupeByName = (list) => {
     const seen = new Set();
     return list.filter((p) => { const k = norm(p[0]); if (seen.has(k)) return false; seen.add(k); return true; });
@@ -250,7 +275,7 @@
     return `<article class="p-card">
       <div class="p-head" style="--c:${color}">
         <span class="p-ic">${catIcon(p[1], 22)}</span>
-        ${p[6] ? `<span class="p-type">${esc(p[6])}</span>` : `<span class="p-type">${esc(cat.label)}</span>`}
+        <span class="p-type">${esc(p[6] ? typeLabel(p[6]) : cat.label)}</span>
         <button class="fav-btn${fav}" data-fav="${esc(favId(p))}" aria-label="${esc(p[0])} favorilere ekle">${icon("i-heart", "i14")}</button>
       </div>
       <div class="p-body">
@@ -390,7 +415,7 @@
         <h3 id="modalTitle">${esc(p[0])}</h3>
         <p class="sub">${esc(p[3] || il.n)}${p[3] ? ", " + esc(il.n) : esc(il.n)} • ${esc(il.r)} Bölgesi</p>
         <div class="modal-tags">
-          ${p[6] ? `<span class="tag">${esc(p[6])}</span>` : ""}
+          ${p[6] ? `<span class="tag">${esc(typeLabel(p[6]))}</span>` : ""}
           <span class="tag">${esc(cat.label)}</span>
           <span class="tag">${p[7] === "approx" ? "≈ yaklaşık konum" : "✓ doğrulanmış konum"}</span>
         </div>
@@ -677,7 +702,7 @@
       if (state.ilce) list = list.filter((p) => p[3] === state.ilce);
       if (state.q) {
         const k = norm(state.q);
-        list = list.filter((p) => norm(p[0] + " " + (p[6] || "") + " " + p[3] + " " + ILS[p[2]].n).includes(k));
+        list = list.filter((p) => norm(p[0] + " " + (p[6] || "") + " " + typeLabel(p[6]) + " " + p[3] + " " + ILS[p[2]].n).includes(k));
       }
       return list;
     }
