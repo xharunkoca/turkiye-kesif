@@ -1,0 +1,386 @@
+/* ============================================================
+   v15 — Açık tema: sade, ferah, tek vurgu rengi
+   Amaç: koyu fotoğraf üzerine beyaz yazı, çok renkli kartlar ve
+   ağır gölgeler yerine; beyaz zemin, ince çizgiler, geniş boşluk.
+   ============================================================ */
+:root{
+  --navy:#1d1d1f;
+  --navy-2:#1d1d1f;
+  --navy-3:#f5f5f7;          /* eskiden koyu alt bilgi rengiydi */
+  --red:#c8102e;
+  --red-dark:#a30d25;
+  --gold:#c8102e;
+  --ink:#1d1d1f;
+  --ink-2:#6e6e73;
+  --muted:#6e6e73;
+  --muted-2:#8e8e93;
+  --bg:#ffffff;
+  --bg-2:#f5f5f7;
+  --card:#ffffff;
+  --line:#d2d2d7;
+  --line-2:#e8e8ed;
+  --sky:#f5f5f7;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 18px 48px rgba(0,0,0,.14);
+  --r-sm:12px;
+  --r:16px;
+  --r-lg:22px;
+  --accent:#c8102e;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,"Helvetica Neue",Arial,sans-serif;
+}
+
+body{background:var(--bg);color:var(--ink)}
+::selection{background:var(--accent);color:#fff}
+h1,h2,h3,.section-title{letter-spacing:-.022em}
+
+/* ---------------- başlık ---------------- */
+.site-header{
+  background:rgba(255,255,255,.82);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--line-2);
+  box-shadow:none;
+}
+.site-header.scrolled{box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
+.header-inner{color:var(--ink)}
+.brand-title,.brand b,.brand strong{color:var(--ink)}
+.brand-tag{color:var(--ink-2)}
+.nav-link{color:#1d1d1f;font-weight:500}
+.nav-link:hover{background:var(--bg-2)}
+.nav-link.active,.main-nav .nav-link.active{color:var(--accent);background:rgba(200,16,46,.08)}
+.nav-link svg{color:var(--ink-2)}
+.burger{color:var(--ink);border:1px solid var(--line);background:#fff}
+.weather{color:var(--ink)}
+.weather .city{color:var(--ink-2)}
+.btn-auth{box-shadow:none}
+.mobile-menu{background:#fff;border-right:1px solid var(--line-2)}
+.mobile-menu a{color:var(--ink)}
+.mobile-menu a:hover{background:var(--bg-2)}
+.wx-ask{background:#fff;border:1px solid var(--line);color:var(--ink)}
+
+/* ---------------- kahraman ---------------- */
+.hero{background:linear-gradient(180deg,#ffffff 0%,#f5f5f7 100%);padding-top:calc(var(--header-h) + 34px);padding-bottom:10px}
+.hero-bg{display:none}
+.hero-content{color:var(--ink);padding-top:clamp(14px,3.4vw,34px)}
+.hero h1{color:var(--ink);text-shadow:none;font-weight:700;letter-spacing:-.035em}
+.hero h1 em{color:var(--accent);font-style:normal}
+.hero .lead{color:var(--ink-2);font-size:clamp(15px,1.5vw,19px)}
+.search-bar{box-shadow:none;border:1px solid var(--line);background:#fff}
+.search-bar:focus-within{border-colour:var(--ink);box-shadow:0 0 0 4px rgba(29,29,31,.06)}
+.search-submit{box-shadow:none}
+.chip{background:#fff;border:1px solid var(--line);color:var(--ink);backdrop-filter:none;font-weight:500}
+.chip:hover{background:var(--bg-2);border-color:var(--line)}
+.chip.primary{background:#1d1d1f;border-color:#1d1d1f;color:#fff}
+.chip.primary:hover{background:#000}
+.quick-chips{gap:8px}
+
+/* kategori şeridi */
+.categories{margin-top:clamp(22px,3vw,34px)}
+.cat-card{background:#fff;border:1px solid var(--line);box-shadow:none;border-radius:var(--r-lg)}
+.cat-item{border-right:1px solid var(--line-2);border-radius:12px}
+.cat-item:hover{background:var(--bg-2)}
+.cat-item span{color:var(--ink);font-weight:500}
+.cat-item em{color:var(--ink-2);font-weight:500}
+.cat-item svg{opacity:.9}
+
+/* ---------------- bölümler ---------------- */
+.section{padding-top:clamp(30px,4.4vw,52px)}
+.section-title{font-size:clamp(19px,2vw,24px);font-weight:700;color:var(--ink)}
+.section-title svg{color:var(--accent)}
+.section-link{color:var(--accent);font-weight:500}
+.section-link:hover{opacity:.75}
+.panel,.p-card,.il-card,.district,.filter-bar,.stats-band,.wx-panel{
+  background:#fff;border:1px solid var(--line);box-shadow:none;border-radius:var(--r-lg);
+}
+.panel:hover,.il-card:hover,.p-card:hover{border-color:#bcbcc2;box-shadow:0 6px 20px rgba(0,0,0,.05)}
+.p-head,.p-title,.il-name{color:var(--ink)}
+.p-loc,.p-src,.il-region,.il-stats,.dist-meta,.ri-meta,.city-meta{color:var(--ink-2)}
+
+/* şehir kartları: fotoğraf + alttan beyaz geçiş */
+.city-card{border-radius:var(--r-lg);box-shadow:none;border:1px solid var(--line-2)}
+.city-card::after{
+  content:"";position:absolute;inset:auto 0 0 0;height:62%;z-index:1;
+  background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.92) 58%,#fff 100%);
+}
+.city-body{color:var(--ink);z-index:2}
+.city-name{color:var(--ink);font-weight:700;letter-spacing:-.01em}
+.city-meta{color:var(--ink-2)}
+.city-plate{background:#fff;color:var(--ink);border:1px solid var(--line)}
+
+/* rota kartları: renkli bant yerine ince etiket */
+.route-item{border:1px solid var(--line);box-shadow:none;border-radius:var(--r-lg);background:#fff}
+.route-item:hover{border-color:#bcbcc2;box-shadow:0 6px 20px rgba(0,0,0,.05)}
+.ri-top{background:var(--bg-2)!important;color:var(--ink);gap:8px;border-bottom:1px solid var(--line-2)}
+.ri-top::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,#c8102e);flex:0 0 auto}
+.ri-badge{color:var(--ink);font-weight:600;letter-spacing:0;text-transform:none;font-size:12px;opacity:1}
+.ri-il{background:#fff;border:1px solid var(--line);color:var(--ink-2);font-weight:500}
+.route-item h3{color:var(--ink);letter-spacing:-.015em}
+.ri-stops{color:var(--ink-2)}
+.ri-btn{box-shadow:none}
+
+/* mevsim kartları */
+.season-card{border-radius:var(--r);border:1px solid var(--line-2);color:var(--ink)}
+.season-card::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.9));z-index:1}
+.season-card>*{position:relative;z-index:2}
+.season-card img{opacity:.95}
+
+/* istatistik bandı */
+.stats-band{background:var(--bg-2);border:none}
+.stat-cell{border-right:1px solid var(--line)}
+.stat-cell b{color:var(--ink);font-weight:700}
+.stat-cell span,.stat-cell em{color:var(--ink-2)}
+
+/* mevsim/banner bloğu */
+.banner{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);min-height:0}
+.banner-bg{display:none}
+.banner-inner{color:var(--ink);padding-block:26px}
+.banner-script,.block-title{color:var(--ink)}
+.block-sub{color:var(--ink-2)}
+
+/* butonlar */
+.btn{font-weight:500;letter-spacing:-.01em}
+.btn-red{background:var(--accent);box-shadow:none}
+.btn-red:hover{background:var(--red-dark)}
+.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn-ghost:hover{background:var(--bg-2);border-color:var(--line)}
+.btn-navy{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn-navy:hover{background:var(--bg-2)}
+.fav-btn{background:rgba(255,255,255,.9);border:1px solid var(--line);color:var(--ink-2)}
+.fav-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ---------------- sayfa başlıkları ---------------- */
+.page-head{background:var(--bg-2);color:var(--ink);border-bottom:1px solid var(--line-2);padding:calc(var(--header-h) + 30px) 0 30px}
+.page-head h1{color:var(--ink);letter-spacing:-.03em;font-weight:700}
+.page-sub{color:var(--ink-2)}
+.crumb{color:var(--ink-2)}
+.crumb a{color:var(--ink-2)}
+.crumb b{color:var(--ink)}
+.il-hero{background-image:none!important;background-color:var(--bg-2)!important;color:var(--ink);border-bottom:1px solid var(--line-2)}
+.il-hero::before,.il-hero::after{display:none!important}
+.il-name{color:var(--ink);letter-spacing:-.03em}
+.il-region,.il-stats{color:var(--ink-2)}
+.il-plate{background:#fff;border:1px solid var(--line);color:var(--ink)}
+
+/* filtreler / formlar */
+select,input[type=search],input[type=text],input[type=email],textarea{
+  background:#fff;border:1px solid var(--line);color:var(--ink);border-radius:12px;
+}
+select:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.auth-form input{border:1px solid var(--line)}
+.form-note,.auth-fine{color:var(--ink-2)}
+
+/* hava durumu */
+.wx-panel{background:#fff;border:1px solid var(--line);box-shadow:none}
+.wx-day{background:var(--bg-2);border:1px solid transparent;border-radius:14px}
+.wx-score{color:var(--ink)}
+
+/* ---------------- katmanlar ---------------- */
+.modal-backdrop{background:rgba(0,0,0,.32);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.modal-card{border-radius:var(--r-lg);box-shadow:0 24px 70px rgba(0,0,0,.22)}
+.modal-body h3{color:var(--ink);letter-spacing:-.02em}
+.modal-body p,.modal-body .sub{color:var(--ink-2)}
+.modal-close{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.suggest{box-shadow:0 18px 48px rgba(0,0,0,.14);border:1px solid var(--line-2)}
+.suggest-item:hover{background:var(--bg-2)}
+.consent{background:rgba(255,255,255,.96);color:var(--ink);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.12);backdrop-filter:blur(12px)}
+.consent a{color:var(--accent)}
+.toast{background:#1d1d1f;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.empty{background:#fff;border:1px dashed var(--line)}
+
+/* ---------------- alt bilgi ---------------- */
+.site-footer{background:var(--bg-2);color:var(--ink-2);border-top:1px solid var(--line-2);padding-top:48px}
+.site-footer .brand-title,.site-footer .brand b,.site-footer .brand strong{color:var(--ink)}
+.site-footer a{color:#1d1d1f}
+.site-footer a:hover{color:var(--accent)}
+.footer-grid{gap:32px}
+.footer-col h3,.footer-grid h3{color:var(--ink);font-weight:600}
+.footer-bottom{border-top:1px solid var(--line);color:var(--ink-2)}
+.footer-legal a{color:var(--ink-2)}
+.footer-legal a:hover{color:var(--accent)}
+footer .footer-btn{color:#1d1d1f}
+footer .footer-btn:hover{color:var(--accent)}
+.newsletter,.footer-grid input{background:#fff;border:1px solid var(--line)}
+
+/* ---------------- hesap ---------------- */
+.acc-card{border:1px solid var(--line);box-shadow:none;border-radius:var(--r-lg)}
+.acc-quiet{background:var(--bg-2)}
+.acc-row{border:1px solid var(--line);border-radius:var(--r)}
+.acc-section h2{letter-spacing:-.02em}
+.acc-label{color:var(--ink-2);letter-spacing:0;text-transform:none;font-weight:500;font-size:13px}
+.acc-empty{background:var(--bg-2);border:1px solid var(--line-2)}
+.prog-bar{background:var(--line-2)}
+
+/* ---------------- ince ayar ---------------- */
+.hero,.section,.page-view,.main-page-head{--p:0}
+.tab,.tag{background:var(--bg-2);color:var(--ink)}
+.i10,.i12{color:inherit}
+.map-stage{background:var(--bg-2);border-radius:var(--r)}
+
+/* --- düzeltmeler (v15.1) --- */
+.hero .lead,.hero-content .lead,.hero p.lead{color:var(--ink-2)!important;opacity:1!important;text-shadow:none!important}
+.site-header.scrolled{background:rgba(255,255,255,.92)}
+.site-header::before,.site-header::after{background:none!important}
+.hero::before,.hero::after{background:none!important}
+.hero{padding-bottom:0}
+.categories{padding-bottom:8px}
+/* vurgu rengi yalnız gerektiğinde */
+.nav-link{color:#1d1d1f}
+.nav-link.active{color:var(--accent)!important;background:rgba(200,16,46,.07)!important}
+.nav-link svg{color:currentColor}
+/* şehir kartı: fotoğraf daha görünür kalsın */
+.city-card::after{height:52%;background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.86) 62%,#fff 100%)}
+.city-name{font-size:16px}
+/* onay şeridi daha sade */
+.consent{display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:16px 18px;border-radius:18px;max-width:720px;margin-inline:auto;font-size:13px;line-height:1.5}
+.consent-btns{display:flex;gap:10px;flex-wrap:wrap;width:auto}
+.consent .btn{min-height:44px}
+
+/* --- v15.2: burger masaüstünde gizli, kategori şeridi taşmasın --- */
+.burger{display:none}
+@media (max-width:980px){.burger{display:inline-flex}}
+@media (min-width:1201px){
+  .cat-item{padding:12px 2px}
+  .cat-item span{font-size:9.5px;line-height:1.18;overflow-wrap:anywhere}
+  .cat-item em{font-size:11px}
+}
+.city-card::after{height:48%;background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.78) 66%,#fff 100%)}
+
+/* --- v15.3: CTA bandı, alt bilgi başlıkları, mevsim kartları --- */
+.banner{background:var(--bg-2)!important;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.banner-bg,.banner>img{display:none!important}
+.banner::after{background:none!important}
+.banner .banner-script,.banner h2,.banner h2 em,.banner .banner-title{color:var(--ink)!important;text-shadow:none!important}
+.banner small,.banner .banner-meta{color:var(--muted)!important}
+.banner-inner small{color:var(--muted)!important}
+.site-footer h4,.site-footer h3{color:var(--ink)!important;letter-spacing:.02em}
+.season-card::after{background:linear-gradient(180deg,rgba(255,255,255,0) 34%,rgba(255,255,255,.82) 82%,#fff 100%)!important}
+.season-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+
+/* --- v15.4: mevsim kartı fotoğrafı görünür kalsın --- */
+.season-card{min-height:190px}
+.season-card img{filter:saturate(1.05) contrast(1.02);z-index:0}
+.season-card::after{background:linear-gradient(180deg,rgba(255,255,255,0) 46%,rgba(255,255,255,.9) 74%,#fff 100%)!important;z-index:1}
+.season-card .sc-name,.season-card .sc-link,.season-card span{position:relative;z-index:2;color:var(--ink)!important}
+.season-card .sc-link{color:var(--accent)!important}
+.season-card.winter{background:#eef4fb}
+.season-card.winter::after{background:linear-gradient(180deg,rgba(238,244,251,0) 40%,rgba(238,244,251,.94) 72%,#eef4fb 100%)!important}
+
+/* --- v15.5: rota kartı düğmeleri, mevsim etiketleri, kahraman zemini --- */
+.ri-btn{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line)!important;box-shadow:none!important;font-weight:600}
+.ri-btn:hover{border-color:var(--accent)!important;color:var(--accent)!important;background:#fff!important}
+.ri-btn svg{color:inherit}
+.ri-btn2{color:var(--accent)!important;background:none!important;border:1px solid transparent!important;box-shadow:none!important;font-weight:600}
+.ri-btn2:hover{background:#fff!important;border-color:var(--line)!important}
+.season-card>span{display:flex!important;flex-direction:column;align-items:flex-start;gap:2px}
+.season-card .sc-link{color:var(--muted)!important;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.season-card .sc-name{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.season-card:hover .sc-link{color:var(--accent)!important}
+.hero{background:linear-gradient(180deg,#f7f7f9 0%,#fff 78%)!important}
+.cat-card{box-shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.04)!important}
+.season-card.winter>span,.season-card.winter .sc-link{align-items:flex-start!important;text-align:left!important;justify-items:start}
+
+/* --- v15.6: renkli bantlar yerine ince çizgi / tek vurgu --- */
+.il-card::before{background:none!important}
+.il-card{border-color:var(--line);box-shadow:none}
+.il-card:hover{border-color:#b9b9c0;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.live-bar>span{background:var(--accent)!important}
+.prog-bar i{background:var(--accent)!important}
+.live-no{background:var(--ink)!important}
+.live-card{background:var(--bg-2)!important;border-color:var(--line)!important}
+
+/* --- v15.7: Apple yazı tipi yığını --- */
+:root{--font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Inter,system-ui,"Helvetica Neue",Arial,sans-serif}
+body,h1,h2,h3,h4,.btn,input,select,textarea,button{font-family:var(--font)}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;letter-spacing:-.005em}
+h1,h2,.section-title{letter-spacing:-.03em}
+
+/* --- v15.8: mekân kartı başlığı nötr --- */
+.p-head{background:var(--bg-2)!important;border-bottom:1px solid var(--line)}
+.p-head::after{background:none!important;box-shadow:none!important}
+.p-ic{color:var(--ink)!important;opacity:.85!important}
+.p-type{color:var(--muted)!important;background:#fff!important;border:1px solid var(--line)!important;font-weight:600}
+.p-card{border-color:var(--line);box-shadow:none}
+.p-card:hover{border-color:#bcbcc2;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.p-head .fav-btn{background:#fff;border:1px solid var(--line);color:#8e8e93}
+.p-head .fav-btn[aria-pressed="true"],.p-head .fav-btn.is-fav{color:var(--accent);border-color:#f0c9cf}
+/* il / sayfa kahramanı: metin koyu, fotoğraf yumuşak */
+.il-hero{background-size:cover;background-position:center}
+.il-hero::before{display:none!important}
+.il-hero .crumb,.il-hero .crumb a,.il-hero h1,.il-hero .page-sub,.il-hero p,.il-hero .crumb.light,.il-hero .crumb.light a{color:var(--ink)!important}
+.il-hero .page-sub,.il-hero .crumb{color:var(--muted)!important}
+.il-hero h1{color:var(--ink)!important;text-shadow:none!important}
+.plate-badge,.il-plate{background:#fff!important;border:1px solid var(--line)!important;color:var(--ink)!important}
+
+/* --- v15.9: mevsim sayfası başlığı açık --- */
+.season-hero{background:var(--bg-2)!important;color:var(--ink)!important;border-bottom:1px solid var(--line)}
+.season-hero>img,.season-hero>svg{display:none!important}
+.season-hero::after{display:none!important}
+.season-hero h1{color:var(--ink)!important;font-weight:700;letter-spacing:-.035em}
+.season-hero h1 span{background:#fff!important;border:1px solid var(--line)!important;color:var(--muted)!important;font-weight:600}
+.season-hero .page-sub{color:var(--muted)!important}
+.season-hero .crumb,.season-hero .crumb a{color:var(--muted)!important}
+.season-facts span,.season-facts li{background:#fff!important;border:1px solid var(--line)!important;color:var(--ink)!important}
+
+/* --- v16: "Konuma git" sakinleşti --- */
+.goto{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line)!important;box-shadow:none!important;font-weight:600}
+.goto:hover{border-color:var(--accent)!important;color:var(--accent)!important}
+.goto svg{color:inherit}
+.p-card .goto[title]{border-style:solid!important}
+
+/* --- v16.1: onay şeridi (dikey şişme düzeltmesi), mobil menü ikonu, şehir kartı geçişi --- */
+.consent{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line);
+  box-shadow:0 10px 30px rgba(0,0,0,.12);border-radius:16px;padding:14px 16px;
+  display:flex!important;flex-direction:row!important;gap:12px;align-items:center;flex-wrap:wrap;
+  max-width:900px;margin-inline:auto;font-size:13px}
+.consent p{flex:1 1 320px!important;margin:0!important;color:var(--muted)!important;font-size:13px!important;line-height:1.5!important}
+.consent a{color:var(--accent)!important}
+.consent-btns{display:flex!important;gap:8px;flex-wrap:wrap;margin-left:auto;width:auto!important}
+@media (max-width:600px){
+  .consent{flex-direction:column!important;align-items:stretch;left:8px;right:8px;bottom:8px;padding:14px}
+  .consent-btns{margin-left:0}
+  .consent .btn{flex:1 1 46%}
+}
+.burger svg{color:var(--ink)!important}
+.city-card::after{height:56%!important;background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.86) 42%,#fff 68%)!important}
+.city-name{font-weight:700}
+.city-meta{color:var(--muted)!important}
+@media (max-width:600px){.consent p{flex:0 1 auto!important}}
+
+/* --- v16.2: şehir kartı = üstte fotoğraf, altta beyaz blok --- */
+.city-card{background:#fff!important;border:1px solid var(--line);overflow:hidden}
+.city-card img{border-radius:12px 12px 0 0}
+.city-card::after{height:54%!important;background:#fff!important}
+.city-name,.city-meta{background:#fff}
+.city-name{padding-top:2px}
+.plate,.city-card .plate-num{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line)!important;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+
+/* --- v16.3: mekân penceresi başlığı nötr, şehir kartı oranı --- */
+.modal-hero{background:var(--bg-2)!important;border-bottom:1px solid var(--line)}
+.modal-hero::after{display:none!important}
+.mh-ic{color:var(--ink)!important;opacity:.8}
+.mh-type,.modal-hero .mh-type{color:var(--muted)!important;font-weight:600;letter-spacing:.04em}
+.city-card::after{height:48%!important}
+@media (max-width:600px){.city-card::after{height:46%!important}}
+
+/* --- v16.4: mekân penceresi başlığı kompakt ve okunur --- */
+.modal-hero{height:110px!important;background:var(--bg-2)!important}
+.modal-hero .mh-ic,.modal-hero .mh-cat,.modal-hero span{color:var(--ink)!important;opacity:1}
+.modal-hero .mh-cat{color:var(--muted)!important;font-weight:600}
+
+/* --- v16.5: küçük metinlerde kontrast (WCAG AA) --- */
+.cat-item em{background:var(--bg-2)!important;color:var(--muted)!important;font-weight:600}
+.cat-chip span,.cat-chip em,.cat-chip small{color:var(--muted)!important}
+.wx-src,.wx-lbl,.wd-name,.wd-rain,.wd-score,.wd-temp,.wd-ic{color:var(--muted)!important}
+.wx-panel,.weather-card,.wx-card{background:#fff!important;border-color:var(--line)!important}
+.dist-places,.chip-label,.chips-bar .chip-label{color:var(--muted)!important}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+.cat-chip.active,.cat-chip[aria-pressed="true"]{background:var(--ink)!important;border-color:var(--ink)!important;color:#fff!important}
+.cat-chip.active em,.cat-chip[aria-pressed="true"] em{color:rgba(255,255,255,.82)!important}
+[class^="wx-"],[class*=" wx-"],[class^="wd-"],[class*=" wd-"]{color:var(--muted)!important}
+[class^="wd-temp"],[class*=" wd-temp"]{color:var(--ink)!important}
+.city-card::after{height:42%!important}
+@media (max-width:600px){.city-card::after{height:40%!important}}
+.panel.seasons-panel{align-self:start}
+.season-grid{grid-auto-rows:minmax(160px,190px)!important}
+.season-card{min-height:0!important;max-height:190px}

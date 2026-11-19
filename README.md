@@ -254,8 +254,12 @@ Her rota kartında **Başlat**, rota detayında **Rotayı başlat** düğmesi va
 
 ## Notlar
 
-- Arayüz tamamen Türkçedir; tipografi ve renk paleti referans tasarımdan gelir
-  (lacivert `#0a2c52`, kırmızı `#e11d2e`, sarı `#ffd21e`).
+- Arayüz tamamen Türkçedir. **v15 ile açık tema:** beyaz zemin (`#fff`/`#f5f5f7`),
+  ince çizgi (`#d2d2d7`), tek vurgu rengi koyu kırmızı (`#c8102e`), ağır gölge ve renkli
+  bant yok; kartlar fotoğraf + beyaz metin bloğu olarak sadeleşti.
+- Tema katmanı `src/theme-light.css` içinde; `build.py` bu dosyayı `style.css`'in **sonuna**
+  ekler (hash'li tek CSS çıktısı). Statik sayfaların stilini `build.py` içindeki `PAGE_CSS`
+  üretir, o da aynı açık paleti kullanır.
 - Favoriler `localStorage` (`tk-favs-v2`), rota kayıtları `tk-routes-v2` anahtarında.
 - Dosya `file://` ile açıldığında da çalışır; GitHub Pages'te harici bağlantılar
   (Google Maps, Wikidata) normal şekilde açılır.

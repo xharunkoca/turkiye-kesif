@@ -450,3 +450,39 @@ Test verileri sonrasında silindi (0 kullanıcı, 0 favori, 0 ilerleme).
 > Doğru `email_redirect_to` yükü ile yapılan iki bağımsız testte (istemci ve curl) yönlendirme
 > `…/turkiye-kesif/` olarak geldi; güncel sürümde sorun görülmedi. Yine de magic-link kurulumu
 > değiştirilirse bu adres ilk kontrol edilmeli.
+
+## v15 — açık tema (Apple sadeliğinde sade arayüz)
+
+Kullanıcı geri bildirimi: "Hepsi ve arayüz sanki karışmış gibi aydınlı ve Apple sadeliğinde olsun."
+Bu nedenle tüm yüzey beyaz zemine, ince çizgiye ve tek vurgu rengine taşındı.
+
+| Öğe | Önce | Sonra (v15) |
+|---|---|---|
+| Zemin / yüzey | lacivert kesitler, renkli bantlar | `#fff`, ikincil `#f5f5f7` |
+| Metin | `#16232f` + beyaz üstü yarı saydam | `#1d1d1f`, ikincil `#6e6e73` |
+| Vurgu | lacivert + kırmızı + sarı | tek vurgu: `#c8102e` |
+| Gölge | `0 12px 34px` ağır gölgeler | `0 1px 2px` / `0 6px 20px` yumuşak |
+| Kahraman (ana) | koyu fotoğraf + karartma | fotoğrafsız, `#f7f7f9 → #fff` geçişli sade blok |
+| Şehir kartı | fotoğraf üzeri beyaz geçiş | fotoğraf üstte + **beyaz metin bloğu** (plaka, ad, sayılar) |
+| İl kartı | 3 px gökkuşağı şerit | ince `#d2d2d7` çerçeve |
+| Mekân kartı başlığı | kategoriye göre mavi/turuncu/yeşil blok | nötr `#f5f5f7` + gri kategori etiketi |
+| Rota kartı | dolu kırmızı "Başlat" | beyaz/çerçeveli düğme + metin bağlantı "İncele" |
+| Mekân penceresi | 180 px koyu degrade | 110 px nötr başlık, koyu metin |
+| Mevsim kartı | renkli karartma | fotoğraf + altta beyaz etiket alanı |
+| Alt bilgi | koyu lacivert | `#f5f5f7` + ince üst çizgi, koyu başlıklar |
+| Statik sayfalar (`PAGE_CSS`) | lacivert başlık/alt bilgi, `#b3261e` | cam efektli beyaz başlık, `#c8102e` CTA |
+
+Teknik notlar:
+- Tema ayrı bir katman: **`src/theme-light.css`**; `build.py` bunu `style.css`'in sonuna ekleyip
+  hash'li tek dosya üretiyor, böylece geri alınması tek dosya silmek kadar kolay.
+- `build.py` içindeki **`PAGE_CSS`** (511 statik sayfanın stili) aynı palete geçirildi.
+- Apple yazı tipi yığını: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", …`.
+- `prefers-reduced-motion` desteği eklendi.
+
+Doğrulamalar (yerel, Playwright + Chromium):
+- 11 rota × 2 görünüm (1440×950, 390×844): **JS hatası 0**, **yatay taşma 0**.
+- Kontrast taraması (WCAG AA, ~5.000 metin düğümü): ana sayfa / keşfet / hesabım / statik sayfa **0 ihlal**,
+  il sayfasında yalnız geçici hava durumu iskeletinde 1 öğe kaldı (`/100`).
+- Düzeltilen regresyonlar: mobil onay şeridinin tam ekran kaplaması (`flex-basis` 340 px → sütunda
+  yükseklik olarak yorumlanıyordu), masaüstünde görünen boş hamburger düğmesi, beyaz üstünde
+  okunmayan `.lead` ve alt bilgi başlıkları, kategori sayılarının soluk zemini.
