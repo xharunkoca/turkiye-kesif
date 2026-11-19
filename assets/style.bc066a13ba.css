@@ -2017,3 +2017,5 @@ html,body{max-width:100%;overflow-x:hidden}
   .page-head h1,.il-hero h1,.season-hero h1{font-size:27px!important}
   .page-sub{font-size:14px!important}
 }
+.hero{padding-bottom:clamp(28px,3.4vw,44px)!important}
+.categories{margin-bottom:0!important}
