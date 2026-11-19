@@ -822,7 +822,7 @@
       const il = ILS[i];
       const villages = il.d.reduce((a, d) => a + d.k.length, 0);
       return `<a class="city-card" href="#/il/${IL_SLUG[i]}">
-        <img src="${CITY_PHOTOS[name]}" alt="${esc(name)}" width="720" height="480" loading="lazy" decoding="async">
+        <img src="${CITY_PHOTOS[name]}" alt="${esc(name)}" width="720" height="480" loading="lazy" decoding="async" fetchpriority="low">
         <div class="city-body">
           <div class="city-name">${esc(name)}</div>
           <div class="city-meta">${icon("i-pin")}${nf(byIlUniq[i].length)} keşif • ${nf(il.d.length)} ilçe</div>
@@ -839,7 +839,7 @@
     const seasons = SEASONS;
     $("#seasonGrid").innerHTML = seasons.map((s) => `
       <button class="season-card ${s.img ? "" : "winter"}" data-season="${esc(s.id)}" aria-label="${esc(s.n)} mevsiminde keşfet">
-        ${s.img ? `<img src="${s.img}" alt="${esc(s.n)} mevsiminde Türkiye" width="420" height="320" loading="lazy" decoding="async">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
+        ${s.img ? `<img src="${s.img}" alt="${esc(s.n)} mevsiminde Türkiye" width="420" height="320" loading="lazy" decoding="async" fetchpriority="low">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
             <path d="M-6 96 34 46 62 74 96 38 132 76 158 54 206 92V124H-6Z" fill="#eaf3fb"/>
             <path d="M34 46 46 60 34 70 22 60Z" fill="#ffffff"/>
             <path d="M96 38 110 54 96 64 82 54Z" fill="#ffffff"/>
@@ -1377,7 +1377,7 @@
     const view = $("#view-page");
     view.innerHTML = `
       <div class="season-hero" style="--sc:${se.color}">
-        ${se.img ? `<img src="${se.img}" alt="${esc(se.n)} mevsiminde Türkiye" width="420" height="320" loading="lazy" decoding="async">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
+        ${se.img ? `<img src="${se.img}" alt="${esc(se.n)} mevsiminde Türkiye" width="420" height="320" loading="lazy" decoding="async" fetchpriority="low">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
           <path d="M-6 96 34 46 62 74 96 38 132 76 158 54 206 92V124H-6Z" fill="#dbe9f6"/>
           <path d="M34 46 46 60 34 70 22 60Z" fill="#fff"/><path d="M96 38 110 54 96 64 82 54Z" fill="#fff"/>
           <path d="M-6 108 44 92 88 104 132 90 174 104 206 94V124H-6Z" fill="#fff"/></svg>`}
