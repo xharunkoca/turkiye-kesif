@@ -2,6 +2,8 @@
 
 **81 il · 15 turizm kategorisi · 3.269 doğrulanmış keşif noktası · 45.060 köy/mahalle · 405 gezi rotası**
 
+🔗 **Canlı site:** <https://xharunkoca.github.io/turkiye-kesif/>
+
 Tek dosyalık (bağımlılıksız) keşif rehberi. `index.html` içinde CSS, JavaScript, veri ve
 tüm görseller base64 olarak gömülüdür — dosyayı çift tıklayıp açmak yeterlidir, internet
 bağlantısı gerekmez (harici harita/kaynak bağlantıları hariç).
@@ -75,7 +77,7 @@ Rota penceresinde duraklar numaralı bir **mini güzergâh haritası** üzerinde
 Depoyu klonlayıp `index.html`'i tarayıcıda açmanız yeterli:
 
 ```bash
-git clone https://github.com/<kullanici>/turkiye-kesif.git
+git clone https://github.com/xharunkoca/turkiye-kesif.git
 cd turkiye-kesif
 open index.html          # macOS   (Windows: start index.html / Linux: xdg-open index.html)
 ```
@@ -127,7 +129,7 @@ Depoya her `push` sonrası site otomatik yayınlanır:
 
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions**
 2. `main` dalına push edin (veya Actions sekmesinden *GitHub Pages'e yayınla* iş akışını çalıştırın)
-3. Site adresi: `https://<kullanici>.github.io/turkiye-kesif/`
+3. Site adresi: `https://xharunkoca.github.io/turkiye-kesif/`
 
 İş akışı yayından önce veriyi doğrular (81 il / 15 kategori), ardından `index.html`
 kaynaklarla güncel mi diye `build.py` çıktısını karşılaştırır.
