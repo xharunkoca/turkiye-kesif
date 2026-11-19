@@ -486,3 +486,8 @@ Doğrulamalar (yerel, Playwright + Chromium):
 - Düzeltilen regresyonlar: mobil onay şeridinin tam ekran kaplaması (`flex-basis` 340 px → sütunda
   yükseklik olarak yorumlanıyordu), masaüstünde görünen boş hamburger düğmesi, beyaz üstünde
   okunmayan `.lead` ve alt bilgi başlıkları, kategori sayılarının soluk zemini.
+
+**Canlı doğrulama (d0c9ec7):** GitHub Actions `success` → <https://xharunkoca.github.io/turkiye-kesif/>
+`style.f2cd168489.css` servis ediliyor; başlık zemini `rgba(255,255,255,.92)`, statik il sayfası
+`h1` rengi `rgb(29,29,31)`; ana sayfa + mobil + `/il/istanbul/` görüntüleri alındı, **JS hatası 0**;
+onay şeridi "Anladım" ile kapanıyor (`tk-consent-v1` yazılıyor). Görüntüler: `shots/canli-v15-*.png`.
