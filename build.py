@@ -172,7 +172,7 @@ def build_routes(il, pool, cat_ids):
 
 # ---------------------------------------------------------------- statik sayfa iskeleti
 PAGE_CSS = """
-:root{--ink:#1d1d1f;--ink-2:#58585d;--muted:#6e6e73;--line:#e6e6eb;--line-2:#d2d2d7;--bg:#fafafc;--accent:#c8102e;
+:root{--ink:#1d1d1f;--ink-2:#58585d;--muted:#6e6e73;--line:#dedee4;--line-2:#cfcfd6;--bg:#fafafc;--accent:#c8102e;
 --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font);color:var(--ink);background:#fff;line-height:1.62;
@@ -242,6 +242,12 @@ img,table,pre{max-width:100%}
   .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   table{font-size:.9rem}
 }
+
+/* v19 — genel hatlar biraz daha kalın */
+.card,.box,.panel,.kart,.list li,.il-card,.place-card,.seo-list,.crumbs,table,th,td,.badge-box{
+  border-width:1.5px;
+}
+table th,table td{border-bottom-width:1.5px}
 """
 
 

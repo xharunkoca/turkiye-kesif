@@ -122,7 +122,7 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
       cats: ["doga", "yayla", "tarih", "kultur", "gastro"], theme: "tarih"
     },
     {
-      id: "kis", n: "Kış", months: "Aralık – Şubat", color: "#275d8f", img: null,
+      id: "kis", n: "Kış", months: "Aralık – Şubat", color: "#275d8f", img: "assets/img/kis-420.webp",
       desc: "Termal kaplıcalar, müzeler, mağaralar ve inanç mirası. Kapalı mekân ve şifa odaklı bir kış programı.",
       cats: ["termal", "muze", "kultur", "tarih", "magara", "dini"], theme: "inanc"
     }
@@ -232,10 +232,84 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
       const [x, y] = project(il.lat, il.lon);
       return `<g class="map-pin${interactive ? " big" : ""}" data-il="${i}" tabindex="0" role="button" aria-label="${esc(il.n)}">
         <title>${esc(il.n)}</title>
-        <circle class="pulse" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"/>
-        <circle class="core" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${interactive ? 4.5 : 3.2}"/>
+        <circle class="pulse" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${interactive ? 8 : 6.4}"/>
+        <circle class="core" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${interactive ? 6 : 4.6}"/>
       </g>`;
     }).join("");
+  }
+
+  /* ------------------------------------------------- harita il adı etiketleri */
+  const LABEL_PRIORITY = ["İstanbul","Ankara","İzmir","Antalya","Bursa","Muğla","Adana","Konya","Kayseri",
+    "Gaziantep","Trabzon","Samsun","Diyarbakır","Erzurum","Mersin","Kocaeli","Eskişehir","Şanlıurfa","Van",
+    "Malatya","Sivas","Denizli","Balıkesir","Manisa","Aydın","Çanakkale","Hatay","Sakarya","Tekirdağ","Ordu",
+    "Rize","Nevşehir","Kars","Afyonkarahisar","Kahramanmaraş","Elazığ","Ağrı","Zonguldak","Sinop"];
+  const labelRank = {};
+  ILS.forEach((il) => { const k = LABEL_PRIORITY.indexOf(il.n); labelRank[il.n] = k < 0 ? 900 : k; });
+
+  function mountMapLabels(wrap, svg) {
+    if (!wrap || !svg) return;
+    wrap.classList.add("has-labels");
+    let layer = wrap.querySelector(".map-labels");
+    if (!layer) { layer = document.createElement("div"); layer.className = "map-labels"; wrap.appendChild(layer); }
+    const canvas = mountMapLabels._c || (mountMapLabels._c = document.createElement("canvas"));
+    const ctx = canvas.getContext("2d");
+    const place = () => {
+      layer.innerHTML = "";
+      const ctm = svg.getScreenCTM && svg.getScreenCTM();
+      const wr = wrap.getBoundingClientRect();
+      if (!ctm || wr.width < 60) return;
+      const fs = wr.width < 420 ? 8.5 : wr.width < 720 ? 9.5 : 10.5;
+      ctx.font = `600 ${fs}px -apple-system, "SF Pro Text", system-ui, sans-serif`;
+      const maxN = wr.width < 420 ? 16 : wr.width < 720 ? 30 : 62;
+      const land = svg.querySelector(".tr-land");
+      const lr = land ? land.getBoundingClientRect() : null;
+      const area = lr ? {
+        x0: Math.max(2, lr.left - wr.left), y0: Math.max(2, lr.top - wr.top),
+        x1: Math.min(wr.width - 2, lr.right - wr.left), y1: Math.min(wr.height - 2, lr.bottom - wr.top),
+      } : { x0: 2, y0: 2, x1: wr.width - 2, y1: wr.height - 2 };
+      const used = [];
+      const spots = ILS.map((il, i) => ({ il, i })).filter((x) => x.il.lat != null)
+        .sort((a, b) => (labelRank[a.il.n] - labelRank[b.il.n]) || (a.il.n.length - b.il.n.length) || a.il.n.localeCompare(b.il.n, "tr"));
+      let count = 0;
+      for (const { il } of spots) {
+        if (count >= maxN) break;
+        const [ux, uy] = project(il.lat, il.lon);
+        let sx, sy;
+        try { const pt = svg.createSVGPoint(); pt.x = ux; pt.y = uy; const sc = pt.matrixTransform(ctm); sx = sc.x; sy = sc.y; }
+        catch (e) { continue; }
+        const x = sx - wr.left, y = sy - wr.top;
+        if (x < 0 || y < 0 || x > wr.width || y > wr.height) continue;
+        const tw = ctx.measureText(il.n).width;
+        const gap = 5;
+        const cands = [
+          { l: x + gap, t: y - fs * 0.78 },
+          { l: x - tw - gap, t: y - fs * 0.78 },
+          { l: x - tw / 2, t: y - gap - fs * 1.02 },
+          { l: x - tw / 2, t: y + gap - fs * 0.15 },
+        ];
+        let pick = null;
+        for (const c of cands) {
+          const r = { x: c.l - 1, y: c.t - 1, w: tw + 2, h: fs + 2 };
+          if (r.x < area.x0 || r.y < area.y0 || r.x + r.w > area.x1 || r.y + r.h > area.y1) continue;
+          const hit = used.some((u) => !(r.x + r.w + 3 < u.x || r.x > u.x + u.w + 3 || r.y + r.h + 2 < u.y || r.y > u.y + u.h + 2));
+          if (!hit) { pick = c; used.push(r); break; }
+        }
+        if (!pick) continue;
+        const sp = document.createElement("span");
+        sp.textContent = il.n;
+        sp.style.left = pick.l.toFixed(1) + "px";
+        sp.style.top = pick.t.toFixed(1) + "px";
+        sp.style.fontSize = fs + "px";
+        layer.appendChild(sp);
+        count++;
+      }
+    };
+    place();
+    if (wrap._labelResize) window.removeEventListener("resize", wrap._labelResize);
+    let t = 0;
+    wrap._labelResize = () => { clearTimeout(t); t = setTimeout(place, 140); };
+    window.addEventListener("resize", wrap._labelResize, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(place, 80));
   }
 
   /* ---------------------------------------------------------------- rotalar */
@@ -517,6 +591,8 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
     if (c) requestAnimationFrame(() => c.focus());
   }
   function closeModal() {
+    const mm = document.querySelector(".modal-map");
+    if (mm && mm._labelResize) { window.removeEventListener("resize", mm._labelResize); mm._labelResize = null; }
     modal.classList.remove("open");
     document.body.style.overflow = "";
     trapEnd();
@@ -780,6 +856,7 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
           }).join("")}
         </div>
       </div>`, "map-modal");
+    requestAnimationFrame(() => mountMapLabels(document.querySelector(".modal-map"), document.querySelector(".modal-map .map-svg")));
   }
 
   function openFavs() {
@@ -875,6 +952,7 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
 
     // harita iğneleri (81 il)
     $("#mapPins").innerHTML = mapPins(false);
+    mountMapLabels(document.querySelector(".map-stage"), document.querySelector(".map-stage .map-svg"));
 
     // menü + footer kategori listeleri
     $("#ddCats").innerHTML = `<div class="dd-title">15 kategori</div>` +
@@ -1801,15 +1879,31 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
   }
   window.addEventListener("scroll", onScroll, { passive: true });
 
+  // v19: mobil/tablette aşağı kaydırırken başlığı gizle, yukarı kaydırınca geri getir
+  let lastY = window.scrollY;
+  window.addEventListener("scroll", () => {
+    if (window.innerWidth > 899) {
+      if (header.classList.contains("is-hidden")) header.classList.remove("is-hidden");
+      lastY = window.scrollY; return;
+    }
+    const y = window.scrollY, d = y - lastY;
+    if (Math.abs(d) < 6) return;
+    if (d > 0 && y > 140 && !document.body.classList.contains("nav-open")) header.classList.add("is-hidden");
+    else if (d < 0) header.classList.remove("is-hidden");
+    lastY = y;
+  }, { passive: true });
+
   // mobil menü
   const burger = $("#burger");
   const mobileMenu = $("#mobileMenu");
   burger.addEventListener("click", () => {
     const open = mobileMenu.classList.toggle("open");
     burger.setAttribute("aria-expanded", String(open));
+    document.body.classList.toggle("nav-open", open);
+    header.classList.remove("is-hidden");
   });
   mobileMenu.addEventListener("click", (e) => {
-    if (e.target.closest("a")) { mobileMenu.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); }
+    if (e.target.closest("a")) { mobileMenu.classList.remove("open"); document.body.classList.remove("nav-open"); burger.setAttribute("aria-expanded", "false"); }
   });
 
 

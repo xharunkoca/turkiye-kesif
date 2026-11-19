@@ -581,3 +581,33 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 **Ölçümler**
 - Yatay taşma taraması: **12 genişlik (320–1440) × 11 sayfa → 0 taşma**.
 - Görsel QA: 360 / 390 / 430 / 768 / 1024 / 1280 / 1440 ekran görüntüleriyle doğrulandı.
+
+## v19 — harita etiketleri, mevsim görselleri, hizalama, kalın hatlar
+
+**Kullanıcı geri bildirimi:** (1) haritada noktalar büyüsün ve il adları yazsın ama dengeli olsun, (2) kış mevsimi belli değil — dört mevsim görseli de görünsün, (3) üç ekranda kayma/hiza sorunu var, (4) genel hatlar biraz daha kalın olsun ama genel görünüm bozulmasın.
+
+**Harita**
+- Nokta yarıçapları büyütüldü: panelde çekirdek 3.2 → 4.6, halka 4 → 6.4; modalda 6 / 8.
+- İl adı etiketleri eklendi. Etiketler SVG'ye gömülmedi; `getScreenCTM()` ile ekran koordinatına çevrilip HTML katmanına yerleştiriliyor — böylece yazı boyutu haritanın ölçeğinden bağımsız kalıyor (telefonda 8.5 px, masaüstünde 10.5 px).
+- Çakışma önleme: her il için sağ/sol/üst/alt dört aday konum denenir, ilk boş olan seçilir; etiketler kara parçasının sınır kutusunun içinde tutulur, böylece denize taşmaz. Öncelik listesi büyük illerle başlar.
+- Sonuç: telefonda 16, tablette 30, masaüstünde 30 etiket — hiçbiri kesilmiyor. Etiketler yarı saydam lacivert kapsül içinde, her zeminde okunur.
+- Sahne yüksekliği içeriğe göre; `max-height` sınırı kaldırıldı (telefonda 315×138 px yerine tam genişlik, masaüstünde 521×228).
+
+**Mevsimler**
+- Kış için gerçek fotoğraf üretildi (`assets/img/kis-420.webp`, 33 KB) — önceki SVG kar sahnesi beyaz zeminde kayboluyordu.
+- Beyaz gradyan örtüsü hafifletildi (metin altında kalıyor ama görselin %44'ü net).
+- Kart metni mutlak konumlandırıldı: dört kartta başlık/ay satırı aynı hizada, `white-space:nowrap` ile ok işareti ayrı satıra düşmüyor.
+- Telefonda 2×2 ızgara (önceki katmanda özgüllük nedeniyle 4 sütuna sıkışıyordu ve yazılar kırpılıyordu).
+
+**Hizalama (kullanıcının "kayma" dediği üç yer)**
+- Footer'daki "Türkiye Haritası" ve "Favorilerim" butonları kutu/pill gibi görünüyordu; düğme varsayılanları sıfırlandı, artık bağlantılarla aynı hizada.
+- Footer bülten formu telefonda taşıyordu: alan ve buton alt alta, tam genişlik (flex-basis'in sütun yönünde yükseklik olarak yorumlanması hatası da düzeltildi).
+- Sabit başlık, kaydırırken içeriği kesiyordu: mobil/tablette aşağı kaydırınca başlık gizleniyor, yukarı kaydırınca geri geliyor (`is-hidden`), menü açıkken sabit kalıyor. `scroll-padding-top` da eklendi.
+
+**Kalın hatlar**
+- `--line` #e6e6eb → #dedee4, `--bw:1.5px`. Panel, kart, çip, arama çubuğu, tablo ve kategori ızgarası çizgileri 1.5 px'e çıkarıldı (retina ekranda ~4 cihaz pikseli).
+- Statik sayfaların `PAGE_CSS` teması da aynı çizgi rengine ve 1.5 px kalınlığa çekildi.
+
+**Ölçümler**
+- Yatay taşma: 11 genişlik (320–1440) × 11 sayfa → **0 taşma**.
+- JS konsol hatası: 0. Harita modalında da etiketler çalışıyor (16 etiket).

@@ -414,7 +414,7 @@ svg{color:currentColor}
 .footer-brand p,.footer-brand small{color:var(--ink-2)!important}
 .footer-legal{border-top:1px solid var(--line);padding-top:14px}
 .footer-legal a{font-size:12.5px}
-.footer-btn{color:var(--ink-2)!important;border:1px solid var(--line)!important;background:#fff!important;border-radius:999px}
+.footer-btn{color:var(--ink-2)!important;border:0!important;background:none!important;border-radius:0!important;padding:0!important;text-align:left!important;display:block!important}
 .footer-news input{height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
 .site-footer .btn-red,.footer-news .btn{white-space:nowrap}
 
@@ -920,3 +920,115 @@ html,body{max-width:100%;overflow-x:hidden}
   .search-bar .search-submit{font-size:15px!important;gap:8px;letter-spacing:0}
   .search-bar .search-submit svg{width:16px;height:16px;flex:0 0 auto}
 }
+
+/* ================================================================
+   v19 — harita etiketleri · mevsim görselleri · hizalama · kalın hat
+   ================================================================ */
+
+/* --- 40. Harita: büyük noktalar + il adı etiketleri --- */
+.map-stage,.modal-map{position:relative}
+.map-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.map-labels span{
+  position:absolute;transform:translateY(-50%);
+  font-weight:600;letter-spacing:.005em;line-height:1;white-space:nowrap;
+  color:#fff;text-shadow:0 1px 2px rgba(4,30,56,.85),0 0 4px rgba(4,30,56,.55);
+}
+.map-svg .map-pin .core{fill:#fff;stroke:var(--accent);stroke-width:2.6;transition:r .15s}
+.map-svg .map-pin .pulse{fill:var(--accent);fill-opacity:.30;transition:r .15s}
+.map-svg .map-pin:hover .core,.map-svg .map-pin:focus-visible .core{r:7}
+.map-svg .map-pin:hover .pulse,.map-svg .map-pin:focus-visible .pulse{r:10;fill-opacity:.20}
+.map-stage{min-height:260px}
+
+/* --- 41. Mevsim kartları: dört görsel de belirgin, metin hizalı --- */
+.season-card::after{background:linear-gradient(180deg,rgba(255,255,255,0) 44%,rgba(255,255,255,.82) 76%,#fff 100%)!important}
+.season-card.winter{background:#fff!important}
+.season-card.winter::after{background:linear-gradient(180deg,rgba(255,255,255,0) 44%,rgba(255,255,255,.82) 76%,#fff 100%)!important}
+.season-card img{width:100%;height:100%;object-fit:cover;display:block}
+.season-card>span{position:absolute!important;left:12px;right:10px;bottom:9px;gap:1px!important}
+.season-card .sc-name{line-height:1.22;letter-spacing:-.01em}
+.season-card .sc-link{white-space:nowrap;font-size:11px!important;line-height:1.35;gap:3px}
+.season-card .sc-link svg{flex:0 0 auto}
+
+/* --- 42. Hizalama: footer butonları bağlantı gibi görünsün --- */
+.footer-btn{
+  display:block;width:100%;margin:0;padding:0;border:0;background:none;box-shadow:none;
+  font:inherit;font-size:13.5px;font-weight:500;line-height:1.5;color:var(--ink-2);
+  text-align:left;border-radius:0;cursor:pointer;
+}
+.footer-btn:hover{color:var(--ink)}
+.footer-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* --- 43. Daha kalın hatlar (genel görünüm korunarak) --- */
+:root{--line:#dedee4;--line-2:#cfcfd6;--bw:1.5px}
+.site-header{border-bottom-width:var(--bw)!important}
+.panel,.city-card,.route-card,.p-card,.il-card,.place-card,.season-card,.stat-band,.region-box,
+.modal-card,.acc-card,.wx-panel,.promo-card,.route-stop,.route-sum,.dist-card,.profile-card,
+.f-search,.filter-bar,.search-bar,.suggest,.note,.info-note,.season-note,.wx-season-note,
+.consent,.hero-note,.map-panel,.routes-panel,.card-outline,.side-card,.toc,.search-scope{
+  border-width:var(--bw)!important;
+}
+.chip,.cat-chip,.quick-chip,.scope-btn,.p-fav,.fav-btn,.icon-btn,.burger,.btn-ghost,.btn-navy,
+.btn-red,.btn,.select,.filter-bar select,.f-search select,.search-bar select{
+  border-width:var(--bw)!important;
+}
+.cat-item,.categories,.stat-cell,.footer-bottom,.day-cell,.wx-day,.route-stop,.tbl th,.tbl td{
+  border-width:var(--bw)!important;
+}
+@media (min-width:1100px){ .main-nav .nav-link{border-width:var(--bw)!important} }
+
+/* --- 44. Mobilde kayan başlık: içerik başlığın altında kilitlenmesin --- */
+html{scroll-padding-top:calc(var(--header-h) + 12px)}
+@media (max-width:899px){
+  .site-header{transition:transform .26s cubic-bezier(.4,0,.2,1);will-change:transform}
+  .site-header.is-hidden{transform:translateY(-101%)}
+  body.nav-open .site-header{transform:none!important}
+}
+
+/* --- 45. Etiketler her zeminde okunur: ince lacivert kapsül --- */
+.map-labels span{
+  background:rgba(8,34,62,.60);border-radius:3px;padding:1.5px 3.5px;
+  text-shadow:none;backdrop-filter:blur(1px);
+}
+/* --- 46. Telefonda mevsimler 2 sütun, harita tam alan --- */
+@media (max-width:599px){
+  .season-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:minmax(150px,158px)!important;gap:12px!important}
+  .map-stage{height:auto!important;min-height:0!important;display:flex;flex-direction:column;gap:10px}
+  .map-stage .map-svg{max-height:none!important;width:100%;height:auto}
+}
+
+/* --- 47. Mevsim ızgarası: telefon/tablet 2 sütun (özgüllük düzeltmesi) --- */
+@media (max-width:899px){
+  .explore-grid .season-grid,.season-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(150px,158px)!important;gap:12px!important;
+  }
+}
+@media (min-width:900px){
+  .explore-grid .season-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
+
+/* --- 48. Footer: bülten formu mobilde alt alta, bağlantı satırları eşit --- */
+@media (max-width:599px){
+  .newsletter{display:flex;flex-direction:column;gap:8px;width:100%}
+  .newsletter input{width:100%!important;min-height:44px}
+  .newsletter .btn,.newsletter button{width:100%!important;min-height:44px;justify-content:center}
+  .footer-col a,.site-footer .footer-btn{display:flex!important;align-items:center;min-height:44px!important;padding-block:0!important}
+}
+@media (min-width:600px){
+  .newsletter{display:flex;flex-wrap:nowrap;gap:8px;align-items:center}
+  .newsletter input{flex:1 1 auto;min-width:0}
+  .newsletter .btn,.newsletter button{flex:0 0 auto;white-space:nowrap}
+}
+
+/* --- 49. Bülten alanı: sütun yönünde flex-basis = yükseklik hatası --- */
+@media (max-width:599px){
+  .newsletter input{flex:0 0 auto!important;height:46px!important;min-height:46px!important;max-height:46px!important}
+}
+
+/* --- 50. Footer'da gereksiz ek boşluk --- */
+.site-footer .footer-btn + .footer-btn{margin-top:0!important}
+
+/* --- 51. Harita sahnesi: tam genişlik, ölü boşluk yok --- */
+.map-stage{height:auto!important;min-height:0!important;display:flex;flex-direction:column;gap:10px}
+.map-stage .map-svg{max-height:none!important;width:100%;height:auto;display:block}
+@media (min-width:900px){ .map-panel .map-stage{padding-bottom:2px} }
