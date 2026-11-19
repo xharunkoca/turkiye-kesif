@@ -96,6 +96,32 @@
   const catById = {};
   CATS.forEach((c, i) => { catById[c.id] = i; });
 
+  // mevsim profilleri: her mevsim öne çıkan kategoriler + önerilen rota teması
+  const SEASONS = [
+    {
+      id: "ilkbahar", n: "İlkbahar", months: "Mart – Mayıs", color: "#2f8f63", img: "__IMG_ILKBAHAR__",
+      desc: "Badem ve kiraz çiçekleri, yürüyüşe en uygun sıcaklıklar. Vadiler, şelaleler ve yaylalar bu mevsimde zirvede.",
+      cats: ["doga", "yayla", "gol", "selale", "vadi", "antik"], theme: "doga"
+    },
+    {
+      id: "yaz", n: "Yaz", months: "Haziran – Ağustos", color: "#1a6fa8", img: "__IMG_YAZ__",
+      desc: "Koylar, Mavi Bayraklı plajlar ve yayla serinliği. Kıyı illerinde deniz, iç bölgelerde yüksek yaylalar öne çıkar.",
+      cats: ["plaj", "gol", "yayla", "doga", "termal"], theme: "deniz"
+    },
+    {
+      id: "sonbahar", n: "Sonbahar", months: "Eylül – Kasım", color: "#b8641c", img: "__IMG_SONBAHAR__",
+      desc: "Orman yürüyüşleri, hasat ve gastronomi zamanı; kalabalık azalır, antik kentler ve tarihî çarşılar keyifli olur.",
+      cats: ["doga", "yayla", "tarih", "kultur", "gastro"], theme: "tarih"
+    },
+    {
+      id: "kis", n: "Kış", months: "Aralık – Şubat", color: "#275d8f", img: null,
+      desc: "Termal kaplıcalar, müzeler, mağaralar ve inanç mirası. Kapalı mekân ve şifa odaklı bir kış programı.",
+      cats: ["termal", "muze", "kultur", "tarih", "magara", "dini"], theme: "inanc"
+    }
+  ];
+  const seasonById = {};
+  SEASONS.forEach((x) => { seasonById[x.id] = x; });
+
   // kategori kısa açıklamaları (kategori sayfası ve kart başlıklarında)
   const CAT_DESC = {
     antik: "Antik kentler, höyükler ve arkeolojik sitler — Anadolu'nun Tunç Çağı'ndan Roma'ya uzanan yerleşim izleri.",
@@ -599,21 +625,16 @@
     $("#routeList").innerHTML = picks.map(([i, t]) => routeCard(routesFor(i)[t], { home: true })).join("");
 
     // mevsimler
-    const seasons = [
-      { n: "İlkbahar", img: "__IMG_ILKBAHAR__", note: "Badem çiçekleri, yürüyüş rotaları" },
-      { n: "Yaz", img: "__IMG_YAZ__", note: "Koylar, plajlar, mavi yolculuk" },
-      { n: "Sonbahar", img: "__IMG_SONBAHAR__", note: "Orman yürüyüşleri, hasat" },
-      { n: "Kış", img: null, note: "Kayak ve termal kaplıcalar" },
-    ];
+    const seasons = SEASONS;
     $("#seasonGrid").innerHTML = seasons.map((s) => `
-      <button class="season-card ${s.img ? "" : "winter"}" data-season="${esc(s.n)}">
+      <button class="season-card ${s.img ? "" : "winter"}" data-season="${esc(s.id)}" aria-label="${esc(s.n)} mevsiminde keşfet">
         ${s.img ? `<img src="${s.img}" alt="${esc(s.n)} mevsiminde Türkiye" loading="lazy">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
             <path d="M-6 96 34 46 62 74 96 38 132 76 158 54 206 92V124H-6Z" fill="#eaf3fb"/>
             <path d="M34 46 46 60 34 70 22 60Z" fill="#ffffff"/>
             <path d="M96 38 110 54 96 64 82 54Z" fill="#ffffff"/>
             <path d="M-6 108 44 92 88 104 132 90 174 104 206 94V124H-6Z" fill="#ffffff"/>
           </svg><span class="snow">${Array.from({ length: 16 }, (_, i) => `<i style="left:${(i * 6.4 + 4).toFixed(1)}%;animation-duration:${3 + (i % 5)}s;animation-delay:${(i * 0.4).toFixed(1)}s;width:${i % 3 === 0 ? 5 : 3}px;height:${i % 3 === 0 ? 5 : 3}px"></i>`).join("")}</span>`}
-        <span><span class="sc-name">${esc(s.n)}</span><span class="sc-link">Keşfet ${icon("i-arrow-right", "i10")}</span></span>
+        <span><span class="sc-name">${esc(s.n)}</span><span class="sc-link">${esc(s.months)} ${icon("i-arrow-right", "i10")}</span></span>
       </button>`).join("");
 
     // istatistik bandı
@@ -912,6 +933,91 @@
   }
 
   /* ---------------------------------------------------------------- KATEGORİ */
+  /* ---------------------------------------------------------------- MEVSİM SAYFASI */
+  function renderMevsim(sid) {
+    const se = seasonById[sid];
+    const catIdx = se.cats.map((id) => catById[id]);
+    const pool = [];
+    ILS.forEach((il, i) => catIdx.forEach((ci) => byIlCat[i][ci].forEach((p) => pool.push(p))));
+    const uniq = dedupeByName(pool);
+    uniq.sort((x, y) => y.links - x.links);
+
+    // mevsime en uygun iller: sezon kategorilerindeki kayıt sayısı
+    const ilScore = ILS.map((il, i) => ({
+      i, il, n: catIdx.reduce((a, ci) => a + byIlCat[i][ci].length, 0)
+    })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 8);
+
+    // sezonun önerilen rotaları: en uygun illerin ilgili temalı rotası
+    const seasonRoutes = ilScore.slice(0, 4).map((x) => {
+      const rs = routesFor(x.i);
+      return rs.find((r) => r.theme.key === se.theme) || rs[0];
+    }).filter(Boolean);
+
+    const view = $("#view-page");
+    view.innerHTML = `
+      <div class="season-hero" style="--sc:${se.color}">
+        ${se.img ? `<img src="${se.img}" alt="${esc(se.n)} mevsiminde Türkiye" loading="lazy">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M-6 96 34 46 62 74 96 38 132 76 158 54 206 92V124H-6Z" fill="#dbe9f6"/>
+          <path d="M34 46 46 60 34 70 22 60Z" fill="#fff"/><path d="M96 38 110 54 96 64 82 54Z" fill="#fff"/>
+          <path d="M-6 108 44 92 88 104 132 90 174 104 206 94V124H-6Z" fill="#fff"/></svg>`}
+        <div class="container season-hero-in">
+          <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><span>Mevsim</span><span>/</span><b>${esc(se.n)}</b></nav>
+          <h1>${esc(se.n)} <span>${esc(se.months)}</span></h1>
+          <p class="page-sub">${esc(se.desc)}</p>
+          <div class="season-facts">
+            <span class="sf"><b>${nf(uniq.length)}</b> uygun keşif</span>
+            <span class="sf"><b>${nf(ilScore.length ? ILS.filter((il, i) => catIdx.some((ci) => byIlCat[i][ci].length)).length : 0)}</b> il</span>
+            <span class="sf"><b>${se.cats.length}</b> kategori</span>
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <h2 class="block-title"><svg><use href="#i-pin"/></svg>Bu mevsimin en uygun illeri</h2>
+        <div class="district-chips">
+          ${ilScore.map((x) => `<a class="district-chip" href="#/il/${IL_SLUG[x.i]}">
+            ${esc(x.il.n)}<em>${nf(x.n)}</em></a>`).join("")}
+        </div>
+
+        <h2 class="block-title"><svg><use href="#i-route"/></svg>${esc(se.n)} için önerilen rotalar</h2>
+        <div class="route-grid">${seasonRoutes.map((r) => routeCard(r)).join("")}</div>
+
+        <h2 class="block-title"><svg><use href="#i-compass"/></svg>${esc(se.n)} keşifleri</h2>
+        <div class="filter-bar">
+          <select id="mil" aria-label="İl">
+            <option value="">Tüm iller (${nf(uniq.length)})</option>
+            ${ILS.map((il, i) => {
+              const n = catIdx.reduce((a, ci) => a + byIlCat[i][ci].length, 0);
+              return n ? `<option value="${i}">${String(il.p).padStart(2, "0")} ${esc(il.n)} (${n})</option>` : "";
+            }).join("")}
+          </select>
+          <select id="mcat" aria-label="Kategori">
+            <option value="">Tüm kategoriler</option>
+            ${catIdx.map((ci) => `<option value="${ci}">${esc(CATS[ci].label)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="result-info" id="mInfo"></div>
+        <div class="p-grid" id="mGrid"></div>
+        <div class="load-more-wrap"><button class="btn btn-navy" id="mMore" hidden>Daha fazla göster</button></div>
+      </div>`;
+
+    let page = 0;
+    const PER = 24;
+    function paint() {
+      const ilSel = $("#mil").value, catSel = $("#mcat").value;
+      let list = uniq;
+      if (ilSel !== "") list = list.filter((p) => p[2] === Number(ilSel));
+      if (catSel !== "") list = list.filter((p) => p[1] === Number(catSel));
+      const shown = list.slice(0, (page + 1) * PER);
+      $("#mGrid").innerHTML = shown.map(placeCard).join("") || `<div class="empty">Bu filtrede keşif yok.</div>`;
+      $("#mMore").hidden = shown.length >= list.length;
+      $("#mInfo").textContent = `${nf(list.length)} keşiften ${nf(shown.length)} tanesi gösteriliyor`;
+    }
+    $("#mil").addEventListener("change", () => { page = 0; paint(); });
+    $("#mcat").addEventListener("change", () => { page = 0; paint(); });
+    $("#mMore").addEventListener("click", () => { page++; paint(); });
+    paint();
+  }
+
   /* ---------------------------------------------------------------- İLÇE SAYFASI */
   function renderIlce(i, di) {
     const il = ILS[i];
@@ -1062,6 +1168,10 @@
         if (i === undefined) { location.hash = "#/iller"; return; }
         renderIl(i, params.get("kat"));
       } else if (seg[0] === "kategori" && seg[1]) { renderKategori(seg[1], params); }
+      else if (seg[0] === "mevsim" && seg[1]) {
+        if (!seasonById[seg[1]]) { location.hash = "#/"; return; }
+        renderMevsim(seg[1]);
+      }
       else if (seg[0] === "ilce" && seg[1] && seg[2]) {
         const i = ilBySlug[seg[1]];
         const di = i === undefined ? undefined : DIST_SLUG[i][seg[2]];
@@ -1114,11 +1224,7 @@
       return;
     }
     const season = e.target.closest("[data-season]");
-    if (season) {
-      const notes = { "İlkbahar": "Badem çiçekleri ve yürüyüş rotaları", "Yaz": "Koylar, plajlar ve mavi yolculuk", "Sonbahar": "Orman yürüyüşleri ve hasat zamanı", "Kış": "Kayak merkezleri ve termal kaplıcalar" };
-      toast(`${season.dataset.season} için ${notes[season.dataset.season]}`);
-      return;
-    }
+    if (season) { location.hash = `#/mevsim/${season.dataset.season}`; return; }
     if (e.target.closest("[data-close-modal]")) { closeModal(); return; }
   });
 
