@@ -528,3 +528,31 @@ Bulunup düzeltilen gerçek hatalar:
 Doğrulama: 22 sayfa (11 SPA rotası + 11 statik sayfa) × 1280/390 px otomatik kontrast taraması
 — başlangıçta **406** düşük kontrastlı metin düğümü, şimdi **0** (yalnız hava durumu yüklenirken
 bir an görünen `/100` iskelet değeri hariç). JS hatası 0, yatay taşma 0.
+
+## v17 — "ferah" ölçek (kullanıcı geri bildirimi: genel his + daha nefes alan)
+
+v16 sistemi kurdu ama yoğunluk hâlâ sıkıydı. v17 tüm sayfalarda ölçeği büyüttü:
+
+| Öğe | v16 | v17 |
+|---|---|---|
+| Sayfa genişliği | 1440 px | **1200 px** (dar kolon = ferah okuma) |
+| Kahraman başlığı | 32–54 px | **38–64 px** |
+| Sayfa başlığı | 26–36 px | **30–42 px** |
+| Bölüm başlığı | 19–24 px | **22–27 px** |
+| Bölüm arası boşluk | 34–56 px | **52–84 px** |
+| Mekân ızgarası | 5 kolon | **3 kolon** (+22 px boşluk) |
+| İl ızgarası | 6 kolon | **4 kolon** |
+| Rota ızgarası | 4 kolon | **3 kolon** |
+| Popüler şehirler | 5 kolon (küçük kart) | 5 kolon, **196 px yüksek kart** |
+| Ana sayfa keşfet bandı | 3 panel yan yana | **2 panel + mevsimler tam genişlik** |
+| Harita paneli | 796 px yüksek (boş alan) | 300–420 px |
+
+Yol boyunca düzeltilen iki gerçek hata:
+- **Şehir/mekân kartları ızgara hücresinden taşıyordu** (grid çocuklarında `min-width:0` yoktu) —
+  kartlar 392 px genişlikte 264 px'lik hücrelere sığıyordu, üst üste biniyordu.
+- **Mobilde sayfa 422 px'e genişliyordu** (container `content-box` + yatay kaydırıcı çocuklar) →
+  başlık sola kaymış görünüyordu; `box-sizing` + `overflow-x` ile sabitlendi.
+- Mobil ince ayar: arama alanı `min-width:0`, bölüm başlığı + "Tümü" bağlantısı tek satır,
+  şehir kartı metinleri tek satır, kategori şeridi çizgisiz kaydırıcı.
+
+Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.

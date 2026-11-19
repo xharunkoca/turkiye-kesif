@@ -570,3 +570,127 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
   .cat-item em{font-size:11px}
   .categories::after{content:"";position:sticky;right:0}
 }
+
+/* ============================================================
+   v17 — "ferah" ölçek: daha büyük tipografi, daha çok boşluk,
+   ekranda daha az kart (Apple ürün sayfası ritmi)
+   ============================================================ */
+
+/* --- 26. Sayfa genişliği ve nefes --- */
+.container{max-width:1200px!important;padding-inline:clamp(18px,4vw,40px)!important}
+.section{padding-top:clamp(52px,5.6vw,84px)!important}
+.section-head{margin-bottom:22px!important}
+.section-title{font-size:clamp(22px,2.2vw,27px)!important;gap:10px}
+.section-title svg{width:20px;height:20px}
+.section-link{font-size:14px}
+
+/* --- 27. Tipografi ölçeği --- */
+.hero h1{font-size:clamp(38px,5vw,64px)!important;line-height:1.04}
+.hero .lead,.hero-content .lead,.hero p.lead{font-size:clamp(16px,1.5vw,19px)!important}
+.page-head h1,.il-hero h1,.season-hero h1,.page-hero h1{font-size:clamp(30px,3.4vw,42px)!important;line-height:1.08}
+.page-sub,.il-hero .page-sub,.season-hero .page-sub{font-size:15.5px!important}
+.crumb,.page-head .crumb,.il-hero .crumb,.season-hero .crumb{font-size:13px!important}
+
+/* --- 28. Başlık bandı daha ferah --- */
+.page-head,.il-hero,.season-hero,.page-hero,.hero-sm{
+  padding-top:calc(var(--header-h) + 34px)!important;
+  padding-bottom:38px!important;
+}
+.il-hero-inner{gap:16px}
+.season-facts{margin-top:16px}
+
+/* --- 29. Izgaralar: ekranda daha az kart, daha büyük kart --- */
+.city-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:22px!important}
+.p-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:22px!important}
+.il-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:22px!important}
+.route-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:22px!important}
+.cat-chips{gap:8px!important}
+
+/* --- 30. Kart içi nefes + büyüyen yazılar --- */
+.city-card{min-height:196px}
+.city-card::after{height:38%!important}
+.city-name{font-size:18px!important}
+.city-meta{font-size:13px!important}
+.p-card{border-radius:20px!important}
+.p-head{height:56px!important;padding:0 16px!important}
+.p-ic svg{width:20px;height:20px}
+.p-type{font-size:11px!important;letter-spacing:.1em}
+.p-head .fav-btn{width:34px;height:34px;top:11px;right:12px}
+.p-body{padding:16px 16px 18px!important}
+.p-title{font-size:16px!important}
+.p-loc{font-size:13px!important}
+.goto{font-size:13px!important;padding:9px 34px 9px 13px!important;border-radius:10px}
+.verified{font-size:12px!important}
+.route-item{border-radius:20px}
+.ri-top{padding:12px 16px}
+.route-item h3{font-size:18px!important;margin:16px 16px 8px!important;line-height:1.25}
+.ri-stops{font-size:13.5px!important}
+.ri-meta{font-size:12.5px!important}
+.ri-actions{padding:0 16px 16px!important;gap:10px}
+.ri-btn,.ri-btn2{font-size:13.5px!important;padding:10px 16px!important;border-radius:11px}
+.il-card{padding:18px!important;border-radius:16px!important}
+.il-name{font-size:17px}
+.il-region{font-size:13px}
+.il-stats{font-size:12px}
+.panel{padding:20px!important}
+.panel h2,.panel .panel-title{font-size:19px}
+.cat-item{padding:18px 8px!important}
+.cat-item span{font-size:12.5px!important}
+.cat-item em{font-size:12.5px!important}
+.cat-item svg{width:28px;height:28px}
+.city-card,.p-card,.il-card,.route-item{box-shadow:none!important}
+
+/* --- 31. Mobilde tek/iki kolon, bol boşluk --- */
+@media (max-width:1100px){
+  .p-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .il-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .route-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .city-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media (max-width:760px){
+  .section{padding-top:44px!important}
+  .city-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+  .p-grid,.route-grid{grid-template-columns:1fr!important;gap:16px!important}
+  .il-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+  .city-card{min-height:150px}
+}
+
+/* --- 32. Izgara taşması düzeltmesi + keşfet bandı düzeni --- */
+.city-grid>*,.p-grid>*,.il-grid>*,.route-grid>*,.season-grid>*,.explore-grid>*{min-width:0}
+.city-card,.p-card,.il-card,.route-item{width:100%!important;max-width:100%}
+.city-card img,.p-card img{max-width:100%}
+
+/* ana sayfa keşfet bandı: 2 kolon, mevsimler tam genişlik */
+.explore-grid{grid-template-columns:1.05fr 1fr!important;gap:24px!important}
+.explore-grid .seasons-panel{grid-column:1 / -1;align-self:start}
+.explore-grid .season-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-auto-rows:minmax(150px,168px)!important;gap:16px!important}
+.map-stage{height:clamp(300px,34vw,420px)!important;min-height:0!important}
+.map-panel,.routes-panel{align-self:start}
+.routes-panel .route-item+.route-item{margin-top:14px}
+@media (min-width:1101px){.city-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}}
+.p-body{min-width:0}
+.p-card *{min-width:0}
+.p-actions,.p-row,.p-foot{flex-wrap:wrap;gap:8px 10px}
+.verified,.p-verified{white-space:nowrap}
+.container{box-sizing:border-box!important;width:100%!important}
+*,*::before,*::after{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+@supports (overflow-x:clip){html,body{overflow-x:clip}}
+
+/* --- 33. Mobil ince ayar --- */
+.search-bar input,.search-bar .f-search input{min-width:0!important;flex:1 1 auto}
+.search-bar{gap:8px}
+@media (max-width:600px){
+  .hero h1{font-size:34px!important}
+  .hero .lead{font-size:15px!important}
+  .section-head{flex-wrap:wrap;gap:4px 10px}
+  .section-title{font-size:21px!important}
+  .section-link{font-size:13px!important;margin-left:auto}
+  .city-meta{font-size:11.5px!important;white-space:nowrap}
+  .city-name{font-size:16px!important}
+  .categories{padding-right:0}
+  .cat-card{padding-right:8px!important}
+  .page-head,.il-hero,.season-hero{padding-top:calc(var(--header-h) + 22px)!important;padding-bottom:26px!important}
+  .page-head h1,.il-hero h1,.season-hero h1{font-size:27px!important}
+  .page-sub{font-size:14px!important}
+}
