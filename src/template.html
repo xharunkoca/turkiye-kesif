@@ -3,27 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Türkiye Keşif — 81 İl • 15 Kategori • Binlerce Rota</title>
-<meta name="description" content="Türkiye'nin 81 ili, 1.004 ilçesi, 45.060 köy ve mahallesi; antik kentlerden gastronomiye 15 kategoride 3.269 doğrulanmış keşif noktası ve her il için 5 gezi rotası.">
+<title>Türkiye Keşif — 81 İl · 15 Kategori · __N_ROUTES__ Hazır Rota</title>
+<meta name="description" content="Türkiye'nin 81 ili, 1.004 ilçesi, 45.060 köy ve mahallesi; 15 kategoride __N_PLACES__ keşif kaydı ve her il için 5 gezi rotası. Haritada doğrulanmış konumlar, tek dokunuşla rota başlatma.">
 <meta name="keywords" content="Türkiye, gezi rehberi, rota, 81 il, antik kent, milli park, köy, mahalle, turizm">
 <meta name="author" content="Türkiye Keşif">
 <meta name="theme-color" content="#0a2c52">
 <meta name="color-scheme" content="light">
 <link rel="canonical" href="https://xharunkoca.github.io/turkiye-kesif/">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.open-meteo.com https://laqmoghxnwsavulkmzls.supabase.co; base-uri 'self'; form-action 'self'">
 
 <!-- Open Graph / Twitter -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Türkiye Keşif">
 <meta property="og:locale" content="tr_TR">
-<meta property="og:title" content="Türkiye Keşif — 81 il, 15 kategori, 405 rota">
-<meta property="og:description" content="Antik kentlerden gastronomiye 15 kategoride 3.269 doğrulanmış keşif noktası, il–ilçe–köy hiyerarşisi ve her il için 5 gezi rotası.">
+<meta property="og:title" content="Türkiye Keşif — 81 il, 15 kategori, __N_ROUTES__ rota">
+<meta property="og:description" content="Antik kentlerden gastronomiye 15 kategoride __N_PLACES__ keşif kaydı, il–ilçe–köy hiyerarşisi ve her il için 5 gezi rotası.">
 <meta property="og:url" content="https://xharunkoca.github.io/turkiye-kesif/">
 <meta property="og:image" content="https://xharunkoca.github.io/turkiye-kesif/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Türkiye Keşif — 81 il, 15 kategori, 405 rota">
-<meta name="twitter:description" content="3.269 doğrulanmış keşif noktası, 45.060 köy/mahalle ve her il için 5 gezi rotası.">
+<meta name="twitter:description" content="__N_PLACES__ keşif kaydı, 45.060 köy/mahalle ve her il için 5 gezi rotası.">
 <meta name="twitter:image" content="https://xharunkoca.github.io/turkiye-kesif/og-image.jpg">
 
 <script type="application/ld+json">
@@ -33,18 +35,30 @@
   "name": "Türkiye Keşif",
   "url": "https://xharunkoca.github.io/turkiye-kesif/",
   "inLanguage": "tr-TR",
-  "description": "Türkiye'nin 81 ili için 15 kategoride doğrulanmış keşif noktaları, köy/mahalle envanteri ve gezi rotaları.",
+  "description": "Türkiye'nin 81 ili için 15 kategoride keşif kayıtları, köy/mahalle envanteri ve gezi rotaları.",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "https://xharunkoca.github.io/turkiye-kesif/#/kesfet?q={search_term_string}",
+    "target": "https://xharunkoca.github.io/turkiye-kesif/ara/?q={search_term_string}",
     "query-input": "required name=search_term_string"
   }
 }
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a2c52'/%3E%3Ccircle cx='23' cy='10' r='4' fill='%23ffd21e'/%3E%3Cpath d='M4 24l7-11 5 7 3-4 5 8z' fill='%23fff'/%3E%3C/svg%3E">
-<style>__CSS__</style>
+<link rel="stylesheet" href="__CSSURL__">
 </head>
 <body>
+<noscript>
+  <div style="max-width:760px;margin:0 auto;padding:24px 18px;font-family:system-ui,sans-serif;line-height:1.6">
+    <h1 style="font-size:1.4rem">Türkiye Keşif — 81 il gezi rehberi</h1>
+    <p>Bu site harita ve rota özellikleri için JavaScript kullanır. İçeriğe doğrudan ulaşabileceğiniz statik sayfalar:</p>
+    <ul>
+      <li><a href="iller/">81 il ve ilçeler listesi</a></li>
+      <li><a href="rotalar/">405 hazır gezi rotası</a></li>
+      <li><a href="kategori/antik/">Antik kentler</a> · <a href="kategori/muze/">Müzeler</a> · <a href="kategori/doga/">Doğa ve milli parklar</a></li>
+      <li><a href="kvkk-aydinlatma/">KVKK aydınlatma metni</a> · <a href="gizlilik/">Gizlilik</a></li>
+    </ul>
+  </div>
+</noscript>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
@@ -129,8 +143,8 @@
         <svg><use href="#i-sun"/></svg>
         <span><span class="temp">18°C</span><span class="city">Ankara</span></span>
       </div>
-      <button class="btn btn-red btn-auth" data-toast="Giriş / üyelik akışı demo sürümde örnek olarak yer alıyor.">
-        <svg><use href="#i-user"/></svg><span>Giriş Yap / Üye Ol</span>
+      <button class="btn btn-red btn-auth" data-auth-open>
+        <svg><use href="#i-user"/></svg><span>Giriş · Üye Ol</span>
       </button>
       <button class="burger" id="burger" aria-label="Menüyü aç" aria-expanded="false"><svg><use href="#i-burger"/></svg></button>
     </div>
@@ -142,9 +156,9 @@
   <a href="#/kesfet"><svg><use href="#i-compass"/></svg>Keşfet</a>
   <a href="#/iller"><svg><use href="#i-pin"/></svg>81 İl</a>
   <a href="#/rotalar"><svg><use href="#i-route"/></svg>Rotalar</a>
-  <a href="#" data-open-map><svg><use href="#i-map"/></svg>Harita</a>
-  <a href="#" data-open-favs><svg><use href="#i-heart"/></svg>Favorilerim</a>
-  <a href="#" class="mm-cta btn btn-red" data-toast="Giriş / üyelik akışı demo sürümde örnek olarak yer alıyor.">Giriş Yap / Üye Ol</a>
+  <button type="button" class="mm-link" data-open-map><svg><use href="#i-map"/></svg>Harita</button>
+  <button type="button" class="mm-link" data-open-favs><svg><use href="#i-heart"/></svg>Favorilerim</button>
+  <button class="mm-cta btn btn-red" data-auth-open>Giriş · Üye Ol</button>
 </div>
 
 <a class="skip-link" href="#main">İçeriğe geç</a>
@@ -153,7 +167,7 @@
   <!-- ============================ ANA SAYFA ============================ -->
   <div id="view-home">
     <section class="hero">
-      <div class="hero-bg"><img src="__IMG_HERO__" alt="Kapadokya'da gün doğumunda sıcak hava balonları"></div>
+      <div class="hero-bg"><img src="assets/img/hero-1600.webp" srcset="assets/img/hero-800.webp 800w, assets/img/hero-1600.webp 1600w" sizes="100vw" width="1600" height="672" fetchpriority="high" decoding="async" alt="Kapadokya'da gün doğumunda sıcak hava balonları"></div>
       <div class="container hero-content">
         <h1>Türkiye'yi <em>Keşfet</em></h1>
         <p class="lead">81 il, binlerce güzellik, unutulmaz bir keşif yolculuğu…</p>
@@ -241,7 +255,7 @@
     </section>
 
     <section class="banner">
-      <div class="banner-bg"><img src="__IMG_HERO__" alt=""></div>
+      <div class="banner-bg"><img src="assets/img/hero-800.webp" width="1600" height="672" loading="lazy" decoding="async" alt=""></div>
       <div class="container banner-inner">
         <div class="banner-script">
           Türkiye'nin Her Köşesinde Keşif Sizi Bekliyor…
@@ -282,26 +296,29 @@
         <h4>Rehber</h4>
         <a href="#/iller">81 İl ve İlçeler</a>
         <a href="#/rotalar">Hazır Rotalar</a>
-        <a href="#" data-open-map>Türkiye Haritası</a>
-        <a href="#" data-open-favs>Favorilerim</a>
+        <button type="button" class="footer-btn" data-open-map>Türkiye Haritası</button>
+        <button type="button" class="footer-btn" data-open-favs>Favorilerim</button>
       </div>
       <div>
-        <h4>Bültenimize Katılın</h4>
-        <p style="margin:0 0 4px;line-height:1.6">Mevsimin en iyi rotaları ve gizli kalmış köşeleri e-postanıza gelsin.</p>
-        <form class="newsletter" id="newsletterForm">
-          <label class="sr-only" for="newsEmail">E-posta adresiniz</label>
-          <input id="newsEmail" type="email" placeholder="E-posta adresiniz" required>
-          <button class="btn btn-red" type="submit">Katıl</button>
+        <h4>Favorilerinizi taşıyın</h4>
+        <p style="margin:0 0 4px;line-height:1.6">E-posta ile giriş yapın; favorileriniz ve rota ilerlemeniz tüm cihazlarınızda senkron kalsın.</p>
+        <form class="newsletter" id="loginForm">
+          <label class="sr-only" for="loginEmail">E-posta adresiniz</label>
+          <input id="loginEmail" type="email" autocomplete="email" placeholder="E-posta adresiniz" required>
+          <button class="btn btn-red" type="submit">Giriş bağlantısı gönder</button>
         </form>
+        <p class="form-note" id="loginNote" role="status" aria-live="polite"></p>
       </div>
     </div>
     <div class="footer-bottom">
       <span>© 2026 Türkiye Keşif — Veri kaynakları: Wikidata, Türkçe Vikipedi, TÜİK, TÜRKPATENT, Kültür ve Turizm Bakanlığı.</span>
-      <div class="socials">
-        <a href="#" aria-label="Instagram" data-toast="Sosyal medya bağlantıları demo sürümde yer alıyor."><svg><use href="#i-instagram"/></svg></a>
-        <a href="#" aria-label="YouTube" data-toast="Sosyal medya bağlantıları demo sürümde yer alıyor."><svg><use href="#i-youtube"/></svg></a>
-        <a href="#" aria-label="X" data-toast="Sosyal medya bağlantıları demo sürümde yer alıyor."><svg><use href="#i-x"/></svg></a>
-      </div>
+      <nav class="footer-legal" aria-label="Yasal ve kaynaklar">
+        <a href="gizlilik/">Gizlilik</a>
+        <a href="kvkk-aydinlatma/">KVKK Aydınlatma</a>
+        <a href="cerez-politikasi/">Çerezler</a>
+        <a href="kaynaklar/">Kaynaklar ve lisanslar</a>
+        <a href="iletisim/">İletişim</a>
+      </nav>
     </div>
   </div>
 </footer>
@@ -314,9 +331,18 @@
   </div>
 </div>
 
+<div class="consent" id="consent" hidden>
+  <p><b>Kısa bilgi:</b> Favoriler bu tarayıcıda (localStorage) saklanır. Hava durumu için
+    <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>'ya il koordinatı gönderilir; harita bağlantıları Google Maps'te açılır.
+    Ayrıntılar: <a href="kvkk-aydinlatma/">KVKK Aydınlatma</a> · <a href="cerez-politikasi/">Çerezler</a></p>
+  <div class="consent-btns">
+    <button class="btn btn-red" id="consentOk">Anladım</button>
+    <button class="btn btn-ghost" id="consentNo">Yalnızca zorunlu</button>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"><svg><use href="#i-check"/></svg><span id="toastText"></span></div>
 
-<script>window.TR_PATH = "__TRPATH__";window.__DATA__ = __DATAJSON__;</script>
-<script>__JS__</script>
+<script src="__JSURL__" defer></script>
 </body>
 </html>

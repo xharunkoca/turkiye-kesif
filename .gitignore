@@ -18,3 +18,8 @@ venv/
 Thumbs.db
 .idea/
 .vscode/
+
+# ---- yayın çıktısı / yerel sırlar
+_site/
+.env.local
+.env

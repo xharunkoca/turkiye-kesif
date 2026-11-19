@@ -1,12 +1,18 @@
 # Türkiye Keşif
 
-**81 il · 15 turizm kategorisi · 5.881 keşif kaydı (5.001 konumlu) · 45.060 köy/mahalle · 405 gezi rotası**
+**81 il · 15 turizm kategorisi · 5.882 keşif kaydı (4.949 konumlu) · 45.060 köy/mahalle · 405 gezi rotası · 511 statik sayfa**
 
 🔗 **Canlı site:** <https://xharunkoca.github.io/turkiye-kesif/>
 
-Tek dosyalık (bağımlılıksız) keşif rehberi. `index.html` içinde CSS, JavaScript, veri ve
-tüm görseller base64 olarak gömülüdür — dosyayı çift tıklayıp açmak yeterlidir, internet
-bağlantısı gerekmez (harici harita/kaynak bağlantıları hariç).
+Bağımlılıksız keşif rehberi. Site **511 önceden oluşturulmuş (prerender) statik sayfadan** ve
+tek sayfalık uygulamadan (`index.html` + hash yönlendirici) oluşur; sunucu tarafı yoktur,
+GitHub Pages üzerinde yayınlanır.
+
+- **İlk yükleme ≈ 23 KB HTML + 12 KB CSS + 338 KB gzip JS** (v11'de 2,26 MB tek dosyaydı)
+- Görseller WebP, `srcset` + `loading="lazy"` + sabit boyut (CLS ≈ 0)
+- Her il / kategori / rota için **gerçek URL** (`/il/istanbul/`, `/kategori/gol/`, `/rota/istanbul-tarih/`)
+  ve `sitemap.xml`'de 511 adres → arama motorları ve paylaşım önizlemeleri çalışır
+- Favoriler ve rota ilerlemesi **Supabase** ile cihazlar arası eşitlenir (e-posta bağlantısıyla giriş)
 
 ![Ana sayfa](docs/screenshots/01-ana-sayfa.jpg)
 
@@ -19,8 +25,8 @@ bağlantısı gerekmez (harici harita/kaynak bağlantıları hariç).
 | Köy | **25.206** |
 | Mahalle | **19.854** |
 | Toplam kırsal yerleşim | **45.060** |
-| Keşif kaydı | **5.881** kayıt / **5.871** tekil yer |
-| — konumu doğrulanmış | **5.001** |
+| Keşif kaydı | **5.882** kayıt |
+| — konumu doğrulanmış | **4.949** |
 | — konumu doğrulanmamış (adresle aranır) | **880** |
 | Turizm kategorisi | **15** |
 | Gezi rotası | **405** (her ile 5 tema) |
@@ -95,54 +101,78 @@ rotaları bir araya getirir; ana sayfadaki mevsim kartları bu sayfalara gider.
 
 ## Kurulum
 
-Depoyu klonlayıp `index.html`'i tarayıcıda açmanız yeterli:
-
 ```bash
 git clone https://github.com/xharunkoca/turkiye-kesif.git
 cd turkiye-kesif
-open index.html          # macOS   (Windows: start index.html / Linux: xdg-open index.html)
+python3 build.py                 # önceden oluşturulmuş sayfaları üretir
+python3 -m http.server 8000      # http://localhost:8000
 ```
 
-Yerel sunucu tercih edilirse:
-
-```bash
-python3 -m http.server 8000
-# http://localhost:8000
-```
+> `index.html`'i doğrudan dosya olarak (`file://`) açmak artık önerilmez: dış CSS/JS ve
+> Supabase çağrıları için bir sunucu gerekir. `python3 -m http.server` yeterlidir.
 
 ## Derleme
 
-`index.html` kaynaklardan üretilir. Yeniden derlemek için:
-
 ```bash
-cd data && python3 build_data.py     # ≈40 sn → data/turkiye-data.json
-cd .. && python3 build.py            # → index.html
+cd data && python3 build_data.py   # ≈40 sn → data/turkiye-data.json  (veri değiştiyse)
+cd .. && python3 build.py          # → 511 sayfa + hash'li paketler + sitemap.xml
 ```
 
-- `build_data.py` ham Wikidata kayıtlarını (`data/raw/`) işler; bu klasör depoya
-  eklenmez (≈45 MB). Sıfırdan veri toplamak için `data/fetch*.py` betikleri çalıştırılır.
-- `build.py` yer tutucuları doldurur: `__CSS__`, `__JS__`, `__DATAJSON__`, `__TRPATH__`
-  ve görseller için `__IMG_*__`. Doldurulmamış yer tutucu kalırsa uyarı verir.
+`build.py` çıktıları:
+
+| Çıktı | Açıklama |
+|---|---|
+| `index.html` | SPA kabuğu (≈65 KB) — `<link>`/`<script src>` ile dış paketler |
+| `assets/style.<hash>.css`, `assets/app.<hash>.js` | İçerik hash'li, uzun ömürlü önbellek |
+| `iller/`, `kategori/<id>/`, `rotalar/`, `rota/<il>-<tema>/`, `il/<slug>/`, `ara/` | Prerender statik sayfalar |
+| `gizlilik/`, `kvkk-aydinlatma/`, `cerez-politikasi/`, `kaynaklar/`, `iletisim/` | Yasal metinler |
+| `sitemap.xml`, `404.html` | 511 URL; 404 sayfası arama kutusu + popüler bağlantılar |
+
+- Rota sırası (en yakın komşu + 2-opt) **hem** `build.py` **hem** `src/app.js` içinde aynı
+  algoritmayla üretilir; statik rota sayfası ile uygulamadaki canlı rota birebir aynıdır.
+- Yer tutucu doldurulmazsa derleme hata verir (`__CSSURL__`, `__JSURL__`, `__TR_PATH__` …).
 
 ## Dosya düzeni
 
 ```
 turkiye-kesif/
-├── index.html          # ÜRETİLEN tek dosya (≈2,2 MB, her şey gömülü)
-├── build.py            # derleyici: şablon + css + js + veri + görseller → index.html
+├── index.html            # ÜRETİLEN SPA kabuğu
+├── build.py              # derleyici: paketler + 511 prerender sayfa + sitemap
 ├── src/
-│   ├── template.html   # işaretleme + ikon sprite + yer tutucular
-│   ├── style.css       # tema (referans görsel dil + v2/v3 bileşenleri)
-│   ├── app.js          # yönlendirici, arama, rotalar, modaller, favoriler
-│   └── tr-path.txt     # Türkiye silueti (Natural Earth 10m, projeksiyona çevrilmiş)
+│   ├── template.html     # işaretleme, ikon sprite, meta/CSP, onay şeridi
+│   ├── style.css         # tema (v12: kontrast, 44 px hedefler, 12 px taban metin)
+│   ├── app.js            # yönlendirici, arama, rotalar, modaller, Supabase istemcisi
+│   └── tr-path.txt       # Türkiye silueti (Natural Earth 10m)
 ├── data/
-│   ├── build_data.py   # ham Wikidata kayıtları → turkiye-data.json
+│   ├── build_data.py     # ham Wikidata kayıtları → turkiye-data.json
 │   ├── turkiye-data.json
-│   └── fetch*.py       # Wikidata SPARQL toplayıcıları (önbellekli)
-├── assets/img/         # 10 JPEG (hero, 5 şehir, rota, 3 mevsim)
-├── docs/screenshots/   # README görselleri
+│   └── fetch*.py         # Wikidata SPARQL toplayıcıları (önbellekli)
+├── assets/img/           # 11 WebP (hero 1600/800, 5 şehir, rota, 3 mevsim)
+├── docs/                 # denetim raporu + ekran görüntüleri
+├── .env.local            # Supabase anahtarları (depoya girmez)
 └── .github/workflows/pages.yml  # GitHub Pages dağıtımı
 ```
+
+## Hesap ve bulut eşitleme (Supabase)
+
+| Bileşen | Değer |
+|---|---|
+| Proje | `laqmoghxnwsavulkmzls` (eu-central-1) |
+| Giriş yöntemi | e-posta **magic link** (şifre yok) |
+| Tablolar | `favorites`, `route_progress`, `newsletter` |
+| Güvenlik | RLS: `auth.uid() = user_id`; anon anahtarla tabloya doğrudan erişim **reddedilir** (HTTP 401) |
+| İstemcide bulunan anahtar | yalnız `publishable` anahtar — `service_role` asla koda girmez |
+
+Giriş yapılmadan favoriler `localStorage`'ta (`tk-favs-v2`) tutulur; giriş yapılınca yerel
+favoriler buluta taşınır (`merge-duplicates`), ikinci cihazda aynı hesapla açıldığında geri gelir.
+
+### KVKK / çerez davranışı
+
+- İlk ziyarette alt şerit çıkar: **Anladım** / **Yalnızca zorunlu**.
+- Hava durumu (Open-Meteo) ve Supabase istekleri **yalnızca izin verildikten sonra** yapılır;
+  "yalnızca zorunlu" seçilirse hiçbir üçüncü taraf çağrısı olmaz, hava durumu yerine
+  "Hava durumunu göster" düğmesi görünür.
+- Meta CSP: `default-src 'self'; script-src 'self'; connect-src 'self' https://api.open-meteo.com https://laqmoghxnwsavulkmzls.supabase.co`.
 
 ## GitHub Pages
 
@@ -152,8 +182,9 @@ Depoya her `push` sonrası site otomatik yayınlanır:
 2. `main` dalına push edin (veya Actions sekmesinden *GitHub Pages'e yayınla* iş akışını çalıştırın)
 3. Site adresi: `https://xharunkoca.github.io/turkiye-kesif/`
 
-İş akışı yayından önce veriyi doğrular (81 il / 15 kategori), ardından `index.html`
-kaynaklarla güncel mi diye `build.py` çıktısını karşılaştırır.
+İş akışı yayından önce veriyi doğrular (81 il / 15 kategori), `build.py`'yi çalıştırır ve
+**tüm siteyi** (`index.html`, `assets/`, `il/`, `kategori/`, `rota/`, yasal sayfalar,
+`sitemap.xml`, `404.html`) `_site/` klasörüne kopyalayıp yayınlar.
 
 ## Veri kaynakları ve doğrulama
 

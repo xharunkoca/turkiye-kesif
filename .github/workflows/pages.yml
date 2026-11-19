@@ -43,9 +43,12 @@ jobs:
       - name: Yayın klasörünü hazırla
         run: |
           mkdir -p _site
-          cp index.html .nojekyll robots.txt sitemap.xml og-image.jpg _site/
-          cp index.html _site/404.html
-          du -h _site/index.html
+          rsync -a --exclude='.git' --exclude='.github' --exclude='data' --exclude='src' \
+                --exclude='docs' --exclude='shots' --exclude='_site' --exclude='*.py' \
+                --exclude='__pycache__' --exclude='README.md' --exclude='LICENSE' ./ _site/
+          test -f _site/index.html && test -f _site/404.html && test -f _site/sitemap.xml
+          echo "yayın: $(find _site -name '*.html' | wc -l) HTML sayfası, $(du -sh _site | cut -f1)"
+          du -h _site/index.html _site/assets/app.*.js
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

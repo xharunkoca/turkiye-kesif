@@ -1179,3 +1179,71 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
   .live-list li{grid-template-columns:30px 1fr;row-gap:2px}
   .live-li-meta{grid-column:2;font-size:.78rem}
 }
+
+/* ---------------------------------------------- v12: erişilebilirlik + kimlik + onay */
+:root{ --muted:#5b6b7c; --muted-2:#737f8c; }
+
+/* metin alt sınırı 12px, kontrast AA */
+.p-src,.p-src-nc,.stop-meta,.ri-stops,.live-li-meta,.p-meta,.footer-legal a,.footer-bottom{font-size:12px}
+
+/* onay / aydınlatma şeridi */
+.consent{position:fixed;left:12px;right:12px;bottom:12px;z-index:180;background:#0a2c52;color:#fff;border-radius:14px;
+  padding:14px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;box-shadow:0 12px 34px rgba(10,44,82,.38)}
+.consent[hidden]{display:none}
+.consent p{margin:0;font-size:.86rem;line-height:1.5;color:#dbe7f3;flex:1 1 340px}
+.consent a{color:#ffd21e;text-decoration:underline}
+.consent-btns{display:flex;gap:8px;flex-wrap:wrap}
+.consent .btn{min-height:44px;padding:10px 16px}
+@media (max-width:600px){ .consent{bottom:8px;left:8px;right:8px;padding:12px} .consent .btn{flex:1 1 46%} }
+
+/* yasal bağlantılar */
+.footer-legal{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.footer-legal a{color:rgba(255,255,255,.78);text-decoration:none}
+.footer-legal a:hover,.footer-legal a:focus-visible{color:#fff;text-decoration:underline}
+
+/* kimlik */
+.auth-form{display:grid;gap:8px;margin:12px 0 8px}
+.auth-form label{font-size:.84rem;font-weight:600;color:#0a2c52}
+.auth-form input{height:46px;border:1px solid #cbd8e6;border-radius:10px;padding:0 12px;font-size:1rem;color:#16232f;background:#fff}
+.auth-form input:focus-visible{outline:3px solid #ffd21e;outline-offset:1px}
+.form-note{margin:8px 0 0;font-size:.85rem;color:#2b3a4a;line-height:1.5}
+.auth-fine{margin:12px 0 0;font-size:.8rem;color:#5b6b7c;line-height:1.55}
+.auth-fine a{color:#b3261e}
+.btn-auth span{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* odak görünürlüğü (klavye) */
+:focus-visible{outline:3px solid #ffd21e;outline-offset:2px;border-radius:6px}
+
+/* dokunma hedefi alt sınırı */
+@media (max-width:720px){
+  .goto,.chip,.cat-chip,.tab,.btn,.modal-close,.p-fav,.stop-name{min-height:44px}
+  .goto.small{min-height:40px}
+}
+
+/* ---------------------------------------------- v12b: metin/tıklama boyutları + CLS rezervi */
+.brand-tag,.city,.city-plate,.ri-badge,.ri-il,.sc-link,.dd-count,.chip-label,.village-chip,
+.tag,.badge,.stat-cell span,.stat-cell em,.ri-meta,.ri-meta em,.p-src,.p-src-nc,.p-meta,
+.stop-meta,.live-li-meta,.footer-bottom,.footer-legal a{font-size:12px !important;line-height:1.45}
+
+.footer-legal a,.section-link,.search-submit,.brand,.burger,.modal-close,.skip-link{min-height:44px}
+.footer-legal a,.section-link{display:inline-flex;align-items:center}
+.brand,.burger{display:inline-flex;align-items:center}
+
+/* ilk boyama sırasında yer rezervi (CLS) */
+#view-home:empty,#view-page:empty{min-height:72vh}
+.wx-line{min-height:22px}
+.hero{padding-top:clamp(28px,5vw,56px)}
+.wx-ask{background:#eef4fa;border:1px solid #cfe0f0;color:#0a2c52;border-radius:999px;padding:6px 12px;font-size:12px;cursor:pointer;min-height:44px}
+.wx-ask:hover{background:#e3eef8}
+
+/* v12c: kategori kartı yazıları + mobil menü hedefleri */
+.cat-card span,.cat-card em,.categories span,.categories em,.cat-tile span,.cat-tile em{font-size:12px !important}
+.mobile-menu a{min-height:46px;display:flex;align-items:center}
+.mobile-menu .mm-cta{min-height:48px}
+
+/* v12d: bağlantı görünümlü düğmeler (href="#" yerine) */
+.mm-link,.footer-btn{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;text-align:left}
+.mm-link{min-height:46px;width:100%}
+.footer-btn{min-height:32px;font-size:12px}
+.footer-btn:hover,.mm-link:hover{text-decoration:underline}

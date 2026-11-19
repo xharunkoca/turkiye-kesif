@@ -12,6 +12,7 @@
   const N_IL = ILS.length;
 
   const $ = (s, r = document) => r.querySelector(s);
+  const on = (sel, ev, fn) => { const el = typeof sel === "string" ? $(sel) : sel; if (el) el.addEventListener(ev, fn); return el; };
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const icon = (id, cls) => `<svg width="16" height="16" aria-hidden="true"${cls ? ` class="${cls}"` : ""}><use href="#${id}"/></svg>`;
   const nf = (n) => Number(n).toLocaleString("tr-TR");
@@ -103,17 +104,17 @@
   // mevsim profilleri: her mevsim öne çıkan kategoriler + önerilen rota teması
   const SEASONS = [
     {
-      id: "ilkbahar", n: "İlkbahar", months: "Mart – Mayıs", color: "#2f8f63", img: "__IMG_ILKBAHAR__",
+      id: "ilkbahar", n: "İlkbahar", months: "Mart – Mayıs", color: "#2f8f63", img: "assets/img/ilkbahar-420.webp",
       desc: "Badem ve kiraz çiçekleri, yürüyüşe en uygun sıcaklıklar. Vadiler, şelaleler ve yaylalar bu mevsimde zirvede.",
       cats: ["doga", "yayla", "gol", "selale", "vadi", "antik"], theme: "doga"
     },
     {
-      id: "yaz", n: "Yaz", months: "Haziran – Ağustos", color: "#1a6fa8", img: "__IMG_YAZ__",
+      id: "yaz", n: "Yaz", months: "Haziran – Ağustos", color: "#1a6fa8", img: "assets/img/yaz-420.webp",
       desc: "Koylar, Mavi Bayraklı plajlar ve yayla serinliği. Kıyı illerinde deniz, iç bölgelerde yüksek yaylalar öne çıkar.",
       cats: ["plaj", "gol", "yayla", "doga", "termal"], theme: "deniz"
     },
     {
-      id: "sonbahar", n: "Sonbahar", months: "Eylül – Kasım", color: "#b8641c", img: "__IMG_SONBAHAR__",
+      id: "sonbahar", n: "Sonbahar", months: "Eylül – Kasım", color: "#b8641c", img: "assets/img/sonbahar-420.webp",
       desc: "Orman yürüyüşleri, hasat ve gastronomi zamanı; kalabalık azalır, antik kentler ve tarihî çarşılar keyifli olur.",
       cats: ["doga", "yayla", "tarih", "kultur", "gastro"], theme: "tarih"
     },
@@ -193,6 +194,9 @@
     try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) { /* yoksay */ }
     $$(`[data-fav="${CSS.escape(id)}"]`).forEach((b) => b.classList.toggle("on", favs.includes(id)));
     updateFavCount();
+    if (auth) {
+      if (favs.includes(id)) syncFavorites(); else removeRemoteFav(id);
+    }
   }
   function updateFavCount() {
     $$("[data-fav-count]").forEach((el) => {
@@ -386,7 +390,7 @@
         <h3><button class="p-title" data-place="${p.idx}">${esc(p[0])}</button></h3>
         <p class="p-loc">${icon("i-pin")}<span>${esc(p[3] || il.n)}${p[3] ? ", " + esc(il.n) : ""}</span></p>
         <div class="p-foot">
-          <a class="goto" href="${mapsPlace(p)}" target="_blank" rel="noopener noreferrer"${hasCoord(p) ? "" : ' title="Koordinatı doğrulanmadı — haritada ada göre aranır"'}>${icon("i-nav")}${hasCoord(p) ? "Konuma git" : "Haritada ara"}</a>
+          <a class="goto" href="${mapsPlace(p)}" target="_blank" rel="noopener noreferrer"${hasCoord(p) ? "" : ' title="Koordinat doğrulanmadı — haritada ada göre aranır"'}>${icon("i-nav")}${hasCoord(p) ? "Konuma git" : "Ada göre ara"}</a>
           <span class="p-src${hasCoord(p) ? "" : " p-src-nc"}" title="${hasCoord(p) ? "Kaynak: " + (p[7] === "approx" ? "il merkezi (yaklaşık)" : p[7] === "wikipedia" ? "Türkçe Vikipedi koordinatı" : "Wikidata") : "Koordinat doğrulanamadı; adres/arama ile bulunur"}">${hasCoord(p) ? (p[7] === "approx" ? "≈ konum" : "✓ doğrulandı") : "konum yok"}</span>
         </div>
       </div>
@@ -495,12 +499,14 @@
     $("#modalCard").className = "modal-card " + (cls || "");
     modal.classList.add("open");
     document.body.style.overflow = "hidden";
+    trapStart();
     const c = $(".modal-close");
-    if (c) c.focus();
+    if (c) requestAnimationFrame(() => c.focus());
   }
   function closeModal() {
     modal.classList.remove("open");
     document.body.style.overflow = "";
+    trapEnd();
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
@@ -549,7 +555,7 @@
           </div>
         </div>
         <div class="modal-actions">
-          <a class="btn btn-red" href="${mapsPlace(p)}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}${hasCoord(p) ? "Konuma git" : "Haritada ara"}</a>
+          <a class="btn btn-red" href="${mapsPlace(p)}" target="_blank" rel="noopener noreferrer" title="${hasCoord(p) ? "Google Maps'te konumu açar" : "Koordinat doğrulanmadı — haritada ada göre aranır"}">${icon("i-nav")}${hasCoord(p) ? "Konuma git" : "Ada göre ara"}</a>
           <button class="btn btn-ghost" data-fav="${esc(favId(p))}">${icon("i-heart")}Favorilere ekle</button>
           <a class="btn btn-ghost" href="#/kesfet?il=${p[2]}&kat=${cat.id}" data-close-nav>${icon("i-compass")}Benzer yerler</a>
           <a class="btn btn-ghost" href="${(p[7] === "approx" || p[7] === "wikipedia") ? wikiUrl(p[0]) : wdUrl(p[0])}" target="_blank" rel="noopener noreferrer">${icon("i-external")}Kaynağa git</a>
@@ -598,6 +604,11 @@
   }
 
   function mountWxLine(ilIdx) {
+    if (!wxAllowed()) {
+      const box0 = $("#wxLine");
+      if (box0) box0.innerHTML = wxAskHtml();
+      return;
+    }
     const box = $("#wxLine");
     if (!box) return;
     const paint = (d) => {
@@ -656,7 +667,7 @@
         </div>
         <div class="live-actions">
           <a class="btn btn-red" href="${prev ? dirUrl(prev, cur) : maps(cur[4], cur[5])}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}${prev ? "Yol tarifi al" : "Konuma git"}</a>
-          <a class="btn btn-ghost" href="${mapsPlace(cur)}" target="_blank" rel="noopener noreferrer">${icon("i-pin")}Haritada aç</a>
+          <a class="btn btn-ghost" href="${mapsPlace(cur)}" target="_blank" rel="noopener noreferrer">${icon("i-pin")}Haritada göster</a>
         </div>
         <div class="live-actions">
           <button class="btn btn-ghost" data-live-prev ${i === 0 ? "disabled" : ""}>${icon("i-back")}Önceki</button>
@@ -721,7 +732,8 @@
         </div>
         <div class="modal-actions">
           <a class="btn btn-ghost" href="#/il/${IL_SLUG[r.ilIdx]}" data-close-nav>${icon("i-pin")}İl sayfası</a>
-          <button class="btn btn-ghost" data-toast="Rota dışa aktarma demo sürümde örnek olarak yer alıyor.">${icon("i-route")}Rotayı kaydet</button>
+          <button class="btn btn-ghost" data-share-route="${r.id}">${icon("i-link")}Rotayı paylaş</button>
+          <button class="btn btn-ghost" data-ics-route="${r.id}">${icon("i-clock")}Takvime ekle</button>
         </div>
       </div>`);
     mountWxLine(r.ilIdx);
@@ -780,8 +792,8 @@
 
   /* ---------------------------------------------------------------- ANA SAYFA */
   const CITY_PHOTOS = {
-    Antalya: "__IMG_ANTALYA__", "İstanbul": "__IMG_ISTANBUL__", "İzmir": "__IMG_IZMIR__",
-    "Muğla": "__IMG_MUGLA__", "Nevşehir": "__IMG_NEVSEHIR__"
+    Antalya: "assets/img/antalya-720.webp", "İstanbul": "assets/img/istanbul-720.webp", "İzmir": "assets/img/izmir-720.webp",
+    "Muğla": "assets/img/mugla-720.webp", "Nevşehir": "assets/img/nevsehir-720.webp"
   };
   const POPULAR = ["Antalya", "İstanbul", "İzmir", "Muğla", "Nevşehir"];
 
@@ -799,7 +811,7 @@
       const il = ILS[i];
       const villages = il.d.reduce((a, d) => a + d.k.length, 0);
       return `<a class="city-card" href="#/il/${IL_SLUG[i]}">
-        <img src="${CITY_PHOTOS[name]}" alt="${esc(name)}" loading="lazy">
+        <img src="${CITY_PHOTOS[name]}" alt="${esc(name)}" width="720" height="480" loading="lazy" decoding="async">
         <div class="city-body">
           <div class="city-name">${esc(name)}</div>
           <div class="city-meta">${icon("i-pin")}${nf(byIlUniq[i].length)} keşif • ${nf(il.d.length)} ilçe</div>
@@ -816,7 +828,7 @@
     const seasons = SEASONS;
     $("#seasonGrid").innerHTML = seasons.map((s) => `
       <button class="season-card ${s.img ? "" : "winter"}" data-season="${esc(s.id)}" aria-label="${esc(s.n)} mevsiminde keşfet">
-        ${s.img ? `<img src="${s.img}" alt="${esc(s.n)} mevsiminde Türkiye" loading="lazy">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
+        ${s.img ? `<img src="${s.img}" alt="${esc(s.n)} mevsiminde Türkiye" width="420" height="320" loading="lazy" decoding="async">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
             <path d="M-6 96 34 46 62 74 96 38 132 76 158 54 206 92V124H-6Z" fill="#eaf3fb"/>
             <path d="M34 46 46 60 34 70 22 60Z" fill="#ffffff"/>
             <path d="M96 38 110 54 96 64 82 54Z" fill="#ffffff"/>
@@ -1286,7 +1298,12 @@
   }
 
   // başlıktaki hava rozeti: ana sayfada Ankara
+  function wxAskHtml() {
+    return `<button class="wx-ask" data-wx-enable title="Hava durumu Open-Meteo'dan alınır">Hava durumunu göster</button>`;
+  }
   function mountHeaderWx() {
+    const w0 = $(".weather");
+    if (!wxAllowed()) { if (w0) w0.innerHTML = wxAskHtml(); return; }
     const idx = ilByName["Ankara"];
     if (idx === undefined) return;
     const w = $(".weather");
@@ -1309,6 +1326,11 @@
   function mountWx(ilIdx) {
     const panel = $("#wxPanel");
     if (!panel) return;
+    if (!wxAllowed()) {
+      const body0 = $("#wxBody");
+      if (body0) body0.innerHTML = wxAskHtml() + ` <span class="wx-off">Hava durumu ve seyahat puanı için izin verin.</span>`;
+      return;
+    }
     const cached = wxCached(ilIdx);
     if (cached) { paintWx(ilIdx, cached); return; }
     const offline = location.protocol === "file:";
@@ -1344,7 +1366,7 @@
     const view = $("#view-page");
     view.innerHTML = `
       <div class="season-hero" style="--sc:${se.color}">
-        ${se.img ? `<img src="${se.img}" alt="${esc(se.n)} mevsiminde Türkiye" loading="lazy">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
+        ${se.img ? `<img src="${se.img}" alt="${esc(se.n)} mevsiminde Türkiye" width="420" height="320" loading="lazy" decoding="async">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
           <path d="M-6 96 34 46 62 74 96 38 132 76 158 54 206 92V124H-6Z" fill="#dbe9f6"/>
           <path d="M34 46 46 60 34 70 22 60Z" fill="#fff"/><path d="M96 38 110 54 96 64 82 54Z" fill="#fff"/>
           <path d="M-6 108 44 92 88 104 132 90 174 104 206 94V124H-6Z" fill="#fff"/></svg>`}
@@ -1536,6 +1558,10 @@
   }
 
   function router() {
+    if (location.hash.includes("access_token=")) {
+      adoptTokens(location.hash);
+      if (location.hash !== "#/" && location.hash !== "") return;
+    }
     const { path, params } = parseHash();
     const home = $("#view-home");
     const page = $("#view-page");
@@ -1562,6 +1588,12 @@
         if (!seasonById[seg[1]]) { location.hash = "#/"; return; }
         renderMevsim(seg[1]);
       }
+      else if (seg[0] === "ara") { renderKesfet(params); }
+      else if (seg[0] === "rota" && seg[1]) {
+        // statik rota sayfasına devret (önceden oluşturulmuş, hızlı)
+        location.replace("rota/" + encodeURIComponent(seg[1]) + "/");
+        return;
+      }
       else if (seg[0] === "ilce" && seg[1] && seg[2]) {
         const i = ilBySlug[seg[1]];
         const di = i === undefined ? undefined : DIST_SLUG[i][seg[2]];
@@ -1573,6 +1605,7 @@
       onScroll();
     }
     updateFavCount();
+    applyMeta(seg, params);
   }
 
   /* ---------------------------------------------------------------- dinamik olaylar */
@@ -1592,6 +1625,22 @@
     }
     const placeEl = e.target.closest("[data-place]");
     if (placeEl) { e.preventDefault(); openPlace(Number(placeEl.dataset.place)); return; }
+    if (e.target.closest("[data-wx-enable]")) {
+      e.preventDefault();
+      setConsent("all");
+      toast("Hava durumu açıldı (Open-Meteo)");
+      mountHeaderWx();
+      const act = location.hash.split("?")[0];
+      if (act.startsWith("#/il/") && ilBySlug[act.split("/")[2]]) mountWx(ilBySlug[act.split("/")[2]]);
+      return;
+    }
+    if (e.target.closest("[data-auth-open]")) { e.preventDefault(); openAuthModal(); return; }
+    if (e.target.closest("[data-auth-signout]")) { e.preventDefault(); signOut(); return; }
+    if (e.target.closest("[data-fav-sync]")) { e.preventDefault(); syncFavorites().then(() => toast("Favoriler eşitlendi")); return; }
+    const shareBtn = e.target.closest("[data-share-route]");
+    if (shareBtn) { e.preventDefault(); shareRoute(shareBtn.dataset.shareRoute); return; }
+    const icsBtn = e.target.closest("[data-ics-route]");
+    if (icsBtn) { e.preventDefault(); downloadIcs(icsBtn.dataset.icsRoute); return; }
     const liveStart = e.target.closest("[data-live-start]");
     if (liveStart) { e.preventDefault(); e.stopPropagation(); startRoute(liveStart.dataset.liveStart, 0); return; }
     if (e.target.closest("[data-live-next]")) { e.preventDefault(); liveGo(1); return; }
@@ -1687,12 +1736,6 @@
     if (e.target.closest("a")) { mobileMenu.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); }
   });
 
-  // bülten
-  $("#newsletterForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    toast(`${$("#newsEmail").value.trim()} adresi bültene eklendi`);
-    e.target.reset();
-  });
 
   // klavye
   document.addEventListener("keydown", (e) => {
@@ -1716,8 +1759,359 @@
     $$(".reveal:not(.in)").forEach((el) => io.observe(el));
   }
 
+
+  /* ================================================================ v12
+     Kimlik (Supabase), favori senkronu, onay şeridi, paylaşım, erişilebilirlik
+     ================================================================ */
+  const SITE = "https://xharunkoca.github.io/turkiye-kesif/";
+  const SB_URL = "https://laqmoghxnwsavulkmzls.supabase.co";
+  const SB_KEY = "sb_publishable_m9-WvY1Bb8OXg_P2qAY-tg_irpa44G5";
+  const AUTH_KEY = "tk-auth-v1";
+  const CONSENT_KEY = "tk-consent-v1";
+
+  /* ---------------------------------------------------- onay / aydınlatma şeridi */
+  const consentState = () => { try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; } };
+  const wxAllowed = () => consentState() === "all";
+  function setConsent(v) {
+    try { localStorage.setItem(CONSENT_KEY, v); } catch (e) { /* yoksay */ }
+    const el = $("#consent"); if (el) el.hidden = true;
+    if (v === "essential") $$(".wx-line, .wx-panel, #headerWx").forEach((x) => { x.innerHTML = ""; });
+    else mountHeaderWx();
+  }
+  function mountConsent() {
+    const el = $("#consent");
+    if (!el) return;
+    if (consentState()) { el.hidden = true; return; }
+    el.hidden = false;
+    const ok = $("#consentOk"), no = $("#consentNo");
+    if (ok) ok.addEventListener("click", () => setConsent("all"));
+    if (no) no.addEventListener("click", () => setConsent("essential"));
+  }
+
+  /* ---------------------------------------------------- Supabase oturumu (fetch, sıfır bağımlılık) */
+  let auth = null;
+  try { auth = JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); } catch (e) { auth = null; }
+
+  function jwtEmail(tok) {
+    try {
+      const payload = JSON.parse(atob(tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      return { email: payload.email || null, uid: payload.sub || null };
+    } catch (e) { return { email: null, uid: null }; }
+  }
+  function saveAuth(v) {
+    auth = v;
+    try { v ? localStorage.setItem(AUTH_KEY, JSON.stringify(v)) : localStorage.removeItem(AUTH_KEY); } catch (e) { /* yoksay */ }
+    renderAuthUI();
+  }
+
+  async function sbAuth(path, body) {
+    const r = await fetch(`${SB_URL}/auth/v1/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SB_KEY },
+      body: JSON.stringify(body || {})
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.msg || data.error_description || data.message || `HTTP ${r.status}`);
+    return data;
+  }
+
+  async function sendLoginLink(email) {
+    return sbAuth("otp", { email, create_user: true, options: { email_redirect_to: SITE } });
+  }
+
+  function adoptTokens(fragment) {
+    const p = new URLSearchParams(String(fragment || "").replace(/^#/, ""));
+    const at = p.get("access_token"), rt = p.get("refresh_token");
+    if (!at) return false;
+    const info = jwtEmail(at);
+    saveAuth({
+      access_token: at, refresh_token: rt, uid: info.uid, email: info.email,
+      exp: Date.now() + (Number(p.get("expires_in") || 3600) * 1000)
+    });
+    history.replaceState(null, "", location.pathname + location.search + "#/");
+    toast(info.email ? `Giriş yapıldı — ${info.email}` : "Giriş yapıldı");
+    syncFavorites();
+    return true;
+  }
+
+  async function ensureSession() {
+    if (!auth) return null;
+    if (auth.exp && Date.now() < auth.exp - 90000) return auth;
+    if (!auth.refresh_token) return null;
+    try {
+      const d = await sbAuth("token?grant_type=refresh_token", { refresh_token: auth.refresh_token });
+      saveAuth({ ...auth, access_token: d.access_token, refresh_token: d.refresh_token, exp: Date.now() + (d.expires_in || 3600) * 1000 });
+      return auth;
+    } catch (e) { saveAuth(null); return null; }
+  }
+
+  async function sbRest(path, opts) {
+    const s2 = await ensureSession();
+    if (!s2) throw new Error("oturum yok");
+    const r = await fetch(`${SB_URL}/rest/v1/${path}`, {
+      ...(opts || {}),
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${s2.access_token}`,
+        "Content-Type": "application/json",
+        ...((opts && opts.headers) || {})
+      }
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.status === 204 ? null : r.json();
+  }
+
+  async function syncFavorites() {
+    const s2 = await ensureSession();
+    if (!s2) return;
+    try {
+      const rows = (await sbRest("favorites?select=place_key")) || [];
+      const remote = new Set(rows.map((r) => r.place_key));
+      const missing = favs.filter((k) => !remote.has(k));
+      if (missing.length) {
+        const body = missing.map((k) => {
+          const cut = k.indexOf("|");
+          const ilIdx = Number(k.slice(0, cut)), name = k.slice(cut + 1);
+          const p = PLACES.find((x) => x[2] === ilIdx && x[0] === name);
+          return { place_key: k, name, il: p ? ILS[p[2]].n : null, cat: p ? CATS[p[1]].id : null };
+        });
+        await sbRest("favorites", {
+          method: "POST",
+          headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+          body: JSON.stringify(body)
+        });
+      }
+      favs = [...new Set([...favs, ...remote])];
+      try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) { /* yoksay */ }
+      updateFavCount();
+    } catch (e) { /* sessiz: yerel modda devam */ }
+  }
+
+  async function removeRemoteFav(key) {
+    if (!auth) return;
+    try { await sbRest(`favorites?place_key=eq.${encodeURIComponent(key)}`, { method: "DELETE" }); } catch (e) { /* yoksay */ }
+  }
+
+  /* ---------------------------------------------------- kimlik arayüzü */
+  function renderAuthUI() {
+    const btn = $(".btn-auth");
+    if (btn) {
+      btn.innerHTML = auth
+        ? `<svg width="16" height="16" aria-hidden="true"><use href="#i-user"/></svg><span>${esc((auth.email || "Hesabım").split("@")[0])}</span>`
+        : `<svg width="16" height="16" aria-hidden="true"><use href="#i-user"/></svg><span>Giriş · Üye Ol</span>`;
+    }
+    const mm = $(".mm-cta.btn");
+    if (mm) mm.textContent = auth ? "Hesabım" : "Giriş · Üye Ol";
+  }
+
+  function openAuthModal() {
+    if (auth) {
+      openModal(`
+        <div class="modal-hero" style="background:linear-gradient(135deg,#1c6fae,#0a2c52)">
+          <span class="mh-ic">${icon("i-user", "i24")}</span>
+          <span class="mh-cat">Hesabım</span>
+        </div>
+        <div class="modal-body">
+          <h3 id="modalTitle">${esc(auth.email || "Giriş yapıldı")}</h3>
+          <p class="sub">${nf(favs.length)} favori bu hesaba bağlı</p>
+          <p class="auth-fine">Favorileriniz ve rota ilerlemeniz Supabase üzerinden tüm cihazlarınızda eşitlenir.
+            Verileriniz yalnızca size görünür (satır düzeyi güvenlik). Ayrıntı: <a href="kvkk-aydinlatma/">KVKK Aydınlatma</a>.</p>
+          <div class="modal-actions">
+            <button class="btn btn-red" data-fav-sync>${icon("i-heart")}Favorileri eşitle</button>
+            <button class="btn btn-ghost" data-auth-signout>${icon("i-close")}Çıkış yap</button>
+          </div>
+        </div>`);
+      return;
+    }
+    openModal(`
+      <div class="modal-hero" style="background:linear-gradient(135deg,#b3261e,#0a2c52)">
+        <span class="mh-ic">${icon("i-user", "i24")}</span>
+        <span class="mh-cat">Giriş / Üyelik</span>
+      </div>
+      <div class="modal-body">
+        <h3 id="modalTitle">E-posta ile giriş</h3>
+        <p class="sub">Şifre yok — tek kullanımlık giriş bağlantısı gönderilir.</p>
+        <form class="auth-form" id="authForm" novalidate>
+          <label for="authEmail">E-posta adresiniz</label>
+          <input id="authEmail" type="email" autocomplete="email" inputmode="email" placeholder="ornek@eposta.com" required>
+          <button class="btn btn-red" type="submit">Giriş bağlantısı gönder</button>
+        </form>
+        <p class="form-note" id="authNote" role="status" aria-live="polite">Favorileriniz giriş sonrası bu hesaba bağlanır ve tüm cihazlarınızda görünür.</p>
+        <p class="auth-fine">Kişisel verileriniz yalnızca kimlik doğrulama ve favori listesi için işlenir.
+          Ayrıntı: <a href="kvkk-aydinlatma/">KVKK Aydınlatma</a> · <a href="gizlilik/">Gizlilik</a></p>
+      </div>`);
+  }
+
+  async function doSignIn(email, noteEl) {
+    const note = noteEl || $("#authNote") || $("#loginNote");
+    const setNote = (t) => { if (note) note.textContent = t; };
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setNote("Geçerli bir e-posta adresi girin."); return; }
+    setNote("Gönderiliyor…");
+    try {
+      await sendLoginLink(email);
+      setNote(`Bağlantı gönderildi: ${email}. Gelen kutunuza (ve spam klasörüne) bakın; bağlantı 1 saat geçerli.`);
+    } catch (e) {
+      setNote(`Gönderilemedi: ${String(e.message || e).slice(0, 90)} — birkaç dakika sonra tekrar deneyin.`);
+    }
+  }
+
+  function signOut() {
+    saveAuth(null);
+    closeModal();
+    toast("Çıkış yapıldı — favoriler bu cihazda kaldı");
+  }
+
+  /* ---------------------------------------------------- paylaşım / takvim */
+  function routeShareText(r) {
+    const il = ILS[r.ilIdx];
+    return `${il.n} — ${r.theme.label} · ${nf(r.km)} km · ${r.stops.length} durak\n` +
+      r.stops.map((s, i) => `${i + 1}. ${s[0]} (${s[3] || il.n})`).join("\n") +
+      `\n\nHarita: ${routeDirUrl(r)}\nTürkiye Keşif: ${SITE}#/il/${IL_SLUG[r.ilIdx]}`;
+  }
+
+  function copyText(t, okMsg) {
+    const done = () => toast(okMsg || "Panoya kopyalandı");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, () => legacyCopy(t, done));
+    } else legacyCopy(t, done);
+  }
+  function legacyCopy(t, done) {
+    const ta = document.createElement("textarea");
+    ta.value = t; ta.setAttribute("readonly", "");
+    ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { toast("Kopyalanamadı — bağlantı yeni sekmede açıldı"); window.open(routeDirUrlish(t), "_blank"); }
+    ta.remove();
+  }
+  const routeDirUrlish = () => SITE;
+
+  async function shareRoute(id) {
+    const r = ALL_ROUTES.find((x) => x.id === id);
+    if (!r) return;
+    const text = routeShareText(r);
+    if (navigator.share) {
+      try { await navigator.share({ title: `${ILS[r.ilIdx].n} — ${r.theme.label}`, text }); return; } catch (e) { /* iptal → kopyala */ }
+    }
+    copyText(text, "Rota metni panoya kopyalandı");
+  }
+
+  function downloadIcs(id) {
+    const r = ALL_ROUTES.find((x) => x.id === id);
+    if (!r) return;
+    const pad = (n) => String(n).padStart(2, "0");
+    const stamp = (d) => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+    const start = new Date(); start.setUTCHours(6, 0, 0, 0);
+    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Turkiye Kesif//ROTA//TR", "CALSCALE:GREGORIAN"];
+    r.stops.forEach((s, i) => {
+      const s0 = new Date(start.getTime() + i * 3 * 3600 * 1000);
+      const s1 = new Date(s0.getTime() + 90 * 60 * 1000);
+      lines.push("BEGIN:VEVENT",
+        `UID:${r.id}-${i}@turkiye-kesif`,
+        `DTSTAMP:${stamp(new Date())}`,
+        `DTSTART:${stamp(s0)}`, `DTEND:${stamp(s1)}`,
+        `SUMMARY:${ILS[r.ilIdx].n} · ${i + 1}. durak: ${s[0]}`.replace(/[\n,;]/g, " "),
+        `DESCRIPTION:${r.theme.label} · ${CATS[s[1]].label} · https://www.google.com/maps/search/?api=1&query=${s[4]},${s[5]}`,
+        `GEO:${s[4]};${s[5]}`,
+        `LOCATION:${(s[3] || ILS[r.ilIdx].n)} / ${ILS[r.ilIdx].n}`,
+        "END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `turkiye-kesif-${r.id}.ics`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast("Takvim dosyası indirildi (.ics)");
+  }
+
+  /* ---------------------------------------------------- erişilebilirlik: modal odak tuzağı */
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
+  function trapStart() {
+    if (!("inert" in HTMLElement.prototype)) return;
+    Array.from(document.body.children).forEach((el) => {
+      if (el.id === "modal" || el.tagName === "SCRIPT" || el.tagName === "NOSCRIPT" || el.id === "toast") return;
+      el.setAttribute("inert", "");
+    });
+  }
+  function trapEnd() {
+    Array.from(document.body.children).forEach((el) => el.removeAttribute("inert"));
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    if (!modal || !modal.classList.contains("open")) return;
+    const f = $$(FOCUSABLE, $("#modalCard")).filter((el) => el.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  /* ---------------------------------------------------- sayfa başlığı / meta (paylaşım + arama) */
+  function setMeta(sel, attr, val) {
+    const el = document.querySelector(sel);
+    if (el) el.setAttribute(attr, val);
+  }
+  function applyMeta(seg, params) {
+    const base = "Türkiye Keşif";
+    let title = `${base} — 81 İl · 15 Kategori · ${nf(ALL_ROUTES.length)} Hazır Rota`;
+    let desc = `81 il, 1.004 ilçe, 45.060 köy/mahalle; 15 kategoride ${nf(PLACE_COUNT)} keşif kaydı ve her il için 5 gezi rotası. Haritada doğrulanmış konumlar, tek dokunuşla rota başlatma.`;
+    let path = "";
+    if (seg[0] === "il" && seg[1] && ilBySlug[seg[1]] !== undefined) {
+      const i = ilBySlug[seg[1]], il = ILS[i];
+      const n = byIl[i].length;
+      title = `${il.n} Gezilecek Yerler — ${n} Nokta ve 5 Rota | ${base}`;
+      desc = `${il.n} ilinde ${n} keşif kaydı, ${il.d.length} ilçe, ${nf(villCount(il))} köy/mahalle ve 5 hazır gezi rotası. Konumlar haritada doğrulanmış.`;
+      path = `il/${IL_SLUG[i]}/`;
+    } else if (seg[0] === "kategori" && seg[1]) {
+      const ci = CATS.findIndex((c) => c.id === seg[1]);
+      if (ci >= 0) {
+        const list = PLACES.filter((p) => p[1] === ci);
+        title = `${CATS[ci].label} — ${nf(list.length)} Kayıt | ${base}`;
+        desc = `Türkiye genelinde ${nf(list.length)} ${CATS[ci].label.toLowerCase()} kaydı; ${list.filter(hasCoord).length} tanesi haritada doğrulanmış koordinatla.`;
+        path = `kategori/${CATS[ci].id}/`;
+      }
+    } else if (seg[0] === "kesfet") {
+      title = `Keşfet — ${nf(PLACE_COUNT)} Kayıt, 15 Kategori | ${base}`;
+      desc = `Arama ve filtrelerle ${nf(PLACE_COUNT)} keşif kaydı: antik kentler, müzeler, doğa, göller, plajlar ve daha fazlası.`;
+      path = "kesfet/";
+    } else if (seg[0] === "iller") {
+      title = `81 İl ve İlçeler — Gezi Rehberi | ${base}`;
+      desc = "Türkiye'nin 81 ili, 1.004 ilçesi: her il için keşif noktaları, rota ve hava durumu.";
+      path = "iller/";
+    } else if (seg[0] === "rotalar") {
+      title = `${nf(ALL_ROUTES.length)} Hazır Gezi Rotası — 5 Tema | ${base}`;
+      desc = `81 il için ${nf(ALL_ROUTES.length)} hazır rota: tarih, doğa, inanç, lezzet ve deniz temaları; her durak tek dokunuşla navigasyona bağlı.`;
+      path = "rotalar/";
+    } else if (seg[0] === "mevsim" && seg[1] && seasonById[seg[1]]) {
+      const se = seasonById[seg[1]];
+      title = `${se.n} Rotası — Mevsime Göre Keşif | ${base}`;
+      desc = `${se.n} ayı için seçilmiş keşif noktaları ve rotalar (${se.months}).`;
+      path = `mevsim/${se.id}/`;
+    }
+    document.title = title;
+    setMeta('meta[name="description"]', "content", desc);
+    setMeta('meta[property="og:title"]', "content", title);
+    setMeta('meta[property="og:description"]', "content", desc);
+    setMeta('meta[name="twitter:title"]', "content", title);
+    setMeta('meta[name="twitter:description"]', "content", desc);
+    const canon = document.querySelector('link[rel="canonical"]');
+    if (canon) canon.setAttribute("href", SITE + path);
+    setMeta('meta[property="og:url"]', "content", SITE + path);
+  }
+
+  document.addEventListener("submit", (e) => {
+    const authForm = e.target.closest("#authForm");
+    if (authForm) { e.preventDefault(); doSignIn(($("#authEmail") || {}).value, $("#authNote")); return; }
+    const loginForm = e.target.closest("#loginForm");
+    if (loginForm) { e.preventDefault(); doSignIn(($("#loginEmail") || {}).value, $("#loginNote")); return; }
+  });
+
   /* ---------------------------------------------------------------- başlat */
   window.addEventListener("hashchange", router);
+  mountConsent();
+  renderAuthUI();
+  if (auth) ensureSession().then((s) => { if (s) syncFavorites(); });
   initHeroSearch();
   renderHome();
   mountHeaderWx();
