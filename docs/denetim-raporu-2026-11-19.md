@@ -556,3 +556,28 @@ Yol boyunca düzeltilen iki gerçek hata:
   şehir kartı metinleri tek satır, kategori şeridi çizgisiz kaydırıcı.
 
 Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
+
+## v18 — Tam duyarlı katman (masaüstü / tablet / telefon)
+
+**Kullanıcı geri bildirimi:** v17 masaüstünde iyi, tablet ve telefonda kırık (5'li şehir ızgarası 2+2+1, "Haritası" paneli ile "Hazır Rotalar" yan yana sıkışmış, rota kartları ~100 px).
+
+**Yaklaşım değişikliği:** v17'ye kadar yalnız `max-width` sorgularıyla yazılan katman, tablet ara genişliklerinde (768–1099) masayaüstü kurallarını devralıyordu. v18 bunun yerine **mobile-first** (`min-width`) kademeleri getirdi.
+
+**Kırılma noktaları**
+| Aralık | Izgara | Not |
+|---|---|---|
+| < 600 | şehir 2 · keşif 1–2 · rota 1 | arama ve filtreler dikey, modal alt-sheet |
+| 600–899 | şehir 3 · keşif 2 · rota 2 | arama tek satır, etiketler sarar |
+| 900–1099 | şehir 4 · keşif 3 · rota 2 | keşif bandı 2 kolon + mevsimler tam genişlik |
+| ≥ 1100 | şehir 5 · keşif 3 · rota 3 | `main-nav` görünür, hamburger gizli, hero ortalı |
+
+**Yapılanlar**
+- `src/theme-light.css` sonuna v18 katmanı (§34–37): mobile-first ızgaralar, `clamp()` tipografi, etiket şeritlerinin tablette sarması, 44 px dokunma alanları.
+- `build.py` `PAGE_CSS` içine statik sayfalar için 700 px / 1100 px blokları (tablo yatay kaydırma, tek sütun, `img,table,pre{max-width:100%}`).
+- Bulunan ve düzeltilen hata: dikey filtre çubuğunda `flex-basis` yükseklik olarak yorumlanıyordu (320 px'te 44 px'lik alanlar 150 px'e şişiyordu) → `flex:0 0 auto` + `max-height`.
+- Hamburger menü: tam genişlik sabit panel, 46 px satırlar, bağlantıya tıklayınca kapanır, Escape ile kapanır.
+- Küçük hedef temizliği: mobilde 40 px altı dokunma hedefi ana sayfada 95 → 8, keşfette 61 → 9, rotalarda 9.
+
+**Ölçümler**
+- Yatay taşma taraması: **12 genişlik (320–1440) × 11 sayfa → 0 taşma**.
+- Görsel QA: 360 / 390 / 430 / 768 / 1024 / 1280 / 1440 ekran görüntüleriyle doğrulandı.
