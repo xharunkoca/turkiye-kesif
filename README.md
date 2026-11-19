@@ -168,6 +168,9 @@ turkiye-kesif/
 Giriş yapılmadan favoriler `localStorage`'ta (`tk-favs-v2`) tutulur; giriş yapılınca yerel
 favoriler buluta taşınır (`merge-duplicates`), ikinci cihazda aynı hesapla açıldığında geri gelir.
 
+Uçtan uca doğrulandı (canlı): magic-link → oturum → yerel favorinin buluta taşınması →
+`route_progress` upsert → Hesabım ekranında görünmesi. Ayrıntı: `docs/denetim-raporu-2026-11-19.md`.
+
 ### Hesabım sayfası ve rota ilerlemesi
 
 `/hesabim/` (uygulama içinde `#/hesabim`) tek ekranda şunları toplar:

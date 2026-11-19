@@ -431,3 +431,22 @@ Doğrulanan akışlar (yerel, sahte oturumla): rota başlat → durak ilerlet �
 Hesabım'da "İzmir — Tarih ve Kültür Rotası, 2/5 durak, sıradaki: Atatürk, Annesi ve Kadın Hakları Anıtı" →
 "Devam et" rotayı 2. duraktan açar; "Bitir" tamamlananlara taşır; "Verilerimi indir" `turkiye-kesif-verilerim.json`
 indirir; "Hesap verilerimi sil" onayıyla tüm anahtarlar temizlenir ve oturum kapanır. Konsol hatası yok.
+
+### Uçtan uca giriş doğrulaması (canlı)
+
+Gerçek bir e-posta ile (tek kullanımlık test adresi) tüm zincir çalıştırıldı:
+
+1. `auth/v1/otp` → 200, e-posta 5 sn içinde ulaştı
+2. Bağlantı → `https://xharunkoca.github.io/turkiye-kesif/#access_token=…`
+3. Uygulama jetonları aldı, adresi `#/` olarak temizledi, oturum `tk-auth-v1`'de
+4. Girişten önce eklenen yerel favori buluta taşındı →
+   `favorites: {place_key: "34|Celsus Kütüphanesi", il: "İzmir"}`
+5. Rota başlatılıp bir durak ilerletildi → `route_progress: {route_id: "34-0", stop_index: 1}`
+6. `#/hesabim`: e-posta, 1 favori, 1 devam eden rota göründü; konsol hatası yok
+
+Test verileri sonrasında silindi (0 kullanıcı, 0 favori, 0 ilerleme).
+
+> **Not:** İlk denemede gelen bağlantı site köküne (`…github.io/#access_token`) düşmüştü.
+> Doğru `email_redirect_to` yükü ile yapılan iki bağımsız testte (istemci ve curl) yönlendirme
+> `…/turkiye-kesif/` olarak geldi; güncel sürümde sorun görülmedi. Yine de magic-link kurulumu
+> değiştirilirse bu adres ilk kontrol edilmeli.
