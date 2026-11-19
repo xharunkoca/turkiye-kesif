@@ -501,7 +501,10 @@ def main():
 <h2>Saklama süresi</h2>
 <p>Yerel favoriler siz silene kadar tarayıcınızda kalır. Hesap verileri, hesabınızı silmeniz hâlinde en geç 30 gün içinde silinir.</p>
 <h2>Haklarınız (KVKK m.11)</h2>
-<p>Verilerinize erişme, düzeltme, silme, işlemeye itiraz etme ve zararın giderilmesini talep etme haklarınız vardır. Taleplerinizi iletişim sayfasından iletebilirsiniz.</p>
+<p>Verilerinize erişme, düzeltme, silme, işlemeye itiraz etme ve zararın giderilmesini talep etme haklarınız vardır.
+Erişme ve taşınabilirlik hakkınızı <b>Hesabım</b> sayfasındaki <a href="../hesabim/">“Verilerimi indir”</a> düğmesiyle (JSON),
+silme hakkınızı “Hesap verilerimi sil” düğmesiyle beklemeden kullanabilirsiniz. E-posta kaydının silinmesi için
+iletişim sayfasından yazmanız yeterlidir (en geç 30 gün).</p>
 <h2>Çerezler</h2>
 <p>Site zorunlu olmayan çerez kullanmaz; ayrıntı için <a href="../cerez-politikasi/">Çerez Politikası</a>.</p>
 </div>"""),
@@ -536,6 +539,8 @@ def main():
 <tr><td>tk-weather-v2</td><td>localStorage</td><td>Hava durumu yanıtını 3 saat önbelleğe alır (istek sayısını azaltır)</td><td>3 saat</td></tr>
 <tr><td>tk-consent-v1</td><td>localStorage</td><td>Bu bilgilendirmeyi gördüğünüzü hatırlar</td><td>Kalıcı</td></tr>
 <tr><td>tk-auth-v1</td><td>localStorage</td><td>Giriş yaptıysanız oturum jetonu</td><td>Oturum / 1 saat (yenilenir)</td></tr>
+<tr><td>tk-progress-v1</td><td>localStorage</td><td>Başlattığınız rotalarda kaldığınız durak</td><td>Siz silene kadar</td></tr>
+<tr><td>tk-done-v1</td><td>localStorage</td><td>Tamamladığınız rotaların listesi</td><td>Siz silene kadar</td></tr>
 </tbody></table>
 <p>Bunlar "çerez" değil, tarayıcı yerel depolama kayıtlarıdır ve sunucuya gönderilmez. Zorunlu olmadıkları için onay şeridinde
 "Yalnızca zorunlu" seçeneğiyle hava durumu isteklerini kapatabilirsiniz.</p>
@@ -577,6 +582,31 @@ güncellemesinde yayına alınır.</p>
         write(ROOT / slug / "index.html",
               page_shell(f"{title} | Türkiye Keşif", f"{title} — Türkiye Keşif.",
                          f"{SITE}/{slug}/", body, "../"))
+
+    # 2f-2) hesap sayfası (kişisel — indekslenmez, SPA'ya devreder)
+    write(ROOT / "hesabim" / "index.html",
+          page_shell("Hesabım — Favoriler ve Rota İlerlemesi | Türkiye Keşif",
+                     "Giriş yaparak favorilerinizi ve rota ilerlemenizi tüm cihazlarınızda eşitleyin.",
+                     f"{SITE}/hesabim/",
+                     """<p class="crumbs"><a href="../">Ana sayfa</a> › Hesabım</p>
+<h1>Hesabım</h1>
+<p class="lead">Favorileriniz ve rota ilerlemeniz giriş yaptığınızda tüm cihazlarınızda aynı olur.</p>
+<div class="legal">
+<ul>
+<li><b>Şifre yok:</b> e-posta adresinize tek kullanımlık giriş bağlantısı gönderilir (1 saat geçerli).</li>
+<li><b>Favoriler:</b> giriş yapmadan da çalışır; giriş yapınca hesabınıza bağlanır.</li>
+<li><b>Rota ilerlemesi:</b> başladığınız rota kaldığı duraktan devam eder.</li>
+<li><b>Haklarınız:</b> verilerinizi JSON olarak indirebilir, tek tuşla silebilirsiniz (KVKK m.11).</li>
+</ul>
+<p>Hesap ekranı uygulama içinde açılır:</p>
+<p><a class="cta" href="../#/hesabim">Hesabıma git</a></p>
+<h2>Ayrıntılı bilgi</h2>
+<ul>
+<li><a href="../kvkk-aydinlatma/">KVKK Aydınlatma Metni</a></li>
+<li><a href="../gizlilik/">Gizlilik Politikası</a></li>
+<li><a href="../cerez-politikasi/">Çerez ve Yerel Depolama Politikası</a></li>
+</ul>
+</div>""", "../", robots="noindex,follow"))
 
     # 2g) 404
     write(ROOT / "404.html", f"""<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8">

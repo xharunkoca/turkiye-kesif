@@ -127,6 +127,7 @@ cd .. && python3 build.py          # → 511 sayfa + hash'li paketler + sitemap.
 | `assets/style.<hash>.css`, `assets/app.<hash>.js` | İçerik hash'li, uzun ömürlü önbellek |
 | `iller/`, `kategori/<id>/`, `rotalar/`, `rota/<il>-<tema>/`, `il/<slug>/`, `ara/` | Prerender statik sayfalar |
 | `gizlilik/`, `kvkk-aydinlatma/`, `cerez-politikasi/`, `kaynaklar/`, `iletisim/` | Yasal metinler |
+| `hesabim/` | Hesap sayfası (noindex; giriş formu SPA'da çalışır) |
 | `sitemap.xml`, `404.html` | 511 URL; 404 sayfası arama kutusu + popüler bağlantılar |
 
 - Rota sırası (en yakın komşu + 2-opt) **hem** `build.py` **hem** `src/app.js` içinde aynı
@@ -166,6 +167,24 @@ turkiye-kesif/
 
 Giriş yapılmadan favoriler `localStorage`'ta (`tk-favs-v2`) tutulur; giriş yapılınca yerel
 favoriler buluta taşınır (`merge-duplicates`), ikinci cihazda aynı hesapla açıldığında geri gelir.
+
+### Hesabım sayfası ve rota ilerlemesi
+
+`/hesabim/` (uygulama içinde `#/hesabim`) tek ekranda şunları toplar:
+
+| Bölüm | İçerik |
+|---|---|
+| Hesap | e-posta, eşitle / verilerimi indir (JSON) / çıkış |
+| Devam eden rotalar | kaldığınız durak, ilerleme çubuğu, "Devam et" ve "Bitir" |
+| Favoriler | hesaba bağlı liste, tek tek kaldırma |
+| Tamamlanan rotalar | bitirdiğiniz rotalar |
+| Verilerimi sil | favoriler + ilerleme + cihaz kayıtları silinir, oturum kapanır |
+
+Rota ilerlemesi üç yerde tutulur: `localStorage` (`tk-progress-v1`, `tk-done-v1`) ve giriş yapıldıysa
+Supabase `route_progress` tablosu. Durak değiştikçe 700 ms debounce ile `upsert` edilir; ikinci cihazda
+giriş yapınca `progPull()` ile geri gelir. "Bitir" yerel kaydı tamamlananlara taşır ve uzak satırı siler.
+
+KVKK m.11 hakları ürün içinde: **verilerimi indir** (JSON dışa aktarım) ve **hesap verilerimi sil**.
 
 ### KVKK / çerez davranışı
 

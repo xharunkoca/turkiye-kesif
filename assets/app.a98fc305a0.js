@@ -706,11 +706,13 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
   function startRoute(rid, i) {
     liveRoute = { rid, i: i || 0 };
     openModal(liveHtml(), "modal-live");
+    if (typeof progPush === "function") progPush(rid, liveRoute.i);
   }
   function liveGo(delta) {
     if (!liveRoute) return;
     const r = allRoutes().find((x) => x.id === liveRoute.rid);
     liveRoute.i = Math.max(0, Math.min(liveRoute.i + delta, r.stops.length - 1));
+    if (typeof progPush === "function") progPush(liveRoute.rid, liveRoute.i);
     modalContent.innerHTML = liveHtml();
     window.scrollTo({ top: 0 });
   }
@@ -1602,6 +1604,7 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
         renderMevsim(seg[1]);
       }
       else if (seg[0] === "ara") { renderKesfet(params); }
+      else if (seg[0] === "hesabim") { renderHesabim(); }
       else if (seg[0] === "rota" && seg[1]) {
         // statik rota sayfasına devret (önceden oluşturulmuş, hızlı)
         location.replace("rota/" + encodeURIComponent(seg[1]) + "/");
@@ -1647,7 +1650,60 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
       if (act.startsWith("#/il/") && ilBySlug[act.split("/")[2]]) mountWx(ilBySlug[act.split("/")[2]]);
       return;
     }
-    if (e.target.closest("[data-auth-open]")) { e.preventDefault(); openAuthModal(); return; }
+    if (e.target.closest("[data-auth-open]")) {
+      e.preventDefault();
+      if (auth) { location.hash = "#/hesabim"; } else openAuthModal();
+      return;
+    }
+    if (e.target.closest("[data-resume]")) {
+      e.preventDefault();
+      const b = e.target.closest("[data-resume]");
+      startRoute(b.dataset.resume, Number(b.dataset.resumeAt) || 0);
+      return;
+    }
+    if (e.target.closest("[data-account-done]")) {
+      e.preventDefault();
+      progDone(e.target.closest("[data-account-done]").dataset.accountDone);
+      renderHesabim();
+      toast("Rota tamamlandı olarak işaretlendi");
+      return;
+    }
+    if (e.target.closest("[data-account-unfav]")) {
+      e.preventDefault();
+      const key = e.target.closest("[data-account-unfav]").dataset.accountUnfav;
+      favs = favs.filter((f) => f !== key);
+      writeJSON(FAV_KEY, favs);
+      updateFavCount();
+      if (auth) removeRemoteFav(key);
+      renderHesabim();
+      toast("Favorilerden çıkarıldı");
+      return;
+    }
+    if (e.target.closest("[data-account-sync]")) {
+      e.preventDefault();
+      Promise.all([syncFavorites(), progPull()]).then(() => { renderHesabim(); toast("Favoriler ve ilerleme eşitlendi"); });
+      return;
+    }
+    if (e.target.closest("[data-account-export]")) { e.preventDefault(); exportData(); return; }
+    if (e.target.closest("[data-account-purge]")) {
+      e.preventDefault();
+      openModal(`
+        <div class="modal-hero" style="height:120px;background:linear-gradient(135deg,#b3261e,#0a2c52)">
+          <span class="mh-ic">${icon("i-close", "i24")}</span>
+          <span class="mh-cat">Geri alınamaz işlem</span>
+        </div>
+        <div class="modal-body">
+          <h3 id="modalTitle">Hesap verilerimi sil</h3>
+          <p class="sub">Favoriler, rota ilerlemesi ve bu cihazdaki kayıtlar silinecek; oturumunuz kapanacak.</p>
+          <p class="auth-fine">E-posta kaydınızın da silinmesini isterseniz <a href="iletisim/">iletişim</a> sayfasından yazın (KVKK m.11).</p>
+          <div class="modal-actions">
+            <button class="btn btn-red" data-purge-confirm>${icon("i-close")}Evet, sil</button>
+            <button class="btn btn-ghost" data-close-modal>Vazgeç</button>
+          </div>
+        </div>`);
+      return;
+    }
+    if (e.target.closest("[data-purge-confirm]")) { e.preventDefault(); closeModal(); purgeAccount(); return; }
     if (e.target.closest("[data-auth-signout]")) { e.preventDefault(); signOut(); return; }
     if (e.target.closest("[data-fav-sync]")) { e.preventDefault(); syncFavorites().then(() => toast("Favoriler eşitlendi")); return; }
     const shareBtn = e.target.closest("[data-share-route]");
@@ -1658,7 +1714,14 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
     if (liveStart) { e.preventDefault(); e.stopPropagation(); startRoute(liveStart.dataset.liveStart, 0); return; }
     if (e.target.closest("[data-live-next]")) { e.preventDefault(); liveGo(1); return; }
     if (e.target.closest("[data-live-prev]") && !e.target.closest("[data-live-prev]").disabled) { e.preventDefault(); liveGo(-1); return; }
-    if (e.target.closest("[data-live-end]")) { e.preventDefault(); closeModal(); liveRoute = null; toast("Rota tamamlandı 🎉"); return; }
+    if (e.target.closest("[data-live-end]")) {
+      e.preventDefault();
+      const biten = liveRoute && liveRoute.rid;
+      closeModal(); liveRoute = null;
+      if (biten && typeof progDone === "function") progDone(biten);
+      toast("Rota tamamlandı 🎉");
+      return;
+    }
     if (e.target.closest("[data-live-close]")) { e.preventDefault(); closeModal(); liveRoute = null; return; }
     const routeEl = e.target.closest("[data-route]");
     if (routeEl) { e.preventDefault(); openRoute(routeEl.dataset.route); return; }
@@ -1844,6 +1907,7 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
     history.replaceState(null, "", location.pathname + location.search + "#/");
     toast(info.email ? `Giriş yapıldı — ${info.email}` : "Giriş yapıldı");
     syncFavorites();
+    progPull().then(() => { if (location.hash.startsWith("#/hesabim")) renderHesabim(); });
     return true;
   }
 
@@ -2096,6 +2160,10 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
       title = `${nf(ROUTE_COUNT)} Hazır Gezi Rotası — 5 Tema | ${base}`;
       desc = `81 il için ${nf(ROUTE_COUNT)} hazır rota: tarih, doğa, inanç, lezzet ve deniz temaları; her durak tek dokunuşla navigasyona bağlı.`;
       path = "rotalar/";
+    } else if (seg[0] === "hesabim") {
+      title = `Hesabım — Favoriler ve Rota İlerlemesi | ${base}`;
+      desc = "Giriş yaparak favorilerinizi ve rota ilerlemenizi tüm cihazlarınızda eşitleyin; verilerinizi tek tuşla indirin veya silin.";
+      path = "hesabim/";
     } else if (seg[0] === "mevsim" && seg[1] && seasonById[seg[1]]) {
       const se = seasonById[seg[1]];
       title = `${se.n} Rotası — Mevsime Göre Keşif | ${base}`;
@@ -2120,11 +2188,262 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
     if (loginForm) { e.preventDefault(); doSignIn(($("#loginEmail") || {}).value, $("#loginNote")); return; }
   });
 
+
+  /* ================================================================ v14
+     Rota ilerlemesi (Supabase route_progress) + "Hesabım" sayfası
+     ================================================================ */
+  const PROG_KEY = "tk-progress-v1";
+  const DONE_KEY = "tk-done-v1";
+
+  const readJSON = (k, dflt) => {
+    try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? dflt : v; } catch (e) { return dflt; }
+  };
+  const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* yoksay */ } };
+
+  const progAll = () => readJSON(PROG_KEY, {});
+  const doneAll = () => readJSON(DONE_KEY, []);
+
+  // "34-1" → { ilIdx: 34, ti: 1 } → routesFor(34)[1]
+  function routeByKey(id) {
+    const parts = String(id || "").split("-");
+    if (parts.length !== 2) return null;
+    const ilIdx = Number(parts[0]), ti = Number(parts[1]);
+    if (!Number.isInteger(ilIdx) || !Number.isInteger(ti)) return null;
+    if (ilIdx < 0 || ilIdx >= ILS.length) return null;
+    const list = routesFor(ilIdx);
+    return (list && list[ti]) || null;
+  }
+
+  function progSet(id, i) {
+    const m = progAll();
+    if (i == null) delete m[id]; else m[id] = i;
+    writeJSON(PROG_KEY, m);
+  }
+
+  let progTimer = null;
+  function progPush(id, i) {
+    progSet(id, i);
+    if (!auth) return;
+    clearTimeout(progTimer);
+    progTimer = setTimeout(() => {
+      sbRest("route_progress", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify([{ route_id: id, stop_index: i, updated_at: new Date().toISOString() }])
+      }).catch(() => { /* sessiz */ });
+    }, 700);
+  }
+
+  function progDone(id) {
+    progSet(id, null);
+    const l = doneAll();
+    if (!l.includes(id)) l.push(id);
+    writeJSON(DONE_KEY, l);
+    if (auth) sbRest(`route_progress?route_id=eq.${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => { /* sessiz */ });
+  }
+
+  async function progPull() {
+    if (!auth) return;
+    try {
+      const rows = (await sbRest("route_progress?select=route_id,stop_index")) || [];
+      const m = progAll();
+      rows.forEach((r) => { if (typeof r.stop_index === "number") m[r.route_id] = r.stop_index; });
+      writeJSON(PROG_KEY, m);
+    } catch (e) { /* sessiz: yerel modda devam */ }
+  }
+
+  /* ---------------------------------------------------- Hesabım sayfası */
+  function progressBar(i, n) {
+    const pct = Math.max(6, Math.round(((i + 1) / Math.max(1, n)) * 100));
+    return `<span class="prog-bar" role="img" aria-label="${i + 1}/${n} durak tamamlandı"><i style="width:${pct}%"></i></span>`;
+  }
+
+  function renderHesabim() {
+    const view = $("#view-page");
+    const m = progAll(), done = doneAll();
+    const progIds = Object.keys(m).filter((id) => routeByKey(id));
+    const doneIds = done.filter((id) => routeByKey(id));
+    const favItems = favs.map((id) => {
+      const cut = id.indexOf("|");
+      const ilIdx = Number(id.slice(0, cut)), name = id.slice(cut + 1);
+      const p = PLACES.find((x) => x[2] === ilIdx && x[0] === name);
+      // kayıt bulunamazsa (veri güncellenmiş olabilir) yine de adıyla göster
+      return p ? { p, id } : { p: null, id, name, il: ILS[ilIdx] ? ILS[ilIdx].n : "" };
+    });
+
+    const head = `
+      <div class="page-head">
+        <div class="container">
+          <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><b>Hesabım</b></nav>
+          <h1>Hesabım</h1>
+          <p class="page-sub">Favorileriniz ve rota ilerlemeniz — giriş yaptığınızda tüm cihazlarınızda aynı.</p>
+        </div>
+      </div>`;
+
+    if (!auth) {
+      view.innerHTML = `${head}
+        <div class="container">
+          <section class="acc-grid">
+            <div class="acc-card">
+              <h2>E-posta ile giriş</h2>
+              <p class="acc-sub">Şifre yok: tek kullanımlık giriş bağlantısı gönderilir, bağlantı 1 saat geçerlidir.</p>
+              <form class="auth-form" id="accForm" novalidate>
+                <label for="accEmail">E-posta adresiniz</label>
+                <input id="accEmail" type="email" autocomplete="email" inputmode="email" placeholder="ornek@eposta.com" required>
+                <button class="btn btn-red" type="submit">${icon("i-user")}Giriş bağlantısı gönder</button>
+              </form>
+              <p class="form-note" id="accNote" role="status" aria-live="polite">Giriş yapmadan da her şey çalışır; favoriler bu tarayıcıda saklanır.</p>
+            </div>
+            <div class="acc-card acc-quiet">
+              <h2>Hesap ne değiştirir?</h2>
+              <ul class="acc-list">
+                <li>${icon("i-heart")}Favoriler telefon, tablet ve bilgisayarda aynı listede</li>
+                <li>${icon("i-route")}Başladığınız rota kaldığı duraktan devam eder</li>
+                <li>${icon("i-close")}Verilerinizi tek tuşla indirir veya silersiniz</li>
+              </ul>
+              <p class="acc-fine">Yalnızca e-posta adresiniz işlenir; reklam, izleme veya üçüncü taraf analitik yok.
+                Ayrıntı: <a href="kvkk-aydinlatma/">KVKK Aydınlatma</a> · <a href="gizlilik/">Gizlilik</a></p>
+            </div>
+          </section>
+          ${progIds.length ? `<section class="acc-section">
+            <h2>Bu cihazdaki ilerleme</h2>
+            <p class="acc-sub">Giriş yaparsanız bu ilerleme hesabınıza bağlanır.</p>
+            <div class="acc-list-rows">${progIds.slice(0, 6).map((id) => resumeRow(id, m[id], false)).join("")}</div>
+          </section>` : ""}
+        </div>`;
+      const f = $("#accForm");
+      if (f) f.addEventListener("submit", (e) => { e.preventDefault(); doSignIn($("#accEmail").value.trim(), $("#accNote")); });
+      return;
+    }
+
+    view.innerHTML = `${head}
+      <div class="container">
+        <section class="acc-card acc-status">
+          <div>
+            <span class="acc-label">Giriş yapıldı</span>
+            <h2 class="acc-mail">${esc(auth.email || "hesabınız")}</h2>
+            <p class="acc-sub">Favoriler ve rota ilerlemesi Supabase (AB/Frankfurt) üzerinde tutulur ve yalnızca sizin hesabınıza görünür.</p>
+          </div>
+          <div class="acc-actions">
+            <button class="btn btn-red" data-account-sync>${icon("i-heart")}Eşitle</button>
+            <button class="btn btn-ghost" data-account-export>${icon("i-clock")}Verilerimi indir</button>
+            <button class="btn btn-ghost" data-auth-signout>${icon("i-close")}Çıkış yap</button>
+          </div>
+        </section>
+
+        <section class="acc-section">
+          <h2>Devam eden rotalar <em>${progIds.length}</em></h2>
+          ${progIds.length
+            ? `<div class="acc-list-rows">${progIds.map((id) => resumeRow(id, m[id], true)).join("")}</div>`
+            : `<p class="acc-empty">Başladığınız bir rota yok. <a href="#/rotalar">${nf(ROUTE_COUNT)} hazır rotaya</a> göz atın.</p>`}
+        </section>
+
+        <section class="acc-section">
+          <h2>Favorileriniz <em>${favItems.length}</em></h2>
+          ${favItems.length
+            ? `<div class="acc-fav-grid">${favItems.map(({ p, id, name, il }) => `
+                <article class="acc-fav">
+                  ${p ? `<button class="acc-fav-open" data-place="${p.idx}">
+                    <span class="suggest-ic">${catIcon(p[1])}</span>
+                    <span><span class="suggest-t">${esc(p[0])}</span><span class="suggest-m">${esc(CATS[p[1]].label)} • ${esc(ILS[p[2]].n)}</span></span>
+                  </button>` : `<span class="acc-fav-open">
+                    <span class="suggest-ic">${icon("i-heart")}</span>
+                    <span><span class="suggest-t">${esc(name)}</span><span class="suggest-m">${esc(il)} · kayıt güncellenmiş olabilir</span></span>
+                  </span>`}
+                  <button class="acc-fav-x" data-account-unfav="${esc(id)}" aria-label="${esc(p ? p[0] : name)} favorilerden çıkar">${icon("i-close")}</button>
+                </article>`).join("")}</div>`
+            : `<p class="acc-empty">Henüz favori yok. Kartlardaki kalp ikonuna dokunarak ekleyin.</p>`}
+        </section>
+
+        ${doneIds.length ? `<section class="acc-section">
+          <h2>Tamamlanan rotalar <em>${doneIds.length}</em></h2>
+          <div class="acc-done">${doneIds.map((id) => {
+            const r = routeByKey(id), il = ILS[r.ilIdx];
+            return `<a class="chip" href="#/il/${IL_SLUG[r.ilIdx]}">${icon("i-check")}${esc(il.n)} · ${esc(r.theme.label)}</a>`;
+          }).join("")}</div>
+        </section>` : ""}
+
+        <section class="acc-section acc-danger">
+          <h2>Verilerimi sil</h2>
+          <p class="acc-sub">Favorileriniz, rota ilerlemeniz ve bu cihazdaki kayıtlar silinir. İşlem geri alınamaz.</p>
+          <button class="btn btn-ghost danger" data-account-purge>${icon("i-close")}Hesap verilerimi sil</button>
+        </section>
+      </div>`;
+  }
+
+  function resumeRow(id, i, withActions) {
+    const r = routeByKey(id);
+    if (!r) return "";
+    const il = ILS[r.ilIdx];
+    const n = r.stops.length;
+    const idx = Math.max(0, Math.min(i, n - 1));
+    return `<article class="acc-row">
+      <div class="acc-row-main">
+        <span class="acc-row-t">${esc(il.n)} — ${esc(r.theme.label)}</span>
+        <span class="acc-row-m">${idx + 1}/${n} durak • ${nf(r.km)} km • sıradaki: ${esc(r.stops[idx][0])}</span>
+        ${progressBar(idx, n)}
+      </div>
+      ${withActions ? `<div class="acc-row-actions">
+        <button class="btn btn-red" data-resume="${esc(id)}" data-resume-at="${idx}">${icon("i-nav")}Devam et</button>
+        <button class="btn btn-ghost" data-account-done="${esc(id)}">${icon("i-check")}Bitir</button>
+      </div>` : `<span class="acc-row-m">%${Math.round(((idx + 1) / n) * 100)}</span>`}
+    </article>`;
+  }
+
+  function exportData() {
+    const payload = {
+      olusturma: new Date().toISOString(),
+      hesap: auth ? auth.email : null,
+      favoriler: favs.map((id) => {
+        const cut = id.indexOf("|");
+        const ilIdx = Number(id.slice(0, cut)), name = id.slice(cut + 1);
+        const p = PLACES.find((x) => x[2] === ilIdx && x[0] === name);
+        return { ad: name, il: ILS[ilIdx] ? ILS[ilIdx].n : null, kategori: p ? CATS[p[1]].label : null };
+      }),
+      rota_ilerlemesi: Object.entries(progAll()).map(([id, i]) => {
+        const r = routeByKey(id);
+        return { rota: r ? `${ILS[r.ilIdx].n} — ${r.theme.label}` : id, durak: i + 1, toplam_durak: r ? r.stops.length : null };
+      }),
+      tamamlanan_rotalar: doneAll().map((id) => {
+        const r = routeByKey(id);
+        return r ? `${ILS[r.ilIdx].n} — ${r.theme.label}` : id;
+      })
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "turkiye-kesif-verilerim.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast("Verileriniz JSON olarak indirildi");
+  }
+
+  async function purgeAccount() {
+    if (auth) {
+      try { await sbRest("favorites?id=not.is.null", { method: "DELETE" }); } catch (e) { /* yoksay */ }
+      try { await sbRest("route_progress?route_id=not.is.null", { method: "DELETE" }); } catch (e) { /* yoksay */ }
+    }
+    favs = [];
+    writeJSON(FAV_KEY, []);
+    writeJSON(PROG_KEY, {});
+    writeJSON(DONE_KEY, []);
+    saveAuth(null);
+    updateFavCount();
+    toast("Verileriniz silindi");
+    renderHesabim();
+  }
+
   /* ---------------------------------------------------------------- başlat */
   window.addEventListener("hashchange", router);
   mountConsent();
   renderAuthUI();
-  if (auth) ensureSession().then((s) => { if (s) syncFavorites(); });
+  if (auth) ensureSession().then((s) => {
+    if (!s) return;
+    syncFavorites();
+    progPull().then(() => {
+      if (location.hash.startsWith("#/hesabim")) renderHesabim();
+    });
+  });
   initHeroSearch();
   renderHome();
   mountHeaderWx();

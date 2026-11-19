@@ -411,3 +411,23 @@ Rota sayısı ekranlarda `ROUTE_COUNT = 81 × 5` ile gösterilir; davranış de�
 
 **Sıradaki adım (v14):** veriyi `assets/data.<hash>.json` olarak ayırıp `fetch()` ile ilk
 boyamadan sonra yüklemek — indirme süresi değişmez, `app.js` 40 KB gzip'e iner.
+
+## v14 — Hesabım sayfası ve rota ilerlemesi
+
+Supabase şemasında hazır olan `route_progress` tablosu ilk kez istemciye bağlandı; "favoriler ve
+rota ilerlemesi tüm cihazlarda" vaadi artık iki veri türü için de çalışıyor.
+
+| Bileşen | Ayrıntı |
+|---|---|
+| Yerel kayıt | `tk-progress-v1` (rota → durak), `tk-done-v1` (tamamlananlar) |
+| Uzak kayıt | `route_progress(route_id, stop_index, updated_at)`, 700 ms debounce ile `upsert` |
+| Birleştirme | giriş sonrası `progPull()` uzak satırları yerelle birleştirir |
+| Bitirme | "Bitir" yerel kaydı tamamlananlara taşır, uzak satırı siler |
+| KVKK m.11 | "Verilerimi indir" JSON dışa aktarımı, "Hesap verilerimi sil" tek tuşla silme |
+| Yönlendirme | `#/hesabim`, `/hesabim/` statik sayfası (`noindex`), alt bilgi + mobil menü bağlantısı |
+| Giriş akışı | giriş yapmış kullanıcıda üst sağdaki düğme doğrudan Hesabım'a gider |
+
+Doğrulanan akışlar (yerel, sahte oturumla): rota başlat → durak ilerlet → `tk-progress-v1 = {"34-0":1}` →
+Hesabım'da "İzmir — Tarih ve Kültür Rotası, 2/5 durak, sıradaki: Atatürk, Annesi ve Kadın Hakları Anıtı" →
+"Devam et" rotayı 2. duraktan açar; "Bitir" tamamlananlara taşır; "Verilerimi indir" `turkiye-kesif-verilerim.json`
+indirir; "Hesap verilerimi sil" onayıyla tüm anahtarlar temizlenir ve oturum kapanır. Konsol hatası yok.
