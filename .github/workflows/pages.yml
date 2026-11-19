@@ -1,0 +1,63 @@
+name: GitHub Pages'e yayınla
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Veriyi doğrula (81 il / 15 kategori)
+        run: |
+          python3 - <<'PY'
+          import json
+          d = json.load(open("data/turkiye-data.json", encoding="utf-8"))
+          ils, cats, places = len(d["ils"]), len(d["cats"]), len(d["places"])
+          koy = sum(len(x["k"]) for i in d["ils"] for x in i["d"])
+          mah = sum(len(x.get("m", [])) for i in d["ils"] for x in i["d"])
+          print(f"{ils} il • {cats} kategori • {places} kayıt • {koy} köy • {mah} mahalle")
+          assert ils == 81 and cats == 15, "veri eksik"
+          PY
+
+      - name: index.html kaynaklarla tutarlı mı?
+        run: |
+          cp index.html /tmp/index.build.old
+          python3 build.py
+          if ! diff -q /tmp/index.build.old index.html; then
+            echo "::warning::index.html kaynaklarla güncel değil — 'python3 build.py' çıktısı işleniyor"
+          fi
+
+      - name: Yayın klasörünü hazırla
+        run: |
+          mkdir -p _site
+          cp index.html .nojekyll _site/
+          cp index.html _site/404.html
+          du -h _site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

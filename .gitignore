@@ -1,0 +1,20 @@
+# ---- ham Wikidata önbelleği (fetch*.py ile yeniden üretilir, ~45 MB)
+data/raw/
+!data/raw/.gitkeep
+
+# ---- ekran görüntüleri / geçici dosyalar
+shots/
+*.log
+*.tmp
+
+# ---- Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ---- işletim sistemi / editör
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

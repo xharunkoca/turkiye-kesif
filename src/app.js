@@ -1,0 +1,1191 @@
+/* ============================================================================
+   Türkiye Keşif v2 — 81 il • 1.004 ilçe • 17.738 köy • 3.218 doğrulanmış yer
+   Veri: Wikidata (koordinatlı mekânlar), Türkçe Vikipedi, TÜRKPATENT/TÜİK envanter sayıları
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const D = window.__DATA__;
+  const ILS = D.ils;
+  const CATS = D.cats;
+  const PLACES = D.places;
+  const N_IL = ILS.length;
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const icon = (id, cls) => `<svg width="16" height="16" aria-hidden="true"${cls ? ` class="${cls}"` : ""}><use href="#${id}"/></svg>`;
+  const nf = (n) => Number(n).toLocaleString("tr-TR");
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  /* ---------------------------------------------------------------- indeksler */
+  const byIl = ILS.map(() => []);
+  const byIlCat = ILS.map(() => CATS.map(() => []));
+  const ilByName = {};
+  ILS.forEach((il, i) => { ilByName[il.n] = i; });
+
+  PLACES.forEach((p, idx) => {
+    p.idx = idx;
+    byIl[p[2]].push(p);
+    byIlCat[p[2]][p[1]].push(p);
+  });
+
+  const VILLAGES = [];
+  ILS.forEach((il, i) => il.d.forEach((d) => {
+    d.k.forEach((k) => VILLAGES.push({ n: k, il: i, d: d.n, t: "köy" }));
+    (d.m || []).forEach((m) => VILLAGES.push({ n: m, il: i, d: d.n, t: "mahalle" }));
+  }));
+
+  const norm = (s) => String(s || "").toLocaleLowerCase("tr")
+    .replace(/ı/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u")
+    .replace(/ö/g, "o").replace(/ç/g, "c").replace(/â/g, "a").replace(/î/g, "i");
+
+  const IL_SEARCH = ILS.map((il, i) => ({ i, k: norm(il.n) }));
+  const DIST_SEARCH = [];
+  ILS.forEach((il, i) => il.d.forEach((d) => DIST_SEARCH.push({ i, d: d.n, k: norm(d.n) })));
+  const VILLAGE_SEARCH = VILLAGES.map((v) => ({ ...v, k: norm(v.n) }));
+  const PLACE_SEARCH = PLACES.map((p) => ({ p, k: norm(p[0] + " " + (p[6] || "")) }));
+
+  const villCount = (il) => il.d.reduce((a, d) => a + d.k.length + (d.m ? d.m.length : 0), 0);
+  const distCount = (il) => il.d.length;
+
+  const dedupeByName = (list) => {
+    const seen = new Set();
+    return list.filter((p) => { const k = norm(p[0]); if (seen.has(k)) return false; seen.add(k); return true; });
+  };
+
+  // aynı yerin iki kategoride görünmesi sayıları şişirmesin: gösterimde tekilleştirilmiş listeler
+  const byIlUniq = byIl.map((l) => dedupeByName(l));
+  const PLACE_COUNT = byIlUniq.reduce((a, l) => a + l.length, 0);
+
+  const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const IL_SLUG = ILS.map((il) => slug(il.n));
+  // ilçe slug haritası: ilSlug -> { ilceSlug: ilçe indeksi }
+  const DIST_SLUG = ILS.map((il) => {
+    const m = {};
+    il.d.forEach((d, di) => { m[slug(d.n)] = di; });
+    return m;
+  });
+  const ilBySlug = {};
+  IL_SLUG.forEach((s, i) => { ilBySlug[s] = i; });
+
+  const catById = {};
+  CATS.forEach((c, i) => { catById[c.id] = i; });
+
+  // kategori kısa açıklamaları (kategori sayfası ve kart başlıklarında)
+  const CAT_DESC = {
+    antik: "Antik kentler, höyükler ve arkeolojik sitler — Anadolu'nun Tunç Çağı'ndan Roma'ya uzanan yerleşim izleri.",
+    muze: "Bakanlığa bağlı ve özel müzeler; arkeoloji, etnografya ve sanat koleksiyonları.",
+    doga: "Millî parklar, tabiat parkları, tabiat anıtları ve korunan doğal alanlar.",
+    tarih: "Kale, han, kervansaray, köprü ve tescilli sivil mimarlık örnekleri.",
+    gol: "Doğal göller, set ve krater gölleri, sulak alanlar.",
+    selale: "Şelaleler ve çağlayanlar; kaynak sularının basamaklı döküldüğü vadiler.",
+    magara: "Turizme açık mağaralar; damlataş oluşumları ve karstik boşluklar.",
+    vadi: "Kanyonlar ve vadiler; akarsu aşındırmasıyla oluşan derin geçitler.",
+    plaj: "Mavi Bayraklı plajlar, koylar ve kıyı şeritleri.",
+    gastro: "Yöresel mutfak, coğrafi işaretli ürünler ve yerel lezzet durakları.",
+    yayla: "Yaylalar, kamp ve karavan alanları, doğa yürüyüşü başlangıç noktaları.",
+    dini: "Cami, kilise, manastır, türbe ve ziyaret yerleri.",
+    kultur: "Anıtlar, kütüphaneler ve kültür-sanat mekânları.",
+    termal: "Kaplıca ve termal tesisler; jeotermal kaynakların bulunduğu ilçeler.",
+    carsi: "Tarihî çarşılar, bedestenler, arastalar ve haftalık pazarlar."
+  };
+
+  const CAT_COLORS = ["#2f6fbe", "#c97716", "#2f9b52", "#c0392b", "#12869b", "#1f9fae",
+    "#7a48c7", "#d97706", "#0f87a8", "#b4500f", "#3f8f3f", "#7749b8", "#8a56c9",
+    "#2b6f9e", "#b3303a"];
+
+  const maps = (lat, lon) => `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+  const wdUrl = (name) => `https://www.wikidata.org/w/index.php?search=${encodeURIComponent(name)}`;
+  const wikiUrl = (name) => `https://tr.wikipedia.org/w/index.php?search=${encodeURIComponent(name)}`;
+
+  function haversine(a, b) {
+    const R = 6371, p = Math.PI / 180;
+    const dLat = (b[0] - a[0]) * p, dLon = (b[1] - a[1]) * p;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * p) * Math.cos(b[0] * p) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  /* ---------------------------------------------------------------- favoriler */
+  const FAV_KEY = "tk-favs-v2";
+  let favs = [];
+  try { favs = JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); } catch (e) { favs = []; }
+  const favId = (p) => `${p[2]}|${p[0]}`;
+  const isFav = (p) => favs.includes(favId(p));
+  function toggleFav(p) {
+    const id = favId(p);
+    if (favs.includes(id)) { favs = favs.filter((f) => f !== id); toast(`"${p[0]}" favorilerden çıkarıldı`); }
+    else { favs = [...favs, id]; toast(`"${p[0]}" favorilere eklendi`); }
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) { /* yoksay */ }
+    $$(`[data-fav="${CSS.escape(id)}"]`).forEach((b) => b.classList.toggle("on", favs.includes(id)));
+    updateFavCount();
+  }
+  function updateFavCount() {
+    $$("[data-fav-count]").forEach((el) => {
+      el.textContent = favs.length ? `(${favs.length})` : "";
+      el.style.fontSize = "11px"; el.style.opacity = ".8";
+    });
+  }
+
+  /* ---------------------------------------------------------------- toast */
+  let toastTimer;
+  function toast(msg) {
+    const t = $("#toast");
+    $("#toastText").textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  /* ---------------------------------------------------------------- harita */
+  const MB = { lon0: 26.043351, lon1: 44.79399, lat0: 35.821535, lat1: 42.141485, W: 1000, pad: 8 };
+  (function () {
+    MB.sx = (MB.W - 2 * MB.pad) / (MB.lon1 - MB.lon0);
+    MB.sy = MB.sx / Math.cos(((MB.lat0 + MB.lat1) / 2) * Math.PI / 180);
+  })();
+  const project = (lat, lon) => [MB.pad + (lon - MB.lon0) * MB.sx, MB.pad + (MB.lat1 - lat) * MB.sy];
+
+  function mapPins(interactive) {
+    return ILS.map((il, i) => {
+      if (il.lat == null) return "";
+      const [x, y] = project(il.lat, il.lon);
+      return `<g class="map-pin${interactive ? " big" : ""}" data-il="${i}" tabindex="0" role="button" aria-label="${esc(il.n)}">
+        <title>${esc(il.n)}</title>
+        <circle class="pulse" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"/>
+        <circle class="core" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${interactive ? 4.5 : 3.2}"/>
+      </g>`;
+    }).join("");
+  }
+
+  /* ---------------------------------------------------------------- rotalar */
+  const THEMES = [
+    { key: "tarih", label: "Tarih ve Kültür Rotası", cats: ["antik", "tarih", "muze", "kultur"], color: "#b3261e" },
+    { key: "doga", label: "Doğa ve Manzara Rotası", cats: ["doga", "gol", "selale", "vadi", "yayla"], color: "#1f7a4d" },
+    { key: "inanc", label: "İnanç ve Miras Rotası", cats: ["dini", "carsi", "muze"], color: "#5b3fa8" },
+    { key: "lezzet", label: "Lezzet Durakları Rotası", cats: ["gastro", "carsi"], color: "#c76a00" },
+    { key: "deniz", label: "Deniz ve Şifa Rotası", cats: ["plaj", "termal", "gol", "doga"], color: "#0e6f86" },
+  ];
+
+  function nearestPath(stops, start) {
+    const rest = stops.slice();
+    const path = [];
+    let cur = start;
+    while (rest.length) {
+      let bi = 0, bd = Infinity;
+      rest.forEach((p, i) => {
+        const d = haversine(cur, [p[4], p[5]]);
+        if (d < bd) { bd = d; bi = i; }
+      });
+      const next = rest.splice(bi, 1)[0];
+      path.push(next);
+      cur = [next[4], next[5]];
+    }
+    return path;
+  }
+
+  function routeStats(stops, il) {
+    let km = 0;
+    for (let i = 1; i < stops.length; i++) km += haversine([stops[i - 1][4], stops[i - 1][5]], [stops[i][4], stops[i][5]]);
+    km = Math.max(1, Math.round(km));
+    const days = Math.min(4, Math.max(1, Math.round(km / 70) || 1));
+    const level = km < 45 ? "Kolay" : km < 110 ? "Orta" : "Zor";
+    return { km, days, level };
+  }
+
+  const routeCache = {};
+  function routesFor(ilIdx) {
+    if (routeCache[ilIdx]) return routeCache[ilIdx];
+    const il = ILS[ilIdx];
+    const pool = byIl[ilIdx];
+    const center = [il.lat, il.lon];
+    const used = new Set();
+    const routes = THEMES.map((th, ti) => {
+      let items = pool.filter((p) => th.cats.includes(CATS[p[1]].id) && !used.has(p.idx));
+      if (items.length < 2) items = pool.filter((p) => !used.has(p.idx));
+      const chosen = [];
+      const tmp = items.slice();
+      // önce il merkezine en yakın durak, sonra il geneline yayılan (farthest-point) seçim
+      while (tmp.length && chosen.length < 5) {
+        let bi = 0, best = -1;
+        tmp.forEach((p, i) => {
+          const d = chosen.length
+            ? Math.min(...chosen.map((c) => haversine([c[4], c[5]], [p[4], p[5]])))
+            : -haversine(center, [p[4], p[5]]);
+          if (d > best) { best = d; bi = i; }
+        });
+        chosen.push(tmp.splice(bi, 1)[0]);
+      }
+      // rota en az 4 durak olsun: kullanılmayan yerlerden tamamla
+      if (chosen.length < 4) {
+        pool.filter((p) => !used.has(p.idx) && !chosen.includes(p))
+          .sort((a, b) => haversine(center, [a[4], a[5]]) - haversine(center, [b[4], b[5]]))
+          .forEach((p) => { if (chosen.length < 4) chosen.push(p); });
+      }
+      // hâlâ eksikse (küçük iller) diğer durakları tekrar kullan
+      if (chosen.length < 3) {
+        pool.forEach((p) => { if (chosen.length < 3 && !chosen.includes(p)) chosen.push(p); });
+      }
+      chosen.forEach((p) => used.add(p.idx));
+      const stops = nearestPath(chosen, center);
+      const st = routeStats(stops, il);
+      return { id: `${ilIdx}-${ti}`, ilIdx, theme: th, stops, ...st };
+    });
+    routeCache[ilIdx] = routes;
+    return routes;
+  }
+
+  const ALL_ROUTES = [];
+  ILS.forEach((il, i) => routesFor(i).forEach((r) => ALL_ROUTES.push(r)));
+
+  /* ---------------------------------------------------------------- parçalar */
+  function catIcon(catIdx, size) {
+    const c = CATS[catIdx];
+    return `<svg width="${size || 18}" height="${size || 18}" aria-hidden="true"><use href="#${c.icon}"/></svg>`;
+  }
+
+  function placeCard(p) {
+    const cat = CATS[p[1]];
+    const color = CAT_COLORS[p[1]];
+    const il = ILS[p[2]];
+    const fav = isFav(p) ? " on" : "";
+    return `<article class="p-card">
+      <div class="p-head" style="--c:${color}">
+        <span class="p-ic">${catIcon(p[1], 22)}</span>
+        ${p[6] ? `<span class="p-type">${esc(p[6])}</span>` : `<span class="p-type">${esc(cat.label)}</span>`}
+        <button class="fav-btn${fav}" data-fav="${esc(favId(p))}" aria-label="${esc(p[0])} favorilere ekle">${icon("i-heart", "i14")}</button>
+      </div>
+      <div class="p-body">
+        <h3><button class="p-title" data-place="${p.idx}">${esc(p[0])}</button></h3>
+        <p class="p-loc">${icon("i-pin")}<span>${esc(p[3] || il.n)}${p[3] ? ", " + esc(il.n) : ""}</span></p>
+        <div class="p-foot">
+          <a class="goto" href="${maps(p[4], p[5])}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}Konuma git</a>
+          <span class="p-src" title="Kaynak: ${p[7] === "approx" ? "il merkezi (yaklaşık)" : p[7] === "wikipedia" ? "Türkçe Vikipedi koordinatı" : "Wikidata"}">${p[7] === "approx" ? "≈ konum" : "✓ doğrulandı"}</span>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  function routeCard(r, opts) {
+    const o = opts || {};
+    const il = ILS[r.ilIdx];
+    const stops = r.stops.slice(0, 4).map((s) => esc(s[0]));
+    return `<article class="route-item" data-route="${r.id}">
+      <div class="ri-top" style="--c:${r.theme.color}">
+        <span class="ri-badge">${esc(r.theme.label.replace(" Rotası", ""))}</span>
+        <span class="ri-il">${esc(il.n)}</span>
+      </div>
+      <h3>${esc(il.n)} — ${esc(r.theme.label)}</h3>
+      <p class="ri-stops">${stops.join(" → ")}${r.stops.length > 4 ? " …" : ""}</p>
+      <div class="ri-meta">
+        <span>${icon("i-clock")}${r.days} gün</span>
+        <span>${icon("i-ruler")}${nf(r.km)} km</span>
+        <span>${icon("i-level")}${r.level}</span>
+        <span>${icon("i-pin")}${r.stops.length} durak</span>
+      </div>
+      <button class="btn btn-red ri-btn" data-route="${r.id}">Rotayı İncele ${icon("i-arrow-right")}</button>
+    </article>`;
+  }
+
+  function ilCard(i, opts) {
+    const il = ILS[i];
+    const count = byIlUniq[i].length;
+    const villages = villCount(il);
+    const o = opts || {};
+    return `<a class="il-card" href="#/il/${IL_SLUG[i]}">
+      <span class="il-plate">${String(il.p).padStart(2, "0")}</span>
+      <span class="il-name">${esc(il.n)}</span>
+      <span class="il-region">${esc(il.r)} Bölgesi</span>
+      <span class="il-stats">
+        <span>${icon("i-pin")}${nf(count)} yer</span>
+        <span>${icon("i-building")}${nf(il.d.length)} ilçe</span>
+        ${o.villages === false ? "" : `<span>${icon("i-village")}${nf(villages)} köy/mahalle</span>`}
+      </span>
+    </a>`;
+  }
+
+  /* ---------------------------------------------------------------- arama */
+  function searchAll(q, limit) {
+    const k = norm(q);
+    const lim = limit || 6;
+    if (!k) {
+      return { ils: ILS.map((il, i) => i).slice(0, lim).map((i) => ({ i })), dists: [], villages: [], places: [] };
+    }
+    const ils = IL_SEARCH.filter((x) => x.k.includes(k)).map((x) => ({ i: x.i })).slice(0, lim);
+    const dists = DIST_SEARCH.filter((x) => x.k.includes(k)).slice(0, lim);
+    const villages = VILLAGE_SEARCH.filter((x) => x.k.startsWith(k)).slice(0, lim);
+    const seen = new Set();
+    const places = PLACE_SEARCH.filter((x) => x.k.includes(k)).map((x) => x.p)
+      .filter((p) => { const key = p[0].toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; })
+      .slice(0, lim * 2);
+    return { ils, dists, villages, places };
+  }
+
+  function renderSuggest(q) {
+    const r = searchAll(q, 5);
+    const box = $("#suggest");
+    const parts = [];
+    if (r.ils.length) {
+      parts.push(`<div class="suggest-head">İller</div>` + r.ils.map((x) =>
+        `<a class="suggest-item" href="#/il/${IL_SLUG[x.i]}"><span class="suggest-ic">${icon("i-building")}</span>
+          <span><span class="suggest-t">${esc(ILS[x.i].n)}</span><span class="suggest-m">${esc(ILS[x.i].r)} Bölgesi • ${nf(byIlUniq[x.i].length)} keşif noktası</span></span></a>`).join(""));
+    }
+    if (r.dists.length) {
+      parts.push(`<div class="suggest-head">İlçeler</div>` + r.dists.map((x) =>
+        `<a class="suggest-item" href="#/ilce/${IL_SLUG[x.i]}/${slug(x.d)}"><span class="suggest-ic">${icon("i-pin")}</span>
+          <span><span class="suggest-t">${esc(x.d)}</span><span class="suggest-m">${esc(ILS[x.i].n)}</span></span></a>`).join(""));
+    }
+    if (r.villages.length) {
+      parts.push(`<div class="suggest-head">Köy ve mahalleler</div>` + r.villages.map((x) =>
+        `<a class="suggest-item" href="#/kesfet?il=${x.il}&ilce=${encodeURIComponent(x.d)}"><span class="suggest-ic">${icon("i-village")}</span>
+          <span><span class="suggest-t">${esc(x.n)}</span><span class="suggest-m">${esc(x.t)} • ${esc(x.d)}, ${esc(ILS[x.il].n)}</span></span></a>`).join(""));
+    }
+    if (r.places.length) {
+      parts.push(`<div class="suggest-head">Gezilecek yerler</div>` + r.places.map((p) =>
+        `<button class="suggest-item" data-place="${p.idx}"><span class="suggest-ic">${catIcon(p[1])}</span>
+          <span><span class="suggest-t">${esc(p[0])}</span><span class="suggest-m">${esc(CATS[p[1]].label)} • ${esc(p[3] || ILS[p[2]].n)}, ${esc(ILS[p[2]].n)}</span></span></button>`).join(""));
+    }
+    if (!parts.length) {
+      box.innerHTML = `<div class="suggest-empty">"${esc(q)}" için sonuç bulunamadı. Bir il, ilçe, köy veya yer adı deneyin.</div>`;
+    } else {
+      box.innerHTML = parts.join("") +
+        `<a class="suggest-all" href="#/kesfet?q=${encodeURIComponent(q)}">Tüm sonuçları gör ${icon("i-arrow-right")}</a>`;
+    }
+    box.classList.add("show");
+  }
+
+  /* ---------------------------------------------------------------- modal */
+  const modal = $("#modal");
+  const modalContent = $("#modalContent");
+  let lastFocus = null;
+
+  function openModal(html, cls) {
+    lastFocus = document.activeElement;
+    modalContent.innerHTML = html;
+    $("#modalCard").className = "modal-card " + (cls || "");
+    modal.classList.add("open");
+    document.body.style.overflow = "hidden";
+    const c = $(".modal-close");
+    if (c) c.focus();
+  }
+  function closeModal() {
+    modal.classList.remove("open");
+    document.body.style.overflow = "";
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  function openPlace(idx) {
+    const p = PLACES[idx];
+    if (!p) return;
+    const il = ILS[p[2]];
+    const cat = CATS[p[1]];
+    const nearby = byIl[p[2]]
+      .filter((q) => q.idx !== p.idx)
+      .sort((a, b) => haversine([p[4], p[5]], [a[4], a[5]]) - haversine([p[4], p[5]], [b[4], b[5]]))
+      .slice(0, 4);
+    openModal(`
+      <div class="modal-hero" style="background:linear-gradient(135deg,${CAT_COLORS[p[1]]},#0a2c52)">
+        <span class="mh-ic">${catIcon(p[1], 40)}</span>
+        <span class="mh-cat">${esc(cat.label)}</span>
+      </div>
+      <div class="modal-body">
+        <h3 id="modalTitle">${esc(p[0])}</h3>
+        <p class="sub">${esc(p[3] || il.n)}${p[3] ? ", " + esc(il.n) : esc(il.n)} • ${esc(il.r)} Bölgesi</p>
+        <div class="modal-tags">
+          ${p[6] ? `<span class="tag">${esc(p[6])}</span>` : ""}
+          <span class="tag">${esc(cat.label)}</span>
+          <span class="tag">${p[7] === "approx" ? "≈ yaklaşık konum" : "✓ doğrulanmış konum"}</span>
+        </div>
+        <div class="modal-stats">
+          <div class="stat"><b>${p[4].toFixed(4)}</b><span>Enlem</span></div>
+          <div class="stat"><b>${p[5].toFixed(4)}</b><span>Boylam</span></div>
+          <div class="stat"><b>${esc(il.p)}</b><span>Plaka</span></div>
+        </div>
+        <p style="font-size:12.5px;color:#5b6f82;line-height:1.6">
+          ${esc(p[0])}, ${esc(il.n)} ilinin ${esc(p[3] || il.n)} ${p[3] ? "ilçesinde" : "merkezinde"} yer alıyor.
+          Konum bilgisi ${p[7] === "approx" ? "il merkezi referans alınarak yaklaşık olarak" : p[7] === "wikipedia" ? "Türkçe Vikipedi koordinatlarından" : "Wikidata'dan"} alınmıştır.
+        </p>
+        <div class="nearby">
+          <div class="nearby-title">Yakındaki keşifler</div>
+          <div class="nearby-list">
+            ${nearby.map((q) => `<button class="nearby-item" data-place="${q.idx}">${catIcon(q[1], 15)}<span>${esc(q[0])}</span></button>`).join("")}
+          </div>
+        </div>
+        <div class="modal-actions">
+          <a class="btn btn-red" href="${maps(p[4], p[5])}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}Konuma git</a>
+          <button class="btn btn-ghost" data-fav="${esc(favId(p))}">${icon("i-heart")}Favorilere ekle</button>
+          <a class="btn btn-ghost" href="#/kesfet?il=${p[2]}&kat=${cat.id}" data-close-nav>${icon("i-compass")}Benzer yerler</a>
+          <a class="btn btn-ghost" href="${p[7] === "approx" ? wikiUrl(p[0]) : wdUrl(p[0])}" target="_blank" rel="noopener noreferrer">${icon("i-external")}Kaynağa git</a>
+        </div>
+      </div>`);
+  }
+
+  // rotanın duraklarını yerel ölçekli bir mini haritada çizer
+  function routeMapSvg(r, il) {
+    const pts = r.stops.map((st, i) => ({ n: st[0], lat: st[4], lon: st[5], i }));
+    if (pts.length < 2) return "";
+    const lats = pts.map((p) => p.lat), lons = pts.map((p) => p.lon);
+    const midLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+    const k = Math.cos((midLat * Math.PI) / 180);
+    let x0 = Math.min(...lons), x1 = Math.max(...lons);
+    let y0 = Math.min(...lats), y1 = Math.max(...lats);
+    const padLon = Math.max((x1 - x0) * 0.18, 0.02), padLat = Math.max((y1 - y0) * 0.18, 0.02);
+    x0 -= padLon; x1 += padLon; y0 -= padLat; y1 += padLat;
+    const spanX = (x1 - x0) * k, spanY = y1 - y0;
+    const H = 220;
+    const W = Math.round(Math.min(Math.max((spanX / spanY) * H, 300), 900));
+    const sc = Math.min((W - 34) / spanX, (H - 40) / spanY);
+    const ox = (W - spanX * sc) / 2, oy = (H - spanY * sc) / 2;
+    const px = (lon) => +(ox + (lon - x0) * k * sc).toFixed(1);
+    const py = (lat) => +(oy + (y1 - lat) * sc).toFixed(1);
+    const line = pts.map((p) => `${px(p.lon)},${py(p.lat)}`).join(" ");
+    return `<div class="route-map">
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(il.n)} rota güzergâhı">
+        <rect x="0" y="0" width="${W}" height="${H}" fill="#eef5fb"/>
+        <g stroke="#d6e6f3" stroke-width="1" stroke-dasharray="3 6">
+          ${Array.from({ length: 7 }, (_, i) => `<line x1="${(W / 7) * (i + 1)}" y1="0" x2="${(W / 7) * (i + 1)}" y2="${H}"/>`).join("")}
+          ${Array.from({ length: 4 }, (_, i) => `<line x1="0" y1="${(H / 4) * (i + 1)}" x2="${W}" y2="${(H / 4) * (i + 1)}"/>`).join("")}
+        </g>
+        <polyline points="${line}" fill="none" stroke="${r.theme.color}" stroke-width="2.4"
+          stroke-dasharray="7 5" stroke-linecap="round" stroke-opacity=".75"/>
+        ${pts.map((p, i) => `<g>
+          <title>${esc(i + 1 + ". " + p.n)}</title>
+          <circle cx="${px(p.lon)}" cy="${py(p.lat)}" r="12" fill="rgba(10,44,82,.10)"/>
+          <circle cx="${px(p.lon)}" cy="${py(p.lat)}" r="11" fill="#fff" stroke="${r.theme.color}" stroke-width="2.6"/>
+          <text x="${px(p.lon)}" y="${py(p.lat) + 4}" text-anchor="middle"
+            font-size="11" font-weight="800" fill="${r.theme.color}">${i + 1}</text>
+        </g>`).join("")}
+      </svg>
+      <span class="route-map-cap">${icon("i-pin")}${esc(il.n)} • ${nf(r.km)} km güzergâh</span>
+    </div>`;
+  }
+
+  function openRoute(routeId) {
+    const r = ALL_ROUTES.find((x) => x.id === routeId);
+    if (!r) return;
+    const il = ILS[r.ilIdx];
+    openModal(`
+      <div class="modal-hero" style="background:linear-gradient(135deg,${r.theme.color},#0a2c52)">
+        <span class="mh-ic">${icon("i-route", "i24")}</span>
+        <span class="mh-cat">${esc(il.n)} • ${r.stops.length} durak</span>
+      </div>
+      <div class="modal-body">
+        <h3 id="modalTitle">${esc(il.n)} — ${esc(r.theme.label)}</h3>
+        <p class="sub">${esc(il.r)} Bölgesi • ${nf(r.km)} km • ${r.days} gün • ${r.level}</p>
+        ${routeMapSvg(r, il)}
+        <ol class="stop-list">
+          ${r.stops.map((s, i) => `<li>
+            <span class="stop-no">${i + 1}</span>
+            <span class="stop-main">
+              <button class="stop-name" data-place="${s.idx}">${esc(s[0])}</button>
+              <span class="stop-meta">${esc(CATS[s[1]].label)} • ${esc(s[3] || il.n)}</span>
+            </span>
+            <a class="goto small" href="${maps(s[4], s[5])}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}Konuma git</a>
+          </li>`).join("")}
+        </ol>
+        <div class="modal-actions">
+          <a class="btn btn-red" href="#/il/${IL_SLUG[r.ilIdx]}" data-close-nav>${icon("i-pin")}İl sayfası</a>
+          <button class="btn btn-ghost" data-toast="Rota dışa aktarma demo sürümde örnek olarak yer alıyor.">${icon("i-route")}Rotayı kaydet</button>
+        </div>
+      </div>`);
+  }
+
+  function openMapModal() {
+    openModal(`
+      <div class="modal-body" style="padding-top:26px">
+        <h3 id="modalTitle">Türkiye Haritası — 81 İl</h3>
+        <p class="sub">İl işaretine dokunarak o ilin keşif sayfasına gidin</p>
+        <div class="modal-map">
+          <svg class="map-svg" viewBox="0 0 1000 438" role="img" aria-label="81 il haritası">
+            <defs>
+              <linearGradient id="trGrad2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#3f9fd6"/><stop offset="100%" stop-color="#1c6fae"/>
+              </linearGradient>
+            </defs>
+            <path class="tr-land" style="fill:url(#trGrad2)" d="${window.TR_PATH}"/>
+            <g>${mapPins(true)}</g>
+          </svg>
+        </div>
+        <div class="region-grid">
+          ${["Marmara", "Ege", "Akdeniz", "İç Anadolu", "Karadeniz", "Doğu Anadolu", "Güneydoğu Anadolu"].map((reg) => {
+            const list = ILS.map((il, i) => ({ il, i })).filter((x) => x.il.r === reg);
+            return `<div class="region-box">
+              <h4>${reg} <span>${list.length} il</span></h4>
+              <div class="region-ils">${list.map((x) => `<a href="#/il/${IL_SLUG[x.i]}" data-close-nav>${esc(x.il.n)}</a>`).join("")}</div>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>`, "map-modal");
+  }
+
+  function openFavs() {
+    const items = favs.map((id) => {
+      const [ilIdx, name] = id.split("|");
+      const p = PLACES.find((x) => x[2] === Number(ilIdx) && x[0] === name);
+      return p ? p : null;
+    }).filter(Boolean);
+    openModal(`
+      <div class="modal-hero" style="height:132px;background:linear-gradient(135deg,#0a2c52,#2a6fa8)">
+        <span class="mh-ic">${icon("i-heart", "i24")}</span>
+        <span class="mh-cat">Kişisel keşif alanınız</span>
+      </div>
+      <div class="modal-body">
+        <h3 id="modalTitle">Kişisel Keşif Alanınız</h3>
+        <p class="sub">${items.length} favori • ${nf(PLACE_COUNT)} doğrulanmış yer • ${ALL_ROUTES.length} rota</p>
+        ${items.length ? `<div class="fav-list">${items.map((p) => `
+          <button class="suggest-item" data-place="${p.idx}">
+            <span class="suggest-ic">${catIcon(p[1])}</span>
+            <span><span class="suggest-t">${esc(p[0])}</span><span class="suggest-m">${esc(CATS[p[1]].label)} • ${esc(ILS[p[2]].n)}</span></span>
+          </button>`).join("")}</div>`
+        : `<div class="suggest-empty">Henüz favori eklemediniz. Kartlardaki kalp ikonuna dokunarak keşiflerinizi kaydedebilirsiniz.</div>`}
+      </div>`, "fav-modal");
+  }
+
+  /* ---------------------------------------------------------------- ANA SAYFA */
+  const CITY_PHOTOS = {
+    Antalya: "__IMG_ANTALYA__", "İstanbul": "__IMG_ISTANBUL__", "İzmir": "__IMG_IZMIR__",
+    "Muğla": "__IMG_MUGLA__", "Nevşehir": "__IMG_NEVSEHIR__"
+  };
+  const POPULAR = ["Antalya", "İstanbul", "İzmir", "Muğla", "Nevşehir"];
+
+  function renderHome() {
+    // kategori şeridi
+    $("#catCard").innerHTML = CATS.map((c, i) => {
+      const total = PLACES.filter((p) => p[1] === i).length;
+      return `<a class="cat-item" data-color="${c.color}" href="#/kategori/${c.id}" title="${esc(c.label)}">
+        ${catIcon(i, 26)}<span>${esc(c.label)}</span><em>${nf(total)}</em></a>`;
+    }).join("");
+
+    // popüler şehirler
+    $("#cityGrid").innerHTML = POPULAR.map((name) => {
+      const i = ilByName[name];
+      const il = ILS[i];
+      const villages = il.d.reduce((a, d) => a + d.k.length, 0);
+      return `<a class="city-card" href="#/il/${IL_SLUG[i]}">
+        <img src="${CITY_PHOTOS[name]}" alt="${esc(name)}" loading="lazy">
+        <div class="city-body">
+          <div class="city-name">${esc(name)}</div>
+          <div class="city-meta">${icon("i-pin")}${nf(byIlUniq[i].length)} keşif • ${nf(il.d.length)} ilçe</div>
+        </div>
+        <span class="city-plate">${String(il.p).padStart(2, "0")}</span>
+      </a>`;
+    }).join("");
+
+    // rotalar (Antalya + İstanbul + Nevşehir örnekleri)
+    const picks = [[ilByName.Antalya, 0], [ilByName["İstanbul"], 1], [ilByName["Nevşehir"], 3]];
+    $("#routeList").innerHTML = picks.map(([i, t]) => routeCard(routesFor(i)[t], { home: true })).join("");
+
+    // mevsimler
+    const seasons = [
+      { n: "İlkbahar", img: "__IMG_ILKBAHAR__", note: "Badem çiçekleri, yürüyüş rotaları" },
+      { n: "Yaz", img: "__IMG_YAZ__", note: "Koylar, plajlar, mavi yolculuk" },
+      { n: "Sonbahar", img: "__IMG_SONBAHAR__", note: "Orman yürüyüşleri, hasat" },
+      { n: "Kış", img: null, note: "Kayak ve termal kaplıcalar" },
+    ];
+    $("#seasonGrid").innerHTML = seasons.map((s) => `
+      <button class="season-card ${s.img ? "" : "winter"}" data-season="${esc(s.n)}">
+        ${s.img ? `<img src="${s.img}" alt="${esc(s.n)} mevsiminde Türkiye" loading="lazy">` : `<svg class="winter-scene" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M-6 96 34 46 62 74 96 38 132 76 158 54 206 92V124H-6Z" fill="#eaf3fb"/>
+            <path d="M34 46 46 60 34 70 22 60Z" fill="#ffffff"/>
+            <path d="M96 38 110 54 96 64 82 54Z" fill="#ffffff"/>
+            <path d="M-6 108 44 92 88 104 132 90 174 104 206 94V124H-6Z" fill="#ffffff"/>
+          </svg><span class="snow">${Array.from({ length: 16 }, (_, i) => `<i style="left:${(i * 6.4 + 4).toFixed(1)}%;animation-duration:${3 + (i % 5)}s;animation-delay:${(i * 0.4).toFixed(1)}s;width:${i % 3 === 0 ? 5 : 3}px;height:${i % 3 === 0 ? 5 : 3}px"></i>`).join("")}</span>`}
+        <span><span class="sc-name">${esc(s.n)}</span><span class="sc-link">Keşfet ${icon("i-arrow-right", "i10")}</span></span>
+      </button>`).join("");
+
+    // istatistik bandı
+    const villages = ILS.reduce((a, il) => a + villCount(il), 0);
+    const koy = ILS.reduce((a, il) => a + il.d.reduce((x, d) => x + d.k.length, 0), 0);
+    const mah = villages - koy;
+    const dists = ILS.reduce((a, il) => a + il.d.length, 0);
+    $("#statsBand").innerHTML = `
+      <div class="stat-cell"><b>${nf(N_IL)}</b><span>il</span></div>
+      <div class="stat-cell"><b>${nf(dists)}</b><span>ilçe / belde</span></div>
+      <div class="stat-cell"><b>${nf(villages)}</b><span>köy ${nf(koy)} • mahalle ${nf(mah)}</span></div>
+      <div class="stat-cell"><b>${nf(PLACE_COUNT)}</b><span>doğrulanmış keşif noktası</span></div>
+      <div class="stat-cell"><b>${nf(ALL_ROUTES.length)}</b><span>hazır rota</span></div>
+      <div class="stat-cell"><b>15</b><span>turizm kategorisi</span></div>`;
+
+    // hızlı çipler
+    const chips = [["Yakınımdaki Yerler", "nearby"], ["Antalya", "#/il/antalya"], ["İstanbul", "#/il/istanbul"],
+      ["Kapadokya", "#/kesfet?q=Kapadokya"], ["İzmir", "#/il/izmir"], ["Muğla", "#/il/mugla"]];
+    $("#quickChips").innerHTML = chips.map(([label, target], i) =>
+      target === "nearby"
+        ? `<button class="chip primary" data-nearby><svg width="13" height="13"><use href="#i-pin"/></svg>${label}</button>`
+        : `<a class="chip" href="${target}">${esc(label)}</a>`).join("");
+
+    // harita iğneleri (81 il)
+    $("#mapPins").innerHTML = mapPins(false);
+
+    // menü + footer kategori listeleri
+    $("#ddCats").innerHTML = `<div class="dd-title">15 kategori</div>` +
+      CATS.map((c, i) => `<a href="#/kategori/${c.id}"><svg width="16" height="16"><use href="#${c.icon}"/></svg>${esc(c.label)}
+        <span class="dd-count">${nf(PLACES.filter((p) => p[1] === i).length)}</span></a>`).join("") +
+      `<a href="#/kesfet" class="dd-all">Tüm keşifleri gör ${icon("i-arrow-right")}</a>`;
+    $("#footerCats").innerHTML = CATS.slice(0, 6).map((c) => `<a href="#/kategori/${c.id}">${esc(c.label)}</a>`).join("");
+
+    observeReveal();
+  }
+
+  /* ---------------------------------------------------------------- KEŞFET */
+  function renderKesfet(params) {
+    const q = params.get("q") || "";
+    const kat = params.get("kat") || "";
+    const ilP = params.get("il");
+    const ilce = params.get("ilce") || "";
+    const ilIdx = ilP !== null && ilP !== "" ? Number(ilP) : null;
+
+    const view = $("#view-page");
+    view.innerHTML = `
+      <div class="page-head">
+        <div class="container">
+          <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><b>Keşfet</b></nav>
+          <h1>${q ? `“${esc(q)}” için sonuçlar` : kat ? esc(CATS[catById[kat]].label) : "Tüm Keşif Noktaları"}</h1>
+          <p class="page-sub">${nf(PLACE_COUNT)} doğrulanmış yer • 15 kategori • 81 il</p>
+        </div>
+      </div>
+      <div class="container">
+        <div class="filter-bar">
+          <div class="f-search">${icon("i-search")}
+            <input id="fq" type="search" placeholder="Yer, il, ilçe veya köy ara…" value="${esc(q)}">
+          </div>
+          <select id="fkat" aria-label="Kategori">
+            <option value="">Tüm kategoriler</option>
+            ${CATS.map((c) => `<option value="${c.id}"${c.id === kat ? " selected" : ""}>${esc(c.label)}</option>`).join("")}
+          </select>
+          <select id="fil" aria-label="İl">
+            <option value="">Tüm iller</option>
+            ${ILS.map((il, i) => `<option value="${i}"${i === ilIdx ? " selected" : ""}>${String(il.p).padStart(2, "0")} ${esc(il.n)}</option>`).join("")}
+          </select>
+          <select id="filce" aria-label="İlçe" ${ilIdx === null ? "disabled" : ""}>
+            <option value="">Tüm ilçeler</option>
+            ${(ilIdx !== null ? ILS[ilIdx].d : []).map((d) => `<option value="${esc(d.n)}"${d.n === ilce ? " selected" : ""}>${esc(d.n)}</option>`).join("")}
+          </select>
+          <button class="btn btn-ghost" id="fclear">Temizle</button>
+        </div>
+        <div class="cat-chips" id="catChips"></div>
+        <div id="kesfetInfo" class="result-info"></div>
+        <div class="p-grid" id="pGrid"></div>
+        <div class="load-more-wrap"><button class="btn btn-navy" id="loadMore" hidden>Daha fazla göster</button></div>
+      </div>`;
+
+    const state = { q, kat, il: ilIdx, ilce, page: 0 };
+    const PER = 48;
+
+    function filtered() {
+      let list = PLACES;
+      if (state.il !== null) list = list.filter((p) => p[2] === state.il);
+      if (state.kat) list = list.filter((p) => CATS[p[1]].id === state.kat);
+      if (state.ilce) list = list.filter((p) => p[3] === state.ilce);
+      if (state.q) {
+        const k = norm(state.q);
+        list = list.filter((p) => norm(p[0] + " " + (p[6] || "") + " " + p[3] + " " + ILS[p[2]].n).includes(k));
+      }
+      return list;
+    }
+
+    function paint() {
+      const list = filtered();
+      const shown = list.slice(0, (state.page + 1) * PER);
+      $("#pGrid").innerHTML = shown.map(placeCard).join("") ||
+        `<div class="empty">Bu filtrelerde sonuç bulunamadı. Filtreleri temizlemeyi deneyin.</div>`;
+      $("#kesfetInfo").textContent = `${nf(list.length)} sonuçtan ${nf(shown.length)} tanesi gösteriliyor`;
+      $("#loadMore").hidden = shown.length >= list.length;
+      $("#catChips").innerHTML = CATS.map((c, i) => {
+        const active = state.kat === c.id;
+        const n = (state.il !== null ? byIlCat[state.il][i] : PLACES.filter((p) => p[1] === i)).length;
+        return `<a class="cat-chip${active ? " active" : ""}" href="#" data-chip-cat="${c.id}">${catIcon(i, 14)}${esc(c.label)} <em>${nf(n)}</em></a>`;
+      }).join("");
+      observeReveal();
+    }
+
+    function push() {
+      const p = new URLSearchParams();
+      if (state.q) p.set("q", state.q);
+      if (state.kat) p.set("kat", state.kat);
+      if (state.il !== null) p.set("il", state.il);
+      if (state.ilce) p.set("ilce", state.ilce);
+      const qs = p.toString();
+      history.replaceState(null, "", `#/kesfet${qs ? "?" + qs : ""}`);
+    }
+
+    $("#fq").addEventListener("input", (e) => {
+      state.q = e.target.value.trim(); state.page = 0; push(); paint();
+      const box = $("#suggest");
+      if (state.q.length > 1) {
+        box.innerHTML = "";
+        renderSuggest(state.q);
+      } else box.classList.remove("show");
+    });
+    $("#fkat").addEventListener("change", (e) => { state.kat = e.target.value; state.page = 0; push(); paint(); });
+    $("#fil").addEventListener("change", (e) => {
+      state.il = e.target.value === "" ? null : Number(e.target.value);
+      state.ilce = ""; state.page = 0; push();
+      renderKesfet(new URLSearchParams(`q=${encodeURIComponent(state.q)}&kat=${state.kat}${state.il !== null ? "&il=" + state.il : ""}`));
+    });
+    $("#filce").addEventListener("change", (e) => { state.ilce = e.target.value; state.page = 0; push(); paint(); });
+    $("#fclear").addEventListener("click", () => { location.hash = "#/kesfet"; });
+    $("#loadMore").addEventListener("click", () => { state.page++; paint(); });
+    $("#catChips").addEventListener("click", (e) => {
+      const a = e.target.closest("[data-chip-cat]");
+      if (!a) return;
+      e.preventDefault();
+      state.kat = state.kat === a.dataset.chipCat ? "" : a.dataset.chipCat;
+      state.page = 0; push(); paint();
+      $("#fkat").value = state.kat;
+    });
+
+    paint();
+  }
+
+  /* ---------------------------------------------------------------- İLLER */
+  function renderIller() {
+    const view = $("#view-page");
+    const villages = ILS.reduce((a, il) => a + villCount(il), 0);
+    view.innerHTML = `
+      <div class="page-head">
+        <div class="container">
+          <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><b>81 İl</b></nav>
+          <h1>Türkiye'nin 81 İli</h1>
+          <p class="page-sub">${nf(ILS.reduce((a, il) => a + il.d.length, 0))} ilçe • ${nf(villages)} köy/mahalle • ${nf(PLACE_COUNT)} keşif noktası</p>
+        </div>
+      </div>
+      <div class="container">
+        <div class="filter-bar">
+          <div class="f-search">${icon("i-search")}<input id="ilSearch" type="search" placeholder="İl ara…"></div>
+          <select id="regionSel" aria-label="Bölge">
+            <option value="">Tüm bölgeler</option>
+            ${["Marmara", "Ege", "Akdeniz", "İç Anadolu", "Karadeniz", "Doğu Anadolu", "Güneydoğu Anadolu"].map((r) => `<option>${r}</option>`).join("")}
+          </select>
+        </div>
+        <div class="il-grid" id="ilGrid"></div>
+      </div>`;
+
+    function paint() {
+      const q = ($("#ilSearch").value || "").trim();
+      const reg = $("#regionSel").value;
+      const list = ILS.map((il, i) => ({ il, i }))
+        .filter((x) => (!q || norm(x.il.n).includes(norm(q))) && (!reg || x.il.r === reg))
+        .sort((a, b) => a.il.p - b.il.p);
+      $("#ilGrid").innerHTML = list.map((x) => ilCard(x.i)).join("") || `<div class="empty">İl bulunamadı.</div>`;
+    }
+    $("#ilSearch").addEventListener("input", paint);
+    $("#regionSel").addEventListener("change", paint);
+    paint();
+  }
+
+  /* ---------------------------------------------------------------- İL SAYFASI */
+  function renderIl(ilIdx, tab) {
+    const il = ILS[ilIdx];
+    const routes = routesFor(ilIdx);
+    const cats = CATS.map((c, i) => ({ c, i, n: byIlCat[ilIdx][i].length })).filter((x) => x.n > 0);
+    const activeTab = tab && catById[tab] !== undefined ? catById[tab] : -1;
+    const list = activeTab >= 0 ? byIlCat[ilIdx][activeTab] : byIl[ilIdx];
+    const villages = villCount(il);
+    const koyN = il.d.reduce((a, d) => a + d.k.length, 0);
+    const mahN = villages - koyN;
+    const view = $("#view-page");
+
+    view.innerHTML = `
+      <div class="il-hero" style="background-image:${CITY_PHOTOS[il.n] ? `url('${CITY_PHOTOS[il.n]}')` : "linear-gradient(120deg,#0a2c52,#1c6fae)"}">
+        <div class="container">
+          <nav class="crumb light"><a href="#/">Ana Sayfa</a><span>/</span><a href="#/iller">81 İl</a><span>/</span><b>${esc(il.n)}</b></nav>
+          <div class="il-hero-inner">
+            <span class="il-plate big">${String(il.p).padStart(2, "0")}</span>
+            <div>
+              <h1>${esc(il.n)}</h1>
+              <p>${esc(il.r)} Bölgesi • ${nf(byIlUniq[ilIdx].length)} keşif noktası • ${nf(il.d.length)} ilçe • ${nf(koyN)} köy • ${nf(mahN)} mahalle</p>
+            </div>
+            <button class="btn btn-red" data-open-map>${icon("i-map")}Haritada gör</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="container">
+        <h2 class="block-title"><svg><use href="#i-route"/></svg>${esc(il.n)} için 5 gezi rotası</h2>
+        <div class="route-grid">${routes.map((r) => routeCard(r)).join("")}</div>
+
+        <h2 class="block-title"><svg><use href="#i-compass"/></svg>Kategorilere göre keşfet</h2>
+        <div class="cat-chips">
+          <a class="cat-chip${activeTab < 0 ? " active" : ""}" href="#/il/${IL_SLUG[ilIdx]}">Tümü <em>${nf(byIlUniq[ilIdx].length)}</em></a>
+          ${cats.map((x) => `<a class="cat-chip${activeTab === x.i ? " active" : ""}" href="#/il/${IL_SLUG[ilIdx]}?kat=${x.c.id}">
+            ${catIcon(x.i, 14)}${esc(x.c.label)} <em>${nf(x.n)}</em></a>`).join("")}
+        </div>
+        <div class="p-grid">${(activeTab < 0 ? dedupeByName(list) : list).map(placeCard).join("") || `<div class="empty">Bu kategoride kayıt yok.</div>`}</div>
+
+        <h2 class="block-title"><svg><use href="#i-building"/></svg>İlçeler ve köyler</h2>
+        <p class="block-sub">${nf(il.d.length)} ilçe/belde, ${nf(koyN)} köy ve ${nf(mahN)} mahalle. İlçeye tıklayarak yerleşim birimlerini görün.</p>
+        <div class="district-list">
+          ${il.d.map((d, di) => `
+            <details class="district">
+              <summary>
+                <a class="dist-name" href="#/ilce/${IL_SLUG[ilIdx]}/${slug(d.n)}">${esc(d.n)}</a>
+                <span class="dist-meta">${nf(d.k.length)} köy${(d.m && d.m.length) ? ` • ${nf(d.m.length)} mahalle` : ""}</span>
+                <span class="dist-places">${[...new Set(byIl[ilIdx].filter((p) => norm(p[3]) === norm(d.n)).map((p) => p[0]))].slice(0, 3).map(esc).join(" · ")}</span>
+                <span class="dist-actions">
+                  <a class="mini-link" href="#/kesfet?il=${ilIdx}&ilce=${encodeURIComponent(d.n)}">Yerleri gör</a>
+                </span>
+              </summary>
+              <div class="village-chips">
+                ${d.k.length ? `<span class="chip-label">Köyler (${d.k.length})</span>${d.k.map((k) => `<span class="village-chip">${icon("i-village", "i12")}${esc(k)}</span>`).join("")}` : ""}
+                ${(d.m && d.m.length) ? `<span class="chip-label">Mahalleler (${d.m.length})</span>${d.m.map((k) => `<span class="village-chip mahalle">${esc(k)}</span>`).join("")}` : ""}
+                ${(!d.k.length && !(d.m && d.m.length)) ? `<span class="muted">Kayıtlı yerleşim bilgisi yok.</span>` : ""}
+              </div>
+            </details>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  /* ---------------------------------------------------------------- ROTALAR */
+  function renderRotalar(params) {
+    const ilP = params.get("il");
+    const ilIdx = ilP !== null && ilP !== "" ? Number(ilP) : null;
+    const view = $("#view-page");
+    view.innerHTML = `
+      <div class="page-head">
+        <div class="container">
+          <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><b>Rotalar</b></nav>
+          <h1>${ilIdx !== null ? esc(ILS[ilIdx].n) + " Rotaları" : "Türkiye Rota Rehberi"}</h1>
+          <p class="page-sub">${nf(ALL_ROUTES.length)} rota • her il için 5 tema • durak durak konum bağlantılı</p>
+        </div>
+      </div>
+      <div class="container">
+        <div class="filter-bar">
+          <select id="ril" aria-label="İl">
+            <option value="">Tüm iller (${nf(ALL_ROUTES.length)} rota)</option>
+            ${ILS.map((il, i) => `<option value="${i}"${i === ilIdx ? " selected" : ""}>${String(il.p).padStart(2, "0")} ${esc(il.n)}</option>`).join("")}
+          </select>
+          <select id="rtheme" aria-label="Tema">
+            <option value="">Tüm temalar</option>
+            ${THEMES.map((t) => `<option value="${t.key}">${esc(t.label)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="route-grid" id="routeGrid"></div>
+        <div class="load-more-wrap"><button class="btn btn-navy" id="rMore" hidden>Daha fazla rota</button></div>
+      </div>`;
+    let page = 0;
+    const PER = 12;
+    function paint() {
+      const selIl = $("#ril").value;
+      const selTheme = $("#rtheme").value;
+      let list = ALL_ROUTES;
+      if (selIl !== "") list = list.filter((r) => r.ilIdx === Number(selIl));
+      if (selTheme) list = list.filter((r) => r.theme.key === selTheme);
+      const shown = list.slice(0, (page + 1) * PER);
+      $("#routeGrid").innerHTML = shown.map((r) => routeCard(r)).join("") || `<div class="empty">Rota bulunamadı.</div>`;
+      $("#rMore").hidden = shown.length >= list.length;
+    }
+    $("#ril").addEventListener("change", () => { page = 0; paint(); });
+    $("#rtheme").addEventListener("change", () => { page = 0; paint(); });
+    $("#rMore").addEventListener("click", () => { page++; paint(); });
+    paint();
+  }
+
+  /* ---------------------------------------------------------------- KATEGORİ */
+  /* ---------------------------------------------------------------- İLÇE SAYFASI */
+  function renderIlce(i, di) {
+    const il = ILS[i];
+    const d = il.d[di];
+    if (!d) { location.hash = `#/il/${IL_SLUG[i]}`; return; }
+    const list = dedupeByName(byIl[i].filter((p) => norm(p[3]) === norm(d.n)));
+    const koy = d.k || [], mah = d.m || [];
+    const ilceSlug = slug(d.n);
+    const others = il.d.map((x, xi) => ({ x, xi })).filter((o) => o.xi !== di).slice(0, 12);
+    const view = $("#view-page");
+    view.innerHTML = `
+      <div class="page-head">
+        <div class="container">
+          <nav class="crumb">
+            <a href="#/">Ana Sayfa</a><span>/</span>
+            <a href="#/iller">81 İl</a><span>/</span>
+            <a href="#/il/${IL_SLUG[i]}">${esc(il.n)}</a><span>/</span>
+            <b>${esc(d.n)}</b>
+          </nav>
+          <h1>${esc(d.n)}</h1>
+          <p class="page-sub">${esc(il.n)} • ${esc(il.r)} Bölgesi${koy.length ? ` • ${nf(koy.length)} köy` : ""}${mah.length ? ` • ${nf(mah.length)} mahalle` : ""} • ${nf(list.length)} keşif noktası</p>
+        </div>
+      </div>
+      <div class="container">
+        <div class="stats-band">
+          ${[
+            [String(il.p).padStart(2, "0"), "Plaka"],
+            [nf(koy.length), "Köy"],
+            [nf(mah.length), "Mahalle"],
+            [nf(list.length), "Keşif noktası"],
+            [nf(il.d.length), esc(il.n) + " ilçesi"]
+          ].filter((c, ci) => ci === 0 || c[0] !== "0")
+            .map((c) => `<div class="stat-cell"><b>${c[0]}</b><span>${c[1]}</span></div>`).join("")}
+        </div>
+
+        <h2 class="block-title"><svg><use href="#i-village"/></svg>Yerleşim birimleri</h2>
+        <p class="block-sub">${esc(d.n)} ilçesine bağlı ${nf(koy.length + mah.length)} yerleşim birimi.</p>
+        <div class="ilce-settle">
+          ${koy.length ? `<div class="settle-block"><span class="chip-label">Köyler (${nf(koy.length)})</span>
+            <div class="village-chips">${koy.map((k) => `<span class="village-chip">${icon("i-village", "i12")}${esc(k)}</span>`).join("")}</div></div>` : ""}
+          ${mah.length ? `<div class="settle-block"><span class="chip-label">Mahalleler (${nf(mah.length)})</span>
+            <div class="village-chips">${mah.map((k) => `<span class="village-chip mahalle">${esc(k)}</span>`).join("")}</div></div>` : ""}
+          ${(!koy.length && !mah.length) ? `<p class="muted">Bu ilçe için kayıtlı yerleşim birimi bulunmuyor.</p>` : ""}
+        </div>
+
+        <h2 class="block-title"><svg><use href="#i-compass"/></svg>${esc(d.n)} içindeki keşif noktaları</h2>
+        ${list.length
+          ? `<div class="p-grid">${list.map(placeCard).join("")}</div>`
+          : `<div class="empty">Bu ilçede kayıtlı keşif noktası yok. <a href="#/kesfet?il=${i}&ilce=${encodeURIComponent(d.n)}">Tüm Türkiye'de ara →</a></div>`}
+
+        <h2 class="block-title"><svg><use href="#i-map"/></svg>${esc(il.n)} ilinin diğer ilçeleri</h2>
+        <div class="district-chips">
+          ${others.map((o) => `<a class="district-chip" href="#/ilce/${IL_SLUG[i]}/${slug(o.x.n)}">
+            ${esc(o.x.n)}<em>${nf(o.x.k.length + (o.x.m ? o.x.m.length : 0))}</em></a>`).join("")}
+          ${il.d.length > others.length + 1 ? `<a class="district-chip more" href="#/il/${IL_SLUG[i]}">Tümü (${nf(il.d.length)}) →</a>` : ""}
+        </div>
+
+        <div class="modal-actions" style="margin:22px 0 8px">
+          <a class="btn btn-red" href="#/il/${IL_SLUG[i]}">${icon("i-arrow-right")}${esc(il.n)} il sayfası</a>
+          <a class="btn btn-ghost" href="#/kesfet?il=${i}&ilce=${encodeURIComponent(d.n)}">${icon("i-search")}Keşfet'te filtrele</a>
+        </div>
+      </div>`;
+    void ilceSlug;
+  }
+
+  function renderKategori(catId, params) {
+    const ci = catById[catId];
+    if (ci === undefined) { location.hash = "#/kesfet"; return; }
+    const cat = CATS[ci];
+    const list = PLACES.filter((p) => p[1] === ci);
+    const perIl = ILS.map((il, i) => ({ il, i, n: byIlCat[i][ci].length })).filter((x) => x.n > 0);
+    const view = $("#view-page");
+    view.innerHTML = `
+      <div class="page-head">
+        <div class="container">
+          <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><a href="#/kesfet">Keşfet</a><span>/</span><b>${esc(cat.label)}</b></nav>
+          <h1><span class="cat-h-ic" style="--c:${CAT_COLORS[ci]}">${catIcon(ci, 26)}</span>${esc(cat.label)}</h1>
+          <p class="page-sub">${esc(CAT_DESC[cat.id] || "")}</p>
+          <p class="page-sub" style="margin-top:2px">Bu kategoride ${nf(list.length)} doğrulanmış nokta, ${perIl.length} ilde</p>
+          <div class="env-row">
+            ${cat.env.map((e) => `<div class="env-chip"><b>${esc(e.v)}</b><span>${esc(e.l)}</span></div>`).join("")}
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <div class="filter-bar">
+          <select id="kil" aria-label="İl">
+            <option value="">Tüm iller</option>
+            ${perIl.map((x) => `<option value="${x.i}">${String(x.il.p).padStart(2, "0")} ${esc(x.il.n)} (${x.n})</option>`).join("")}
+          </select>
+          <div class="f-search">${icon("i-search")}<input id="kq" type="search" placeholder="${esc(cat.label)} içinde ara…"></div>
+        </div>
+        <div class="result-info" id="kInfo"></div>
+        <div class="p-grid" id="kGrid"></div>
+        <div class="load-more-wrap"><button class="btn btn-navy" id="kMore" hidden>Daha fazla göster</button></div>
+      </div>`;
+    let page = 0;
+    const PER = 48;
+    function paint() {
+      const ilSel = $("#kil").value;
+      const q = $("#kq").value.trim();
+      let items = list;
+      if (ilSel !== "") items = items.filter((p) => p[2] === Number(ilSel));
+      if (q) items = items.filter((p) => norm(p[0] + " " + (p[6] || "") + " " + p[3]).includes(norm(q)));
+      const shown = items.slice(0, (page + 1) * PER);
+      $("#kGrid").innerHTML = shown.map(placeCard).join("") || `<div class="empty">Sonuç bulunamadı.</div>`;
+      $("#kInfo").textContent = `${nf(items.length)} sonuçtan ${nf(shown.length)} tanesi gösteriliyor`;
+      $("#kMore").hidden = shown.length >= items.length;
+    }
+    $("#kil").addEventListener("change", () => { page = 0; paint(); });
+    $("#kq").addEventListener("input", debounce(() => { page = 0; paint(); }, 180));
+    $("#kMore").addEventListener("click", () => { page++; paint(); });
+    paint();
+  }
+
+  function debounce(fn, ms) {
+    let t;
+    return function () { clearTimeout(t); t = setTimeout(fn, ms); };
+  }
+
+  /* ---------------------------------------------------------------- router */
+  function parseHash() {
+    const h = location.hash.replace(/^#/, "") || "/";
+    const [path, qs] = h.split("?");
+    return { path, params: new URLSearchParams(qs || "") };
+  }
+
+  function router() {
+    const { path, params } = parseHash();
+    const home = $("#view-home");
+    const page = $("#view-page");
+    const seg = path.split("/").filter(Boolean);
+
+    document.body.classList.toggle("is-home", seg.length === 0);
+    $$(".main-nav .nav-link").forEach((a) => a.classList.remove("active"));
+
+    if (seg.length === 0) {
+      home.hidden = false; page.hidden = true;
+      if (!$("#catCard").childElementCount) renderHome();
+      const nav = $('[data-nav="home"]'); if (nav) nav.classList.add("active");
+    } else {
+      home.hidden = true; page.hidden = false;
+      if (seg[0] === "kesfet") { renderKesfet(params); }
+      else if (seg[0] === "iller") { renderIller(); const a = $('[data-nav="iller"]'); if (a) a.classList.add("active"); }
+      else if (seg[0] === "rotalar") { renderRotalar(params); const a = $('[data-nav="rotalar"]'); if (a) a.classList.add("active"); }
+      else if (seg[0] === "il" && seg[1]) {
+        const i = ilBySlug[seg[1]];
+        if (i === undefined) { location.hash = "#/iller"; return; }
+        renderIl(i, params.get("kat"));
+      } else if (seg[0] === "kategori" && seg[1]) { renderKategori(seg[1], params); }
+      else if (seg[0] === "ilce" && seg[1] && seg[2]) {
+        const i = ilBySlug[seg[1]];
+        const di = i === undefined ? undefined : DIST_SLUG[i][seg[2]];
+        if (i === undefined || di === undefined) { location.hash = "#/iller"; return; }
+        renderIlce(i, di);
+      }
+      else { location.hash = "#/"; return; }
+      window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+      onScroll();
+    }
+    updateFavCount();
+  }
+
+  /* ---------------------------------------------------------------- dinamik olaylar */
+  // Kartlar her sayfa geçişinde yeniden üretildiği için olaylar delege edilir.
+  function bindDynamic() { /* delege edildi: aşağıdaki global click dinleyicisi */ }
+
+  /* ---------------------------------------------------------------- global olaylar */
+  document.addEventListener("click", (e) => {
+    // --- delege edilmiş kart olayları
+    const favEl = e.target.closest("[data-fav]");
+    if (favEl) {
+      e.preventDefault(); e.stopPropagation();
+      const [ilIdx, name] = favEl.dataset.fav.split("|");
+      const p = PLACES.find((x) => x[2] === Number(ilIdx) && x[0] === name);
+      if (p) toggleFav(p);
+      return;
+    }
+    const placeEl = e.target.closest("[data-place]");
+    if (placeEl) { e.preventDefault(); openPlace(Number(placeEl.dataset.place)); return; }
+    const routeEl = e.target.closest("[data-route]");
+    if (routeEl) { e.preventDefault(); openRoute(routeEl.dataset.route); return; }
+    const ilEl = e.target.closest("[data-il]");
+    if (ilEl) { location.hash = `#/il/${IL_SLUG[Number(ilEl.dataset.il)]}`; closeModal(); return; }
+
+    const closeNav = e.target.closest("[data-close-nav]");
+    if (closeNav) closeModal();
+
+    const toastEl = e.target.closest("[data-toast]");
+    if (toastEl && !toastEl.closest("#modal")?.contains(toastEl)) {
+      // modal dışındaki toast butonları
+      if (!e.target.closest("#modal")) { e.preventDefault(); toast(toastEl.dataset.toast); return; }
+    }
+
+    if (e.target.closest("[data-open-map]")) { openMapModal(); return; }
+    if (e.target.closest("[data-open-favs]")) { openFavs(); return; }
+    if (e.target.closest("[data-nearby]")) {
+      toast("Konum izni demo sürümde kullanılmıyor — Antalya yakınındaki keşifler listelendi");
+      location.hash = "#/il/antalya";
+      return;
+    }
+    const season = e.target.closest("[data-season]");
+    if (season) {
+      const notes = { "İlkbahar": "Badem çiçekleri ve yürüyüş rotaları", "Yaz": "Koylar, plajlar ve mavi yolculuk", "Sonbahar": "Orman yürüyüşleri ve hasat zamanı", "Kış": "Kayak merkezleri ve termal kaplıcalar" };
+      toast(`${season.dataset.season} için ${notes[season.dataset.season]}`);
+      return;
+    }
+    if (e.target.closest("[data-close-modal]")) { closeModal(); return; }
+  });
+
+  // hero arama
+  function initHeroSearch() {
+    const input = $("#searchInput");
+    const suggest = $("#suggest");
+    input.addEventListener("input", () => {
+      if (input.value.trim().length > 0) renderSuggest(input.value.trim());
+      else suggest.classList.remove("show");
+    });
+    input.addEventListener("focus", () => { if (input.value.trim()) renderSuggest(input.value.trim()); });
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".search-wrap")) suggest.classList.remove("show");
+    });
+    $("#searchForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      location.hash = q ? `#/kesfet?q=${encodeURIComponent(q)}` : "#/kesfet";
+      suggest.classList.remove("show");
+    });
+    const SCOPES = ["Tüm Türkiye", "Yakınımdaki Yerler", "Sadece şehir merkezleri"];
+    let si = 0;
+    $("#scopeBtn").addEventListener("click", () => {
+      si = (si + 1) % SCOPES.length;
+      $("#scopeLabel").textContent = SCOPES[si];
+      toast(`Arama kapsamı: ${SCOPES[si]}`);
+    });
+  }
+
+  // dropdown menüler
+  $$("[data-dropdown]").forEach((item) => {
+    const btn = $(".nav-link", item);
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const wasOpen = item.classList.contains("open");
+      $$("[data-dropdown]").forEach((d) => { d.classList.remove("open"); $(".nav-link", d).setAttribute("aria-expanded", "false"); });
+      item.classList.toggle("open", !wasOpen);
+      btn.setAttribute("aria-expanded", String(!wasOpen));
+    });
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-dropdown]")) {
+      $$("[data-dropdown]").forEach((d) => { d.classList.remove("open"); $(".nav-link", d).setAttribute("aria-expanded", "false"); });
+    }
+  });
+
+  // sticky header
+  const header = $("#siteHeader");
+  function onScroll() {
+    const solid = !document.body.classList.contains("is-home") || window.scrollY > 40;
+    header.classList.toggle("scrolled", solid);
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  // mobil menü
+  const burger = $("#burger");
+  const mobileMenu = $("#mobileMenu");
+  burger.addEventListener("click", () => {
+    const open = mobileMenu.classList.toggle("open");
+    burger.setAttribute("aria-expanded", String(open));
+  });
+  mobileMenu.addEventListener("click", (e) => {
+    if (e.target.closest("a")) { mobileMenu.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); }
+  });
+
+  // bülten
+  $("#newsletterForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    toast(`${$("#newsEmail").value.trim()} adresi bültene eklendi`);
+    e.target.reset();
+  });
+
+  // klavye
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { closeModal(); $("#suggest")?.classList.remove("show"); }
+    if ((e.key === "Enter" || e.key === " ") && e.target.closest && e.target.closest("[data-il]")) {
+      e.preventDefault();
+      location.hash = `#/il/${IL_SLUG[Number(e.target.closest("[data-il]").dataset.il)]}`;
+      closeModal();
+    }
+  });
+
+  // reveal
+  let io = null;
+  function observeReveal() {
+    if (!("IntersectionObserver" in window)) { $$(".reveal").forEach((el) => el.classList.add("in")); return; }
+    if (!io) {
+      io = new IntersectionObserver((entries) => entries.forEach((en) => {
+        if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+      }), { threshold: 0.1 });
+    }
+    $$(".reveal:not(.in)").forEach((el) => io.observe(el));
+  }
+
+  /* ---------------------------------------------------------------- başlat */
+  window.addEventListener("hashchange", router);
+  initHeroSearch();
+  renderHome();
+  router();
+  onScroll();
+})();
