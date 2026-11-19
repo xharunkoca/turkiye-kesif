@@ -259,7 +259,11 @@ Her rota kartında **Başlat**, rota detayında **Rotayı başlat** düğmesi va
   bant yok; kartlar fotoğraf + beyaz metin bloğu olarak sadeleşti.
 - Tema katmanı `src/theme-light.css` içinde; `build.py` bu dosyayı `style.css`'in **sonuna**
   ekler (hash'li tek CSS çıktısı). Statik sayfaların stilini `build.py` içindeki `PAGE_CSS`
-  üretir, o da aynı açık paleti kullanır.
+  üretir, o da aynı paleti kullanır.
+- **v16 tek arayüz sistemi:** bütün sayfalar aynı başlık bandını (kırıntı + h1 + alt satır),
+  aynı kart anatomisini (beyaz + 1 px `#e6e6eb` + 18 px köşe, gölge yok) ve aynı eylem
+  hiyerarşisini kullanır — dolu kırmızı yalnız birincil eylemde. Ölçek: h1 26–36 px,
+  gövde 13–14,5 px; ikincil metin `#58585d`, üçüncül `#6e6e73` (WCAG AA).
 - Favoriler `localStorage` (`tk-favs-v2`), rota kayıtları `tk-routes-v2` anahtarında.
 - Dosya `file://` ile açıldığında da çalışır; GitHub Pages'te harici bağlantılar
   (Google Maps, Wikidata) normal şekilde açılır.

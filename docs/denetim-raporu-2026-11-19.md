@@ -496,3 +496,35 @@ onay şeridi "Anladım" ile kapanıyor (`tk-consent-v1` yazılıyor). Görüntü
 `.consent[hidden]{display:none}` kuralını ezdiği için onay şeridi "Anladım"a basıldıktan sonra da
 ekranda kalıyordu (durum doğru kaydediliyor, yalnızca görünürlük yanlıştı). `.consent[hidden]{display:none!important}`
 eklendi; yerelde doğrulandı (kapatma + yenileme sonrası gizli).
+
+## v16 — tek arayüz sistemi (Apple estetiği, bütün sayfalarda aynı iskelet)
+
+v15'te açık temaya geçildi ama sayfalar arasında dil birliği yoktu: bazı yerlerde beyaz üstü beyaz
+yazı, kart başlıklarında rastgele boşluklar, sayfa başlığının sabit üst çubuk altında kırpılması,
+görünmez form alanları. v16, `src/theme-light.css` dosyasını sıfırdan **tek bir tasarım sistemi**
+olarak yeniden yazdı.
+
+| Katman | Kural |
+|---|---|
+| Renk | `#fff` zemin, `#fafafc` bant, `#e6e6eb` çizgi, `#1d1d1f` metin, `#58585d` ikincil, `#6e6e73` üçüncül, tek vurgu `#c8102e` |
+| Tipografi | `-apple-system/SF Pro` yığını; h1 clamp(26→36) −0.035em, gövde 13–14,5 px |
+| Sayfa başlığı | **Tek desen**: `#fafafc` bant + kırıntı + h1 + alt satır; `padding-top: calc(başlık + 20px)` |
+| Kart | beyaz + 1 px `#e6e6eb` + 18 px köşe, gölge yok (yalnız hover'da 1 px) |
+| Eylem | dolu kırmızı **yalnız birincil** eylemde (Giriş, Ara, Haritada gör); ikincil düğmeler beyaz/çerçeveli, üçüncül eylemler kırmızı metin bağlantı |
+| Kategori şeridi | 5 × 3 eşit ızgara (mobil 3 × 5), dikey/yatay çizgiler, tek renk ikon |
+| Etiket satırı | ızgarada değil, **tek satır kaydırılabilir** pill listesi |
+| Form | input/select 40 px, `#fff` zemin, koyu metin, görünür placeholder |
+
+Bulunup düzeltilen gerçek hatalar:
+- **Alt bilgi e-posta alanı görünmezdi** (koyu tema kalıntısı: beyaz yazı, %7 beyaz zemin) → beyaz alan + koyu metin.
+- **Telif satırı görünmezdi** (`rgba(255,255,255,.5)` açık zeminde) → ikincil gri.
+- **Sayfa başlıkları sabit çubuk altında kırpılıyordu** (`.page-head` üst boşluğu ezilmişti).
+- **İl sayfası alt satırı beyaz üstü beyazdı** (`.il-hero-inner p`).
+- **Kalp (favori) ikonları görünmezdi** (ikon rengi beyaz) → `currentColor`.
+- **Rota kartlarındaki "Başlat" düğmesi yine dolu kırmızıydı** (`.btn-red` sonradan geldiği için `.ri-btn`'i eziyordu).
+- **Mobil menü ikonu görünmezdi**, kategori sayaçları ve ilçe etiketleri soluktu.
+- İl sayfasındaki hava durumu paneli, mevsim/ilçe etiketleri nötr griye çekildi.
+
+Doğrulama: 22 sayfa (11 SPA rotası + 11 statik sayfa) × 1280/390 px otomatik kontrast taraması
+— başlangıçta **406** düşük kontrastlı metin düğümü, şimdi **0** (yalnız hava durumu yüklenirken
+bir an görünen `/100` iskelet değeri hariç). JS hatası 0, yatay taşma 0.
