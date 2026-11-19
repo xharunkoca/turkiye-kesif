@@ -73,6 +73,9 @@
     return String(t).charAt(0).toLocaleUpperCase("tr") + String(t).slice(1);
   };
 
+  // konumu doğrulanmış kayıtlar listede önce gelir
+  const byCoordFirst = (list) => list.slice().sort((x, y) => (y[4] != null) - (x[4] != null));
+
   const dedupeByName = (list) => {
     const seen = new Set();
     return list.filter((p) => { const k = norm(p[0]); if (seen.has(k)) return false; seen.add(k); return true; });
@@ -81,6 +84,7 @@
   // aynı yerin iki kategoride görünmesi sayıları şişirmesin: gösterimde tekilleştirilmiş listeler
   const byIlUniq = byIl.map((l) => dedupeByName(l));
   const PLACE_COUNT = byIlUniq.reduce((a, l) => a + l.length, 0);
+  const PLACE_VERIFIED = byIlUniq.reduce((a, l) => a + l.filter((p) => p[4] != null).length, 0);
 
   const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const IL_SLUG = ILS.map((il) => slug(il.n));
@@ -145,7 +149,14 @@
     "#7a48c7", "#d97706", "#0f87a8", "#b4500f", "#3f8f3f", "#7749b8", "#8a56c9",
     "#2b6f9e", "#b3303a"];
 
+  // koordinat varsa doğrudan nokta; yoksa ad + ilçe + il ile arama (her zaman doğru sonuç)
   const maps = (lat, lon) => `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+  const mapsPlace = (p) => {
+    if (p[4] != null && p[5] != null) return maps(p[4], p[5]);
+    const q = [p[0], p[3], ILS[p[2]].n, "Türkiye"].filter(Boolean).join(", ");
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  };
+  const hasCoord = (p) => p[4] != null && p[5] != null;
   const wdUrl = (name) => `https://www.wikidata.org/w/index.php?search=${encodeURIComponent(name)}`;
   const wikiUrl = (name) => `https://tr.wikipedia.org/w/index.php?search=${encodeURIComponent(name)}`;
 
@@ -246,7 +257,7 @@
   function routesFor(ilIdx) {
     if (routeCache[ilIdx]) return routeCache[ilIdx];
     const il = ILS[ilIdx];
-    const pool = byIl[ilIdx];
+    const pool = byIl[ilIdx].filter(hasCoord);   // rota yalnızca konumu doğrulanmış duraklarla kurulur
     const center = [il.lat, il.lon];
     const used = new Set();
     const routes = THEMES.map((th, ti) => {
@@ -308,8 +319,8 @@
         <h3><button class="p-title" data-place="${p.idx}">${esc(p[0])}</button></h3>
         <p class="p-loc">${icon("i-pin")}<span>${esc(p[3] || il.n)}${p[3] ? ", " + esc(il.n) : ""}</span></p>
         <div class="p-foot">
-          <a class="goto" href="${maps(p[4], p[5])}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}Konuma git</a>
-          <span class="p-src" title="Kaynak: ${p[7] === "approx" ? "il merkezi (yaklaşık)" : p[7] === "wikipedia" ? "Türkçe Vikipedi koordinatı" : "Wikidata"}">${p[7] === "approx" ? "≈ konum" : "✓ doğrulandı"}</span>
+          <a class="goto" href="${mapsPlace(p)}" target="_blank" rel="noopener noreferrer"${hasCoord(p) ? "" : ' title="Koordinatı doğrulanmadı — haritada ada göre aranır"'}>${icon("i-nav")}${hasCoord(p) ? "Konuma git" : "Haritada ara"}</a>
+          <span class="p-src${hasCoord(p) ? "" : " p-src-nc"}" title="${hasCoord(p) ? "Kaynak: " + (p[7] === "approx" ? "il merkezi (yaklaşık)" : p[7] === "wikipedia" ? "Türkçe Vikipedi koordinatı" : "Wikidata") : "Koordinat doğrulanamadı; adres/arama ile bulunur"}">${hasCoord(p) ? (p[7] === "approx" ? "≈ konum" : "✓ doğrulandı") : "konum yok"}</span>
         </div>
       </div>
     </article>`;
@@ -428,9 +439,10 @@
     if (!p) return;
     const il = ILS[p[2]];
     const cat = CATS[p[1]];
-    const nearby = byIl[p[2]]
-      .filter((q) => q.idx !== p.idx)
-      .sort((a, b) => haversine([p[4], p[5]], [a[4], a[5]]) - haversine([p[4], p[5]], [b[4], b[5]]))
+    const nearby = (hasCoord(p)
+      ? byIl[p[2]].filter((q) => q.idx !== p.idx && hasCoord(q))
+          .sort((a, b) => haversine([p[4], p[5]], [a[4], a[5]]) - haversine([p[4], p[5]], [b[4], b[5]]))
+      : byIl[p[2]].filter((q) => q.idx !== p.idx && norm(q[3]) === norm(p[3])))
       .slice(0, 4);
     openModal(`
       <div class="modal-hero" style="background:linear-gradient(135deg,${CAT_COLORS[p[1]]},#0a2c52)">
@@ -439,20 +451,26 @@
       </div>
       <div class="modal-body">
         <h3 id="modalTitle">${esc(p[0])}</h3>
-        <p class="sub">${esc(p[3] || il.n)}${p[3] ? ", " + esc(il.n) : esc(il.n)} • ${esc(il.r)} Bölgesi</p>
+        <p class="sub">${p[3] ? esc(p[3]) + ", " + esc(il.n) : esc(il.n)} • ${esc(il.r)} Bölgesi</p>
         <div class="modal-tags">
           ${p[6] ? `<span class="tag">${esc(typeLabel(p[6]))}</span>` : ""}
           <span class="tag">${esc(cat.label)}</span>
-          <span class="tag">${p[7] === "approx" ? "≈ yaklaşık konum" : "✓ doğrulanmış konum"}</span>
+          <span class="tag${hasCoord(p) ? "" : " tag-nc"}">${hasCoord(p) ? (p[7] === "approx" ? "≈ yaklaşık konum" : "✓ doğrulanmış konum") : "konum doğrulanmadı"}</span>
         </div>
         <div class="modal-stats">
-          <div class="stat"><b>${p[4].toFixed(4)}</b><span>Enlem</span></div>
-          <div class="stat"><b>${p[5].toFixed(4)}</b><span>Boylam</span></div>
-          <div class="stat"><b>${esc(il.p)}</b><span>Plaka</span></div>
+          ${hasCoord(p)
+            ? `<div class="stat"><b>${p[4].toFixed(4)}</b><span>Enlem</span></div>
+               <div class="stat"><b>${p[5].toFixed(4)}</b><span>Boylam</span></div>
+               <div class="stat"><b>${esc(il.p)}</b><span>Plaka</span></div>`
+            : `<div class="stat"><b>${esc(il.p)}</b><span>Plaka</span></div>
+               <div class="stat"><b>${esc(p[3] || il.n)}</b><span>İlçe</span></div>
+               <div class="stat"><b>—</b><span>Koordinat</span></div>`}
         </div>
         <p style="font-size:12.5px;color:#5b6f82;line-height:1.6">
-          ${esc(p[0])}, ${esc(il.n)} ilinin ${esc(p[3] || il.n)} ${p[3] ? "ilçesinde" : "merkezinde"} yer alıyor.
-          Konum bilgisi ${p[7] === "approx" ? "il merkezi referans alınarak yaklaşık olarak" : p[7] === "wikipedia" ? "Türkçe Vikipedi koordinatlarından" : "Wikidata'dan"} alınmıştır.
+          ${esc(p[0])}, ${esc(il.n)} ilinin ${p[3] ? esc(p[3]) + " ilçesinde" : "merkezinde"} yer alıyor.
+          ${hasCoord(p)
+            ? `Konum bilgisi ${p[7] === "approx" ? "il merkezi referans alınarak yaklaşık olarak" : p[7] === "wikipedia" ? "Türkçe Vikipedi koordinatlarından" : "Wikidata'dan"} alınmıştır.`
+            : "Koordinatı doğrulanamadığı için harita bağlantısı ad ve ilçe bilgisiyle arama yapar; konum yanlış gösterilmez."}
         </p>
         <div class="nearby">
           <div class="nearby-title">Yakındaki keşifler</div>
@@ -461,10 +479,10 @@
           </div>
         </div>
         <div class="modal-actions">
-          <a class="btn btn-red" href="${maps(p[4], p[5])}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}Konuma git</a>
+          <a class="btn btn-red" href="${mapsPlace(p)}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}${hasCoord(p) ? "Konuma git" : "Haritada ara"}</a>
           <button class="btn btn-ghost" data-fav="${esc(favId(p))}">${icon("i-heart")}Favorilere ekle</button>
           <a class="btn btn-ghost" href="#/kesfet?il=${p[2]}&kat=${cat.id}" data-close-nav>${icon("i-compass")}Benzer yerler</a>
-          <a class="btn btn-ghost" href="${p[7] === "approx" ? wikiUrl(p[0]) : wdUrl(p[0])}" target="_blank" rel="noopener noreferrer">${icon("i-external")}Kaynağa git</a>
+          <a class="btn btn-ghost" href="${(p[7] === "approx" || p[7] === "wikipedia") ? wikiUrl(p[0]) : wdUrl(p[0])}" target="_blank" rel="noopener noreferrer">${icon("i-external")}Kaynağa git</a>
         </div>
       </div>`);
   }
@@ -603,7 +621,7 @@
       </div>
       <div class="modal-body">
         <h3 id="modalTitle">Kişisel Keşif Alanınız</h3>
-        <p class="sub">${items.length} favori • ${nf(PLACE_COUNT)} doğrulanmış yer • ${ALL_ROUTES.length} rota</p>
+        <p class="sub">${items.length} favori • ${nf(PLACE_COUNT)} keşif kaydı • ${ALL_ROUTES.length} rota</p>
         ${items.length ? `<div class="fav-list">${items.map((p) => `
           <button class="suggest-item" data-place="${p.idx}">
             <span class="suggest-ic">${catIcon(p[1])}</span>
@@ -669,7 +687,7 @@
       <div class="stat-cell"><b>${nf(N_IL)}</b><span>il</span></div>
       <div class="stat-cell"><b>${nf(dists)}</b><span>ilçe / belde</span></div>
       <div class="stat-cell"><b>${nf(villages)}</b><span>köy ${nf(koy)} • mahalle ${nf(mah)}</span></div>
-      <div class="stat-cell"><b>${nf(PLACE_COUNT)}</b><span>doğrulanmış keşif noktası</span></div>
+      <div class="stat-cell"><b>${nf(PLACE_COUNT)}</b><span>keşif kaydı</span></div>
       <div class="stat-cell"><b>${nf(ALL_ROUTES.length)}</b><span>hazır rota</span></div>
       <div class="stat-cell"><b>15</b><span>turizm kategorisi</span></div>`;
 
@@ -708,7 +726,7 @@
         <div class="container">
           <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><b>Keşfet</b></nav>
           <h1>${q ? `“${esc(q)}” için sonuçlar` : kat ? esc(CATS[catById[kat]].label) : "Tüm Keşif Noktaları"}</h1>
-          <p class="page-sub">${nf(PLACE_COUNT)} doğrulanmış yer • 15 kategori • 81 il</p>
+          <p class="page-sub">${nf(PLACE_COUNT)} keşif kaydı • 15 kategori • 81 il</p>
         </div>
       </div>
       <div class="container">
@@ -748,7 +766,7 @@
         const k = norm(state.q);
         list = list.filter((p) => norm(p[0] + " " + (p[6] || "") + " " + typeLabel(p[6]) + " " + p[3] + " " + ILS[p[2]].n).includes(k));
       }
-      return list;
+      return byCoordFirst(list);
     }
 
     function paint() {
@@ -814,7 +832,7 @@
         <div class="container">
           <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><b>81 İl</b></nav>
           <h1>Türkiye'nin 81 İli</h1>
-          <p class="page-sub">${nf(ILS.reduce((a, il) => a + il.d.length, 0))} ilçe • ${nf(villages)} köy/mahalle • ${nf(PLACE_COUNT)} keşif noktası</p>
+          <p class="page-sub">${nf(ILS.reduce((a, il) => a + il.d.length, 0))} ilçe • ${nf(villages)} köy/mahalle • ${nf(PLACE_COUNT)} keşif kaydı (${nf(PLACE_VERIFIED)} konumlu)</p>
         </div>
       </div>
       <div class="container">
@@ -879,7 +897,7 @@
           ${cats.map((x) => `<a class="cat-chip${activeTab === x.i ? " active" : ""}" href="#/il/${IL_SLUG[ilIdx]}?kat=${x.c.id}">
             ${catIcon(x.i, 14)}${esc(x.c.label)} <em>${nf(x.n)}</em></a>`).join("")}
         </div>
-        <div class="p-grid">${(activeTab < 0 ? dedupeByName(list) : list).map(placeCard).join("") || `<div class="empty">Bu kategoride kayıt yok.</div>`}</div>
+        <div class="p-grid">${byCoordFirst(activeTab < 0 ? dedupeByName(list) : list).map(placeCard).join("") || `<div class="empty">Bu kategoride kayıt yok.</div>`}</div>
 
         <h2 class="block-title"><svg><use href="#i-building"/></svg>İlçeler ve köyler</h2>
         <p class="block-sub">${nf(il.d.length)} ilçe/belde, ${nf(koyN)} köy ve ${nf(mahN)} mahalle. İlçeye tıklayarak yerleşim birimlerini görün.</p>
@@ -1162,8 +1180,8 @@
     const catIdx = se.cats.map((id) => catById[id]);
     const pool = [];
     ILS.forEach((il, i) => catIdx.forEach((ci) => byIlCat[i][ci].forEach((p) => pool.push(p))));
-    const uniq = dedupeByName(pool);
-    uniq.sort((x, y) => y.links - x.links);
+    const uniq = byCoordFirst(dedupeByName(pool));
+    uniq.sort((x, y) => ((y[4] != null) - (x[4] != null)) || (y.links - x.links));
 
     // mevsime en uygun iller: sezon kategorilerindeki kayıt sayısı
     const ilScore = ILS.map((il, i) => ({
@@ -1247,7 +1265,7 @@
     const il = ILS[i];
     const d = il.d[di];
     if (!d) { location.hash = `#/il/${IL_SLUG[i]}`; return; }
-    const list = dedupeByName(byIl[i].filter((p) => norm(p[3]) === norm(d.n)));
+    const list = byCoordFirst(dedupeByName(byIl[i].filter((p) => norm(p[3]) === norm(d.n))));
     const koy = d.k || [], mah = d.m || [];
     const ilceSlug = slug(d.n);
     const others = il.d.map((x, xi) => ({ x, xi })).filter((o) => o.xi !== di).slice(0, 12);
@@ -1311,7 +1329,7 @@
     const ci = catById[catId];
     if (ci === undefined) { location.hash = "#/kesfet"; return; }
     const cat = CATS[ci];
-    const list = PLACES.filter((p) => p[1] === ci);
+    const list = byCoordFirst(PLACES.filter((p) => p[1] === ci));
     const perIl = ILS.map((il, i) => ({ il, i, n: byIlCat[i][ci].length })).filter((x) => x.n > 0);
     const view = $("#view-page");
     view.innerHTML = `
@@ -1320,7 +1338,7 @@
           <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><a href="#/kesfet">Keşfet</a><span>/</span><b>${esc(cat.label)}</b></nav>
           <h1><span class="cat-h-ic" style="--c:${CAT_COLORS[ci]}">${catIcon(ci, 26)}</span>${esc(cat.label)}</h1>
           <p class="page-sub">${esc(CAT_DESC[cat.id] || "")}</p>
-          <p class="page-sub" style="margin-top:2px">Bu kategoride ${nf(list.length)} doğrulanmış nokta, ${perIl.length} ilde</p>
+          <p class="page-sub" style="margin-top:2px">Bu kategoride ${nf(list.length)} kayıt (${nf(list.filter(hasCoord).length)} konumlu), ${perIl.length} ilde</p>
           <div class="env-row">
             ${cat.env.map((e) => `<div class="env-chip"><b>${esc(e.v)}</b><span>${esc(e.l)}</span></div>`).join("")}
           </div>

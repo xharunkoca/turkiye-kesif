@@ -91,7 +91,7 @@ ENVANTER = {
               ("10.000", "geleneksel pazar yeri (genel tahmin)")],
 }
 
-CAPS = {"antik": 6, "muze": 4, "doga": 4, "tarih": 8, "gol": 5, "selale": 4, "magara": 4,
+CAPS = {"antik": 6, "muze": 18, "doga": 45, "tarih": 8, "gol": 5, "selale": 4, "magara": 4,
         "vadi": 4, "plaj": 5, "gastro": 3, "yayla": 4, "dini": 6, "kultur": 4, "termal": 4,
         "carsi": 3}
 
@@ -417,6 +417,87 @@ def extra_carsi(provs, dists):
     return out
 
 
+def nearest_district_in(dists, il, pt):
+    """Verilen ilin ilçeleri arasından koordinata en yakın ilçe adı."""
+    dd = dists.get(il, {})
+    pts = [(dn, r["lat"], r["lon"]) for dn, r in dd.items() if r["lat"]]
+    if not pts:
+        return None
+    return min(pts, key=lambda x: haversine(pt, (x[1], x[2])))[0]
+
+
+def extra_wiki(provs, dists):
+    """Vikipedi resmî listelerinden (millî park, tabiat parkı/anıtı, koruma alanı, müzeler)
+    ad + il; koordinat bulunabildiyse konum. Koordinatı olmayanlar da korunur."""
+    names_f = RAW / "wiki_lists_names.json"
+    coords_f = RAW / "wiki_coords.json"
+    if not names_f.exists():
+        print("  ! wiki listeleri yok (fetch_wiki_lists.py names)")
+        return []
+    rows = json.loads(names_f.read_text())
+    coords = json.loads(coords_f.read_text()) if coords_f.exists() else {}
+
+    def type_of(name, cat):
+        low = name.lower()
+        if cat == "muze":
+            return "Müze"
+        if "millî parkı" in low or "milli parkı" in low:
+            return "Millî park"
+        if "tabiat parkı" in low:
+            return "Tabiat parkı"
+        if "tabiat anıtı" in low:
+            return "Tabiat anıtı"
+        return "Tabiatı koruma alanı"
+
+    out, nocoord = [], 0
+    for r in rows:
+        il = None
+        for cand in r.get("ils") or []:
+            c2 = ALIAS.get(cand, cand)
+            if c2 in provs:
+                il = c2
+                break
+        if not il:
+            continue
+        lat = lon = dist = None
+        c = coords.get(r["name"])
+        if c:
+            la, lo = c[0], c[1]
+            if 35.0 <= la <= 42.6 and 25.2 <= lo <= 45.0:
+                lat, lon = round(la, 4), round(lo, 4)
+                dist = nearest_district_in(dists, il, (lat, lon))
+        if lat is None:
+            nocoord += 1
+        out.append({"cat": r["cat"], "name": r["name"], "il": il, "dist": dist,
+                    "lat": lat, "lon": lon, "type": type_of(r["name"], r["cat"]),
+                    "links": 0, "src": "wikipedia"})
+    print(f"  + wiki listesi: {len(out)} kayıt ({nocoord} koordinatsız)")
+    return out
+
+
+def fix_districts(places, dists):
+    """İlçe merkezinden 90 km'den uzak kayıtları en yakın ilçeye taşı (P131 hatası düzeltmesi)."""
+    moved = 0
+    for p in places:
+        if p.get("lat") is None or not p.get("dist"):
+            continue
+        dd = dists.get(p["il"], {})
+        rec = dd.get(p["dist"])
+        if not rec or not rec.get("lat"):
+            continue
+        d0 = haversine((p["lat"], p["lon"]), (rec["lat"], rec["lon"]))
+        if d0 <= 90:
+            continue
+        nd = nearest_district_in(dists, p["il"], (p["lat"], p["lon"]))
+        if nd and nd != p["dist"]:
+            nrec = dd.get(nd)
+            if nrec and nrec.get("lat") and haversine((p["lat"], p["lon"]), (nrec["lat"], nrec["lon"])) < d0:
+                p["dist"] = nd
+                moved += 1
+    print(f"  - ilçe düzeltmesi: {moved} kayıt en yakın ilçeye taşındı")
+    return places
+
+
 def select(places):
     """Her il + kategori için en iyi kayıtları seç."""
     grouped = defaultdict(list)
@@ -441,7 +522,7 @@ if __name__ == "__main__":
     cur = curated_places(provs, dists)
     print(f"wikidata mekân: {len(wik)} | curated: {len(cur)}")
 
-    merged = wik + cur + extra_carsi(provs, dists)
+    merged = wik + cur + extra_carsi(provs, dists) + extra_wiki(provs, dists)
 
     # ---- ad temizliği ve genel/jenerik kayıtların ayıklanması
     GENERIC = {"bedesten", "tarihî çarşı", "tarihî arasta", "tarihî bedesten", "tarihî taş han",
@@ -464,7 +545,12 @@ if __name__ == "__main__":
         # aynı ad + 3 km yakınlık = aynı yer
         dup = False
         for q_ in by_name:
-            if q_["name"] == name and haversine((q_["lat"], q_["lon"]), (p["lat"], p["lon"])) < 3:
+            if q_["name"] != name:
+                continue
+            if q_.get("lat") is None or p.get("lat") is None:
+                dup = True          # konumu olmayan aynı ad → yine tekrar say
+                break
+            if haversine((q_["lat"], q_["lon"]), (p["lat"], p["lon"])) < 3:
                 dup = True
                 break
         if dup:
@@ -484,7 +570,7 @@ if __name__ == "__main__":
         dedup.append(p)
     uniq = dedup
 
-    places = select(uniq)
+    places = fix_districts(select(uniq), dists)
     print(f"seçilen mekân: {len(places)}")
 
     # il sıralaması: plaka koduna göre

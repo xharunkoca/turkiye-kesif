@@ -1140,3 +1140,8 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
 }
 .env-note{margin:8px 0 0;font-size:11px;color:rgba(255,255,255,.62);line-height:1.5}
 @media (max-width:760px){ .env-note{font-size:10.5px} }
+
+/* ================================================================ v6 — konumu doğrulanmamış kayıtlar */
+.p-src-nc{color:#9a7b3f;background:#fdf6e6;border-radius:999px;padding:2px 8px}
+.tag-nc{background:#fdf6e6;color:#8a6a2a;border-color:#f0e2bf}
+.p-card .goto[title]{border-style:dashed}

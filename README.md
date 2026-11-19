@@ -1,6 +1,6 @@
 # Türkiye Keşif
 
-**81 il · 15 turizm kategorisi · 3.269 doğrulanmış keşif noktası · 45.060 köy/mahalle · 405 gezi rotası**
+**81 il · 15 turizm kategorisi · 4.319 keşif kaydı (3.448 konumlu) · 45.060 köy/mahalle · 405 gezi rotası**
 
 🔗 **Canlı site:** <https://xharunkoca.github.io/turkiye-kesif/>
 
@@ -19,7 +19,9 @@ bağlantısı gerekmez (harici harita/kaynak bağlantıları hariç).
 | Köy | **25.206** |
 | Mahalle | **19.854** |
 | Toplam kırsal yerleşim | **45.060** |
-| Doğrulanmış turistik nokta | **3.271** kayıt / **3.269** tekil yer |
+| Keşif kaydı | **4.319** kayıt / **4.292** tekil yer |
+| — konumu doğrulanmış | **3.448** |
+| — konumu doğrulanmamış (adresle aranır) | **871** |
 | Turizm kategorisi | **15** |
 | Gezi rotası | **405** (her ile 5 tema) |
 
@@ -28,8 +30,8 @@ bağlantısı gerekmez (harici harita/kaynak bağlantıları hariç).
 | # | Kategori | Kayıt |
 |---|---|---|
 | 1 | Antik Kentler | 455 |
-| 2 | Müzeler | 235 |
-| 3 | Doğa ve Milli Parklar | 72 |
+| 2 | Müzeler | 838 |
+| 3 | Doğa ve Milli Parklar | 517 |
 | 4 | Tarihi Yapılar | 643 |
 | 5 | Göller | 336 |
 | 6 | Şelaleler | 59 |
@@ -159,15 +161,25 @@ kaynaklarla güncel mi diye `build.py` çıktısını karşılaştırır.
   (SPARQL, sonuçlar `data/raw/` içinde önbelleklenir). Sınıf eşlemeleri: antik kent,
   höyük, kale, müze, millî park, göl, şelale, mağara, kanyon, plaj, cami/külliye,
   hamam, kervansaray, bedesten/çarşı…
+- **Türkçe Vikipedi resmî listeleri**: *Türkiye'deki millî parklar* (53), *tabiat parkları* (259),
+  *tabiat anıtları* (117), *tabiat koruma alanları* (32) ve *illere göre müzeler* (~1.600 ad).
+  Bu kayıtlarda koordinat varsa Vikipedi koordinat API'sinden alınır; yoksa kayıt yine listelenir.
 - **Natural Earth 10m** (kamu malı): Türkiye sınır geometrisi.
 - **Open-Meteo** (ücretsiz, anahtarsız): canlı hava durumu ve seyahat puanı.
 - Kategori envanter sayıları resmî/derleme istatistiklerdir (TÜİK, Kültür ve Turizm
   Bakanlığı, TÜRÇEV, TÜRKPATENT vb.).
 
-Kalite kuralları: yalnızca koordinatı Türkiye sınır kutusunda olan kayıtlar; il
-merkezine 220 km'den uzak aykırı koordinatlar atılır; aynı ad + 3 km yakınlık
-yinelenen kayıt sayılır; jenerik adlar ("Bedesten", "Tarihî Çarşı"…) elenir; köy ve
-mahalleler en yakın ilçeye (≤22 km) bağlanır.
+### Konum doğruluğu
+
+- Koordinatı olan kayıtlar **"Konuma git"** ile doğrudan noktaya gider (`maps?query=lat,lon`).
+- Koordinatı doğrulanamayan **871 kayıt** da listede görünür; kartında *"konum yok"* etiketi
+  ve **"Haritada ara"** düğmesi bulunur → Google Maps'te *ad + ilçe + il* ile arama yapar
+  (yanlış bir koordinata göndermek yerine doğru sonucu bulur).
+- İlçe merkezinden 90 km'den uzak koordinatlar en yakın ilçeye taşınır (9 kayıt düzeltildi).
+- **Hazır rotalar yalnızca konumu doğrulanmış duraklarla kurulur**; konumsuz kayıtlar rota
+  üretimine hiç girmez.
+- İl merkezine 220 km'den uzak aykırı koordinatlar, aynı ad + 3 km yinelenen kayıtlar ve
+  jenerik adlar ("Bedesten", "Tarihî Çarşı"…) ayıklanır; köy/mahalleler en yakın ilçeye bağlanır.
 
 ## Notlar
 
