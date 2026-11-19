@@ -1138,3 +1138,5 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
   .wx-day:nth-child(n+4){display:none}
   .wx-pill{margin-left:0}
 }
+.env-note{margin:8px 0 0;font-size:11px;color:rgba(255,255,255,.62);line-height:1.5}
+@media (max-width:760px){ .env-note{font-size:10.5px} }

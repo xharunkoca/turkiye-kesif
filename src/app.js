@@ -1324,6 +1324,7 @@
           <div class="env-row">
             ${cat.env.map((e) => `<div class="env-chip"><b>${esc(e.v)}</b><span>${esc(e.l)}</span></div>`).join("")}
           </div>
+          <p class="env-note">Envanter rakamları resmî/derleme toplamlardır; aşağıdaki listede yalnızca konumu doğrulanmış kayıtlar yer alır.</p>
         </div>
       </div>
       <div class="container">
