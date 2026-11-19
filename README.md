@@ -8,7 +8,8 @@ Bağımlılıksız keşif rehberi. Site **511 önceden oluşturulmuş (prerender
 tek sayfalık uygulamadan (`index.html` + hash yönlendirici) oluşur; sunucu tarafı yoktur,
 GitHub Pages üzerinde yayınlanır.
 
-- **İlk yükleme ≈ 23 KB HTML + 12 KB CSS + 338 KB gzip JS** (v11'de 2,26 MB tek dosyaydı)
+- **İlk yükleme ≈ 23 KB HTML + 12 KB CSS + 357 KB gzip JS** (v11'de 2,26 MB tek dosyaydı)
+- Mobil (4x CPU + yavaş 4G): **LCP 780 ms · CLS 0,04 · DCL 2,85 sn** (v11: 9,07 sn)
 - Görseller WebP, `srcset` + `loading="lazy"` + sabit boyut (CLS ≈ 0)
 - Her il / kategori / rota için **gerçek URL** (`/il/istanbul/`, `/kategori/gol/`, `/rota/istanbul-tarih/`)
   ve `sitemap.xml`'de 511 adres → arama motorları ve paylaşım önizlemeleri çalışır

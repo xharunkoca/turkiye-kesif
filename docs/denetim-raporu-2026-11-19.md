@@ -384,12 +384,16 @@ testlerden alınmıştır; canlı değerler GitHub Pages gzip'i ile daha iyidir.
 
 | Ölçüt | v11 (denetim) | v12 (canlı) |
 |---|---|---|
-| LCP | — | **820 ms** |
+| LCP | — | **780 ms** |
 | CLS | 0,697 | **0,04** |
-| DOMContentLoaded | 9.070 ms | **4.650 ms** |
+| DOMContentLoaded | 9.070 ms | **2.850 ms** |
 | İlk yükleme aktarımı | 2,4 MB | **834 KB** (11 istek) |
 | `index.html` aktarımı | 2,4 MB | **23,7 KB** (gzip) |
 | JS paketi aktarımı | — | 357 KB (gzip) |
+
+DCL artık tamamen **bant genişliği sınırında**: 2,85 sn'nin ≈2,1 sn'si JS'in inmesi, ≈0,75 sn'si
+yürütme. Daha aşağısı yalnızca veri hacmini küçültmekle mümkün; kayıt/yerleşim adları
+silinmeden bu sınıra inildi (hedef 2,5 sn).
 
 ### v13 — açılış CPU'sunu düşürme
 
