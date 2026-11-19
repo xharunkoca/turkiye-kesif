@@ -491,3 +491,8 @@ Doğrulamalar (yerel, Playwright + Chromium):
 `style.f2cd168489.css` servis ediliyor; başlık zemini `rgba(255,255,255,.92)`, statik il sayfası
 `h1` rengi `rgb(29,29,31)`; ana sayfa + mobil + `/il/istanbul/` görüntüleri alındı, **JS hatası 0**;
 onay şeridi "Anladım" ile kapanıyor (`tk-consent-v1` yazılıyor). Görüntüler: `shots/canli-v15-*.png`.
+
+**Düzeltme (v15.1):** Tema katmanındaki `.consent{display:flex!important}` kuralı, taban CSS'in
+`.consent[hidden]{display:none}` kuralını ezdiği için onay şeridi "Anladım"a basıldıktan sonra da
+ekranda kalıyordu (durum doğru kaydediliyor, yalnızca görünürlük yanlıştı). `.consent[hidden]{display:none!important}`
+eklendi; yerelde doğrulandı (kapatma + yenileme sonrası gizli).

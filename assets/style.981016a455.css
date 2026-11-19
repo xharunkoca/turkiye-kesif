@@ -1707,3 +1707,6 @@ h1,h2,.section-title{letter-spacing:-.03em}
 .panel.seasons-panel{align-self:start}
 .season-grid{grid-auto-rows:minmax(160px,190px)!important}
 .season-card{min-height:0!important;max-height:190px}
+
+/* --- kritik: [hidden] her zaman kazansın (onay şeridi kapanabilsin) --- */
+.consent[hidden]{display:none!important}
