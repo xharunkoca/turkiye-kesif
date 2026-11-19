@@ -1,6 +1,6 @@
 # Türkiye Keşif
 
-**81 il · 15 turizm kategorisi · 4.319 keşif kaydı (3.448 konumlu) · 45.060 köy/mahalle · 405 gezi rotası**
+**81 il · 15 turizm kategorisi · 5.881 keşif kaydı (5.001 konumlu) · 45.060 köy/mahalle · 405 gezi rotası**
 
 🔗 **Canlı site:** <https://xharunkoca.github.io/turkiye-kesif/>
 
@@ -19,9 +19,9 @@ bağlantısı gerekmez (harici harita/kaynak bağlantıları hariç).
 | Köy | **25.206** |
 | Mahalle | **19.854** |
 | Toplam kırsal yerleşim | **45.060** |
-| Keşif kaydı | **4.319** kayıt / **4.292** tekil yer |
-| — konumu doğrulanmış | **3.448** |
-| — konumu doğrulanmamış (adresle aranır) | **871** |
+| Keşif kaydı | **5.881** kayıt / **5.871** tekil yer |
+| — konumu doğrulanmış | **5.001** |
+| — konumu doğrulanmamış (adresle aranır) | **880** |
 | Turizm kategorisi | **15** |
 | Gezi rotası | **405** (her ile 5 tema) |
 
@@ -29,20 +29,20 @@ bağlantısı gerekmez (harici harita/kaynak bağlantıları hariç).
 
 | # | Kategori | Kayıt |
 |---|---|---|
-| 1 | Antik Kentler | 455 |
-| 2 | Müzeler | 838 |
-| 3 | Doğa ve Milli Parklar | 517 |
-| 4 | Tarihi Yapılar | 643 |
-| 5 | Göller | 336 |
-| 6 | Şelaleler | 59 |
-| 7 | Mağaralar | 155 |
-| 8 | Vadiler ve Kanyonlar | 186 |
-| 9 | Plajlar ve Kıyılar | 67 |
+| 1 | Antik Kentler | 838 |
+| 2 | Müzeler | 927 |
+| 3 | Doğa ve Milli Parklar | 476 |
+| 4 | Tarihi Yapılar | 1.084 |
+| 5 | Göller | 490 |
+| 6 | Şelaleler | 64 |
+| 7 | Mağaralar | 203 |
+| 8 | Vadiler ve Kanyonlar | 185 |
+| 9 | Plajlar ve Kıyılar | 75 |
 | 10 | Gastronomi ve Yöresel | 123 |
 | 11 | Yaylalar ve Kamp | 104 |
-| 12 | Dini Yapılar ve İnanç | 486 |
+| 12 | Dini Yapılar ve İnanç | 955 |
 | 13 | Kültür ve Sanat | 192 |
-| 14 | Kaplıcalar ve Termal | 56 |
+| 14 | Kaplıcalar ve Termal | 63 |
 | 15 | Çarşılar ve Pazarlar | 102 |
 
 Her kategori kartında referans istatistikleri ("genel kabul gören antik kent sayısı",
@@ -164,6 +164,9 @@ kaynaklarla güncel mi diye `build.py` çıktısını karşılaştırır.
 - **Türkçe Vikipedi resmî listeleri**: *Türkiye'deki millî parklar* (53), *tabiat parkları* (259),
   *tabiat anıtları* (117), *tabiat koruma alanları* (32) ve *illere göre müzeler* (~1.600 ad).
   Bu kayıtlarda koordinat varsa Vikipedi koordinat API'sinden alınır; yoksa kayıt yine listelenir.
+- **Wikidata sınıf taraması**: kale, tarihî köprü, mağara, manastır, kilise, türbe, cami, müze,
+  antik kent, göl, şelale, baraj, plaj ve kaplıca sınıflarında koordinatlı 11.474 aday toplandı.
+- **İl sınırı poligonları** (`tr-cities.json`, 81 il): koordinat → doğru il/ilçe ataması.
 - **Natural Earth 10m** (kamu malı): Türkiye sınır geometrisi.
 - **Open-Meteo** (ücretsiz, anahtarsız): canlı hava durumu ve seyahat puanı.
 - Kategori envanter sayıları resmî/derleme istatistiklerdir (TÜİK, Kültür ve Turizm
@@ -177,7 +180,9 @@ kaynaklarla güncel mi diye `build.py` çıktısını karşılaştırır.
   (yanlış bir koordinata göndermek yerine doğru sonucu bulur).
 - İlçe merkezinden 90 km'den uzak koordinatlar en yakın ilçeye taşınır (9 kayıt düzeltildi).
 - **Hazır rotalar yalnızca konumu doğrulanmış duraklarla kurulur**; konumsuz kayıtlar rota
-  üretimine hiç girmez.
+  üretimine hiç girmez. Rotalar kompakt kümeleme (çekirdek durak + çevresindeki en yakın
+  duraklar), en yakın komşu sıralaması ve 2-opt kısaltmasıyla kurulur; aynı yerin iki kaydı
+  (ör. "X Millî Parkı" / "X Milli Parkı") rotaya iki kez girmez.
 - İl merkezine 220 km'den uzak aykırı koordinatlar, aynı ad + 3 km yinelenen kayıtlar ve
   jenerik adlar ("Bedesten", "Tarihî Çarşı"…) ayıklanır; köy/mahalleler en yakın ilçeye bağlanır.
 

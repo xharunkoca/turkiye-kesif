@@ -227,6 +227,18 @@
     { key: "deniz", label: "Deniz ve Şifa Rotası", cats: ["plaj", "termal", "gol", "doga"], color: "#0e6f86" },
   ];
 
+  // aynı yerin iki kaydı mı? (aynı ad ya da biri diğerini kapsıyor + 5 km)
+  function sameSpot(a, b, il) {
+    const nm = (x) => norm(x[0]).replace(/\b(milli|milli parki|milli park)\b/g, "milli park")
+      .replace(new RegExp("\\b" + norm(il.n) + "\\b", "g"), "").trim();
+    const na = nm(a), nb = nm(b);
+    const d = haversine([a[4], a[5]], [b[4], b[5]]);
+    if (d > 5) return false;
+    if (na === nb) return true;
+    if (na.length > 6 && nb.length > 6 && (na.includes(nb) || nb.includes(na))) return true;
+    return d < 0.6;
+  }
+
   function nearestPath(stops, start) {
     const rest = stops.slice();
     const path = [];
@@ -242,6 +254,31 @@
       cur = [next[4], next[5]];
     }
     return path;
+  }
+
+  // 2-opt: güzergâh üzerindeki kesişmeleri kaldırır
+  function twoOpt(path, start) {
+    const pts = [start, ...path.map((p) => [p[4], p[5]])];
+    const seq = pts.map((_, i) => i);
+    const d = (a, b) => haversine(pts[a], pts[b]);
+    let improved = true, guard = 0;
+    while (improved && guard++ < 40) {
+      improved = false;
+      for (let i = 1; i < seq.length - 1; i++) {
+        for (let k = i + 1; k < seq.length; k++) {
+          const a = seq[i - 1], b = seq[i], c = seq[k], e = seq[k + 1] ?? null;
+          const before = d(a, b) + (e !== null ? d(c, e) : 0);
+          const after = d(a, c) + (e !== null ? d(b, e) : 0);
+          if (after + 1e-9 < before) {
+            const seg = seq.slice(i, k + 1).reverse();
+            seq.splice(i, k - i + 1, ...seg);
+            improved = true;
+          }
+        }
+      }
+    }
+    const out = seq.slice(1).map((i) => path[i - 1]);
+    return out;
   }
 
   function routeStats(stops, il) {
@@ -260,34 +297,51 @@
     const pool = byIl[ilIdx].filter(hasCoord);   // rota yalnızca konumu doğrulanmış duraklarla kurulur
     const center = [il.lat, il.lon];
     const used = new Set();
+    const seeds = [];   // her rotanın çekirdek noktası: rotalar il geneline yayılır
     const routes = THEMES.map((th, ti) => {
       let items = pool.filter((p) => th.cats.includes(CATS[p[1]].id) && !used.has(p.idx));
       if (items.length < 2) items = pool.filter((p) => !used.has(p.idx));
-      const chosen = [];
-      const tmp = items.slice();
-      // önce il merkezine en yakın durak, sonra il geneline yayılan (farthest-point) seçim
+
+      // 1) çekirdek durak: ilk rota il merkezine en yakın, sonrakiler önceki çekirdeklere en uzak
+      let seed = null, best = -Infinity;
+      items.forEach((p) => {
+        const pt = [p[4], p[5]];
+        const score = seeds.length
+          ? Math.min(...seeds.map((s2) => haversine(s2, pt)))
+          : -haversine(center, pt);
+        if (score > best) { best = score; seed = p; }
+      });
+      const chosen = seed ? [seed] : [];
+
+      // 2) çekirdeğin çevresinde kompakt küme: her adımda kümeye en yakın durak eklenir
+      const tmp = items.filter((p) => p !== seed && !chosen.some((c) => sameSpot(c, p, il)));
       while (tmp.length && chosen.length < 5) {
-        let bi = 0, best = -1;
+        let bi = -1, bd = Infinity;
         tmp.forEach((p, i) => {
-          const d = chosen.length
-            ? Math.min(...chosen.map((c) => haversine([c[4], c[5]], [p[4], p[5]])))
-            : -haversine(center, [p[4], p[5]]);
-          if (d > best) { best = d; bi = i; }
+          if (chosen.some((c) => sameSpot(c, p, il))) return;
+          const d = Math.min(...chosen.map((c) => haversine([c[4], c[5]], [p[4], p[5]])));
+          // çok yakın duraklar (aynı avlu) yerine 2 km'den uzak en yakın durağı tercih et
+          const w = d < 2 ? d + 40 : d;
+          if (w < bd) { bd = w; bi = i; }
         });
+        if (bi < 0) break;
         chosen.push(tmp.splice(bi, 1)[0]);
       }
       // rota en az 4 durak olsun: kullanılmayan yerlerden tamamla
       if (chosen.length < 4) {
-        pool.filter((p) => !used.has(p.idx) && !chosen.includes(p))
+        pool.filter((p) => !used.has(p.idx) && !chosen.includes(p) &&
+            !chosen.some((c) => sameSpot(c, p, il)))
           .sort((a, b) => haversine(center, [a[4], a[5]]) - haversine(center, [b[4], b[5]]))
           .forEach((p) => { if (chosen.length < 4) chosen.push(p); });
       }
-      // hâlâ eksikse (küçük iller) diğer durakları tekrar kullan
       if (chosen.length < 3) {
         pool.forEach((p) => { if (chosen.length < 3 && !chosen.includes(p)) chosen.push(p); });
       }
       chosen.forEach((p) => used.add(p.idx));
-      const stops = nearestPath(chosen, center);
+      if (seed) seeds.push([seed[4], seed[5]]);
+
+      // 3) sıralama: il merkezinden en yakın komşu + 2-opt ile kısaltma
+      const stops = twoOpt(nearestPath(chosen, center), center);
       const st = routeStats(stops, il);
       return { id: `${ilIdx}-${ti}`, ilIdx, theme: th, stops, ...st };
     });

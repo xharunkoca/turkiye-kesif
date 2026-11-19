@@ -93,8 +93,8 @@ ENVANTER = {
               ("10.000", "geleneksel pazar yeri (genel tahmin)")],
 }
 
-CAPS = {"antik": 6, "muze": 18, "doga": 45, "tarih": 8, "gol": 5, "selale": 4, "magara": 4,
-        "vadi": 4, "plaj": 5, "gastro": 3, "yayla": 4, "dini": 6, "kultur": 4, "termal": 4,
+CAPS = {"antik": 12, "muze": 24, "doga": 45, "tarih": 14, "gol": 8, "selale": 6, "magara": 8,
+        "vadi": 4, "plaj": 6, "gastro": 3, "yayla": 4, "dini": 12, "kultur": 4, "termal": 6,
         "carsi": 3}
 
 ALIAS = {"Afyon": "Afyonkarahisar", "İçel": "Mersin", "Urfa": "Şanlıurfa", "Maraş": "Kahramanmaraş",
@@ -477,6 +477,85 @@ def extra_wiki(provs, dists):
     return out
 
 
+
+def strip_geo_suffix(places, provs):
+    """Ad sonundaki "(İl)", ", İlçe", "(İlçe)" eklerini temizle (il/ilçe zaten kart altında yazıyor)."""
+    names = set(provs) | {ALIAS.get(k, k) for k in provs}
+    n = 0
+    for p in places:
+        nm = p["name"]
+        m = re.match(r"^(.*?)\s*\(([^()]+)\)\s*$", nm)
+        if m:
+            inner = m.group(2).strip()
+            if inner in names or ALIAS.get(inner, inner) in names or inner == (p.get("dist") or ""):
+                nm = m.group(1).strip()
+        m2 = re.match(r"^(.*?),\s*([^,]+)$", nm)
+        if m2:
+            tail = m2.group(2).strip()
+            if tail in names or ALIAS.get(tail, tail) in names or tail == (p.get("dist") or ""):
+                nm = m2.group(1).strip()
+        if nm != p["name"] and len(nm) >= 3:
+            p["name"] = nm
+            n += 1
+    print(f"  - ad temizliği: {n} kayıtta il/ilçe soneki kaldırıldı")
+    return places
+
+
+POI_MAP = {
+    "kale": ("tarih", "Kale"),
+    "kopru": ("tarih", "Tarihî köprü"),
+    "manastir": ("dini", "Manastır"),
+    "kilise": ("dini", "Kilise"),
+    "turbe": ("dini", "Türbe"),
+    "cami": ("dini", "Cami"),
+    "muze": ("muze", "Müze"),
+    "antik": ("antik", "Antik kent"),
+    "gol": ("gol", "Göl"),
+    "selale": ("selale", "Şelale"),
+    "baraj": ("gol", "Baraj gölü"),
+    "plaj": ("plaj", "Plaj"),
+    "kaplica": ("termal", "Kaplıca"),
+    "magara": ("magara", "Mağara"),
+}
+BAD_NAMES = {"kale", "cami", "kilise", "türbe", "mağara", "göl", "köprü", "müze", "manastır",
+             "şelale", "plaj", "baraj", "kaplıca", "antik kent", "höyük"}
+
+
+def poi_extra(provs, dists, geoms):
+    """Wikidata sınıf taramasıyla bulunan koordinatlı ek kayıtlar (kale, köprü, ibadet yeri…)."""
+    if not geoms:
+        return []
+    out = []
+    for slug, (cat, typ) in POI_MAP.items():
+        f = RAW / f"poi_{slug}.json"
+        if not f.exists():
+            continue
+        rows = json.loads(f.read_text())
+        n = 0
+        for r in rows:
+            name = (r.get("label") or "").strip()
+            if len(name) < 4 or re.match(r"^Q\d+$", name) or name in provs:
+                continue
+            if name.lower() in BAD_NAMES:
+                continue
+            pt = (r["lat"], r["lon"])
+            il = None
+            for nm, polys in geoms.items():
+                if _in_province(pt, polys):
+                    il = nm
+                    break
+            if not il:
+                continue
+            out.append({"cat": cat, "name": name, "il": il,
+                        "dist": nearest_district_in(dists, il, pt),
+                        "lat": round(pt[0], 4), "lon": round(pt[1], 4), "type": typ,
+                        "links": 0, "src": "wikidata", "qid": qid(r["i"])})
+            n += 1
+        print(f"  + {slug}: {n}")
+    print(f"  + wikidata sınıf taraması toplam: {len(out)}")
+    return out
+
+
 CITY_ALIAS = {"Afyon": "Afyonkarahisar"}
 
 
@@ -626,7 +705,8 @@ if __name__ == "__main__":
     cur = curated_places(provs, dists)
     print(f"wikidata mekân: {len(wik)} | curated: {len(cur)}")
 
-    merged = wik + cur + extra_carsi(provs, dists) + extra_wiki(provs, dists)
+    CITY_GEOMS = load_city_geoms()
+    merged = wik + cur + extra_carsi(provs, dists) + extra_wiki(provs, dists) + poi_extra(provs, dists, CITY_GEOMS)
 
     # ---- ad temizliği ve genel/jenerik kayıtların ayıklanması
     GENERIC = {"bedesten", "tarihî çarşı", "tarihî arasta", "tarihî bedesten", "tarihî taş han",
@@ -637,7 +717,14 @@ if __name__ == "__main__":
         n = re.sub(r"\s{2,}", " ", n).strip()
         return n
 
-    seen_ids, by_name, uniq = set(), [], []
+    def nkey(name):
+        n = name.lower().replace("î", "i").replace("â", "a").replace("û", "u")
+        n = re.sub(r"[^\w\s]", " ", n, flags=re.UNICODE)
+        n = re.sub(r"\b(millî|milli)\b", "milli", n)
+        return re.sub(r"\s+", " ", n).strip()
+
+    # --- yinelenen kayıt ayıklama: ad anahtarı + konum ızgarası (hızlı)
+    seen_ids, by_key, grid, uniq = set(), {}, {}, []
     for p in merged:
         name = tidy(p["name"])
         if re.match(r"^Q\d+$", name) or "yehud" in name.lower():
@@ -646,21 +733,39 @@ if __name__ == "__main__":
             continue
         if name in seen_ids:
             continue
-        # aynı ad + 3 km yakınlık = aynı yer
-        dup = False
-        for q_ in by_name:
-            if q_["name"] != name:
-                continue
-            if q_.get("lat") is None or p.get("lat") is None:
-                dup = True          # konumu olmayan aynı ad → yine tekrar say
-                break
-            if haversine((q_["lat"], q_["lon"]), (p["lat"], p["lon"])) < 3:
-                dup = True
-                break
+        nk = nkey(name)
+        lat, lon = p.get("lat"), p.get("lon")
+
+        def dup_near(q_, limit, same_name_only):
+            if q_.get("lat") is None or lat is None:
+                return same_name_only
+            if haversine((q_["lat"], q_["lon"]), (lat, lon)) > limit:
+                return False
+            if same_name_only:
+                return True
+            qk = nkey(q_["name"])
+            return len(nk) >= 12 and len(qk) >= 12 and (nk in qk or qk in nk)
+
+        dup = any(dup_near(q_, 3, True) for q_ in by_key.get(nk, ()))
+        if not dup and lat is not None:
+            # aynı adı taşımayan ama birbirini kapsayan uzun adlar: 5 km çevre
+            gx, gy = round(lon * 20), round(lat * 20)
+            for ix in (gx - 1, gx, gx + 1):
+                for iy in (gy - 1, gy, gy + 1):
+                    for q_ in grid.get((ix, iy), ()):
+                        if dup_near(q_, 5, False):
+                            dup = True
+                            break
+                    if dup:
+                        break
+                if dup:
+                    break
         if dup:
             continue
         p["name"] = name
-        by_name.append(p)
+        by_key.setdefault(nk, []).append(p)
+        if lat is not None:
+            grid.setdefault((round(lon * 20), round(lat * 20)), []).append(p)
         seen_ids.add(name)
         uniq.append(p)
 
@@ -674,8 +779,8 @@ if __name__ == "__main__":
         dedup.append(p)
     uniq = dedup
 
-    CITY_GEOMS = load_city_geoms()
-    places = fix_districts(fix_province_by_geom(select(uniq), CITY_GEOMS, dists), dists)
+    places = strip_geo_suffix(select(uniq), provs)
+    places = fix_districts(fix_province_by_geom(places, CITY_GEOMS, dists), dists)
     print(f"seçilen mekân: {len(places)}")
 
     # il sıralaması: plaka koduna göre
