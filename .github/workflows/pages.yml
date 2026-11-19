@@ -43,7 +43,7 @@ jobs:
       - name: Yayın klasörünü hazırla
         run: |
           mkdir -p _site
-          cp index.html .nojekyll _site/
+          cp index.html .nojekyll robots.txt sitemap.xml og-image.jpg _site/
           cp index.html _site/404.html
           du -h _site/index.html
 

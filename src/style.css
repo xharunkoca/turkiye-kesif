@@ -1057,3 +1057,24 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
   font-size:10.5px;font-weight:800;color:var(--navy);letter-spacing:.2px;
 }
 .route-map-cap svg{width:12px;height:12px;color:var(--red)}
+
+/* ================================================================ v4 — erişilebilirlik ve ince ayarlar */
+:where(a, button, summary, input, select, [tabindex]):focus-visible{
+  outline:3px solid rgba(225,29,46,.55);
+  outline-offset:2px;
+  border-radius:6px;
+}
+.skip-link{
+  position:absolute;left:-9999px;top:0;z-index:200;background:var(--navy);color:#fff;
+  padding:10px 16px;border-radius:0 0 10px 0;font-weight:700;font-size:13px;
+}
+.skip-link:focus{left:0}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important}
+}
+@media print{
+  header,.mobile-menu,.toast,.modal,.page-head .btn,.route-map{display:none !important}
+  body{background:#fff}
+  .p-card,.route-item,.district{break-inside:avoid;box-shadow:none;border-color:#ccc}
+}

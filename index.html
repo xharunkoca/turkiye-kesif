@@ -4,7 +4,43 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Türkiye Keşif — 81 İl • 15 Kategori • Binlerce Rota</title>
-<meta name="description" content="Türkiye'nin 81 ili, 1.004 ilçesi, 17.738 köyü; antik kentlerden gastronomiye 15 kategoride doğrulanmış gezi noktaları ve her il için 5 rota.">
+<meta name="description" content="Türkiye'nin 81 ili, 1.004 ilçesi, 45.060 köy ve mahallesi; antik kentlerden gastronomiye 15 kategoride 3.269 doğrulanmış keşif noktası ve her il için 5 gezi rotası.">
+<meta name="keywords" content="Türkiye, gezi rehberi, rota, 81 il, antik kent, milli park, köy, mahalle, turizm">
+<meta name="author" content="Türkiye Keşif">
+<meta name="theme-color" content="#0a2c52">
+<meta name="color-scheme" content="light">
+<link rel="canonical" href="https://xharunkoca.github.io/turkiye-kesif/">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Türkiye Keşif">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="Türkiye Keşif — 81 il, 15 kategori, 405 rota">
+<meta property="og:description" content="Antik kentlerden gastronomiye 15 kategoride 3.269 doğrulanmış keşif noktası, il–ilçe–köy hiyerarşisi ve her il için 5 gezi rotası.">
+<meta property="og:url" content="https://xharunkoca.github.io/turkiye-kesif/">
+<meta property="og:image" content="https://xharunkoca.github.io/turkiye-kesif/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Türkiye Keşif — 81 il, 15 kategori, 405 rota">
+<meta name="twitter:description" content="3.269 doğrulanmış keşif noktası, 45.060 köy/mahalle ve her il için 5 gezi rotası.">
+<meta name="twitter:image" content="https://xharunkoca.github.io/turkiye-kesif/og-image.jpg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Türkiye Keşif",
+  "url": "https://xharunkoca.github.io/turkiye-kesif/",
+  "inLanguage": "tr-TR",
+  "description": "Türkiye'nin 81 ili için 15 kategoride doğrulanmış keşif noktaları, köy/mahalle envanteri ve gezi rotaları.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://xharunkoca.github.io/turkiye-kesif/#/kesfet?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a2c52'/%3E%3Ccircle cx='23' cy='10' r='4' fill='%23ffd21e'/%3E%3Cpath d='M4 24l7-11 5 7 3-4 5 8z' fill='%23fff'/%3E%3C/svg%3E">
 <style>/* ============================================================
    Türkiye Keşif — stil dosyası
@@ -1065,6 +1101,27 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
   font-size:10.5px;font-weight:800;color:var(--navy);letter-spacing:.2px;
 }
 .route-map-cap svg{width:12px;height:12px;color:var(--red)}
+
+/* ================================================================ v4 — erişilebilirlik ve ince ayarlar */
+:where(a, button, summary, input, select, [tabindex]):focus-visible{
+  outline:3px solid rgba(225,29,46,.55);
+  outline-offset:2px;
+  border-radius:6px;
+}
+.skip-link{
+  position:absolute;left:-9999px;top:0;z-index:200;background:var(--navy);color:#fff;
+  padding:10px 16px;border-radius:0 0 10px 0;font-weight:700;font-size:13px;
+}
+.skip-link:focus{left:0}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important}
+}
+@media print{
+  header,.mobile-menu,.toast,.modal,.page-head .btn,.route-map{display:none !important}
+  body{background:#fff}
+  .p-card,.route-item,.district{break-inside:avoid;box-shadow:none;border-color:#ccc}
+}
 </style>
 </head>
 <body>
@@ -1167,9 +1224,10 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
   <a href="#/rotalar"><svg><use href="#i-route"/></svg>Rotalar</a>
   <a href="#" data-open-map><svg><use href="#i-map"/></svg>Harita</a>
   <a href="#" data-open-favs><svg><use href="#i-heart"/></svg>Favorilerim</a>
-  <a href="#" class="mm-cta btn btn-red">Giriş Yap / Üye Ol</a>
+  <a href="#" class="mm-cta btn btn-red" data-toast="Giriş / üyelik akışı demo sürümde örnek olarak yer alıyor.">Giriş Yap / Üye Ol</a>
 </div>
 
+<a class="skip-link" href="#main">İçeriğe geç</a>
 <main id="main">
 
   <!-- ============================ ANA SAYFA ============================ -->
@@ -2224,8 +2282,12 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
             ${THEMES.map((t) => `<option value="${t.key}">${esc(t.label)}</option>`).join("")}
           </select>
         </div>
+        <div class="result-info" id="rInfo"></div>
         <div class="route-grid" id="routeGrid"></div>
-        <div class="load-more-wrap"><button class="btn btn-navy" id="rMore" hidden>Daha fazla rota</button></div>
+        <div class="load-more-wrap">
+          <button class="btn btn-navy" id="rMore" hidden>Daha fazla rota</button>
+          <button class="btn btn-ghost" id="rAll" hidden>Tümünü göster</button>
+        </div>
       </div>`;
     let page = 0;
     const PER = 12;
@@ -2238,10 +2300,13 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
       const shown = list.slice(0, (page + 1) * PER);
       $("#routeGrid").innerHTML = shown.map((r) => routeCard(r)).join("") || `<div class="empty">Rota bulunamadı.</div>`;
       $("#rMore").hidden = shown.length >= list.length;
+      $("#rAll").hidden = list.length - shown.length <= PER;
+      $("#rInfo").textContent = `${nf(list.length)} rotadan ${nf(shown.length)} tanesi gösteriliyor`;
     }
     $("#ril").addEventListener("change", () => { page = 0; paint(); });
     $("#rtheme").addEventListener("change", () => { page = 0; paint(); });
     $("#rMore").addEventListener("click", () => { page++; paint(); });
+    $("#rAll").addEventListener("click", () => { page = Math.ceil(ALL_ROUTES.length / PER); paint(); });
     paint();
   }
 

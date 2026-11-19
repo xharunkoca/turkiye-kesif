@@ -883,8 +883,12 @@
             ${THEMES.map((t) => `<option value="${t.key}">${esc(t.label)}</option>`).join("")}
           </select>
         </div>
+        <div class="result-info" id="rInfo"></div>
         <div class="route-grid" id="routeGrid"></div>
-        <div class="load-more-wrap"><button class="btn btn-navy" id="rMore" hidden>Daha fazla rota</button></div>
+        <div class="load-more-wrap">
+          <button class="btn btn-navy" id="rMore" hidden>Daha fazla rota</button>
+          <button class="btn btn-ghost" id="rAll" hidden>Tümünü göster</button>
+        </div>
       </div>`;
     let page = 0;
     const PER = 12;
@@ -897,10 +901,13 @@
       const shown = list.slice(0, (page + 1) * PER);
       $("#routeGrid").innerHTML = shown.map((r) => routeCard(r)).join("") || `<div class="empty">Rota bulunamadı.</div>`;
       $("#rMore").hidden = shown.length >= list.length;
+      $("#rAll").hidden = list.length - shown.length <= PER;
+      $("#rInfo").textContent = `${nf(list.length)} rotadan ${nf(shown.length)} tanesi gösteriliyor`;
     }
     $("#ril").addEventListener("change", () => { page = 0; paint(); });
     $("#rtheme").addEventListener("change", () => { page = 0; paint(); });
     $("#rMore").addEventListener("click", () => { page++; paint(); });
+    $("#rAll").addEventListener("click", () => { page = Math.ceil(ALL_ROUTES.length / PER); paint(); });
     paint();
   }
 
