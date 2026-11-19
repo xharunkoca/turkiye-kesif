@@ -391,7 +391,19 @@ testlerden alınmıştır; canlı değerler GitHub Pages gzip'i ile daha iyidir.
 | `index.html` aktarımı | 2,4 MB | **23,7 KB** (gzip) |
 | JS paketi aktarımı | — | 357 KB (gzip) |
 
-**Kalan darboğaz:** DCL'in büyük kısmı 973 KB'lık veri JSON'unun ayrıştırılması ve arama
-indekslerinin kurulması. Bir sonraki adım (v13): veriyi `assets/data.<hash>.json` olarak
-ayırıp `fetch()` ile ilk boyamadan sonra yüklemek + mahalle adları yerine sayı taşımak
-(≈60 KB gzip tasarrufu). Ölçülen LCP/CLS bu adımdan etkilenmez.
+### v13 — açılış CPU'sunu düşürme
+
+DCL'i şişiren şey veri indirme değil, açılışta yapılan iki iş olduğu ölçüldü
+(`JSON.parse` 975 KB için yalnız **7 ms**):
+
+| İş | Önce | Sonra |
+|---|---|---|
+| 45.060 yerleşim adını arama için sadeleştirme | 8 ayrı regex geçişi | **tek geçişli** harf eşlemesi |
+| 405 rotayı açılışta kurma (en yakın komşu + 2-opt) | her zaman, ≈970 ms (4x CPU) | **tembel**: ana sayfa yalnız 3 rota kurar, tamamı `#/rotalar`'da |
+| DCL (4x CPU, hızlı ağ) | 2.234 ms | **760 ms** |
+
+Rota sayısı ekranlarda `ROUTE_COUNT = 81 × 5` ile gösterilir; davranış değişmedi
+(ana sayfa 3 kart, rota sayfası 405 rota, modal ve canlı mod aynı).
+
+**Sıradaki adım (v14):** veriyi `assets/data.<hash>.json` olarak ayırıp `fetch()` ile ilk
+boyamadan sonra yüklemek — indirme süresi değişmez, `app.js` 40 KB gzip'e iner.

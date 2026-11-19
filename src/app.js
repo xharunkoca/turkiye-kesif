@@ -36,9 +36,10 @@
     (d.m || []).forEach((m) => VILLAGES.push({ n: m, il: i, d: d.n, t: "mahalle" }));
   }));
 
-  const norm = (s) => String(s || "").toLocaleLowerCase("tr")
-    .replace(/ı/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u")
-    .replace(/ö/g, "o").replace(/ç/g, "c").replace(/â/g, "a").replace(/î/g, "i");
+  // tek geçişli Türkçe sadeleştirme (8 ayrı regex yerine) — 45 bin yerleşim adında fark eder
+  const TR_MAP = { "ı": "i", "ş": "s", "ğ": "g", "ü": "u", "ö": "o", "ç": "c", "â": "a", "î": "i", "û": "u" };
+  const TR_RE = /[ışğüöçâîû]/g;
+  const norm = (s) => String(s || "").toLocaleLowerCase("tr").replace(TR_RE, (c) => TR_MAP[c]);
 
   const IL_SEARCH = ILS.map((il, i) => ({ i, k: norm(il.n) }));
   const DIST_SEARCH = [];
@@ -366,8 +367,18 @@
     return routes;
   }
 
+  // Rotalar tembel üretilir: ana sayfa yalnız 3 örnek rota ister; 81 il × 5 temayı
+  // baştan kurmak (en yakın komşu + 2-opt) mobilde ≈1 sn CPU harcıyordu.
   const ALL_ROUTES = [];
-  ILS.forEach((il, i) => routesFor(i).forEach((r) => ALL_ROUTES.push(r)));
+  const ROUTE_COUNT = N_IL * THEMES.length;
+  let routesBuilt = false;
+  function allRoutes() {
+    if (!routesBuilt) {
+      routesBuilt = true;
+      ILS.forEach((il, i) => routesFor(i).forEach((r) => ALL_ROUTES.push(r)));
+    }
+    return ALL_ROUTES;
+  }
 
   /* ---------------------------------------------------------------- parçalar */
   function catIcon(catIdx, size) {
@@ -634,7 +645,7 @@
   let liveRoute = null;   // { rid, i }
 
   function liveHtml() {
-    const r = ALL_ROUTES.find((x) => x.id === liveRoute.rid);
+    const r = allRoutes().find((x) => x.id === liveRoute.rid);
     if (!r) return "";
     const il = ILS[r.ilIdx];
     const stops = r.stops;
@@ -696,14 +707,14 @@
   }
   function liveGo(delta) {
     if (!liveRoute) return;
-    const r = ALL_ROUTES.find((x) => x.id === liveRoute.rid);
+    const r = allRoutes().find((x) => x.id === liveRoute.rid);
     liveRoute.i = Math.max(0, Math.min(liveRoute.i + delta, r.stops.length - 1));
     modalContent.innerHTML = liveHtml();
     window.scrollTo({ top: 0 });
   }
 
   function openRoute(routeId) {
-    const r = ALL_ROUTES.find((x) => x.id === routeId);
+    const r = allRoutes().find((x) => x.id === routeId);
     if (!r) return;
     const il = ILS[r.ilIdx];
     openModal(`
@@ -780,7 +791,7 @@
       </div>
       <div class="modal-body">
         <h3 id="modalTitle">Kişisel Keşif Alanınız</h3>
-        <p class="sub">${items.length} favori • ${nf(PLACE_COUNT)} keşif kaydı • ${ALL_ROUTES.length} rota</p>
+        <p class="sub">${items.length} favori • ${nf(PLACE_COUNT)} keşif kaydı • ${nf(ROUTE_COUNT)} rota</p>
         ${items.length ? `<div class="fav-list">${items.map((p) => `
           <button class="suggest-item" data-place="${p.idx}">
             <span class="suggest-ic">${catIcon(p[1])}</span>
@@ -847,7 +858,7 @@
       <div class="stat-cell"><b>${nf(dists)}</b><span>ilçe / belde</span></div>
       <div class="stat-cell"><b>${nf(villages)}</b><span>köy ${nf(koy)} • mahalle ${nf(mah)}</span></div>
       <div class="stat-cell"><b>${nf(PLACE_COUNT)}</b><span>keşif kaydı</span></div>
-      <div class="stat-cell"><b>${nf(ALL_ROUTES.length)}</b><span>hazır rota</span></div>
+      <div class="stat-cell"><b>${nf(ROUTE_COUNT)}</b><span>hazır rota</span></div>
       <div class="stat-cell"><b>15</b><span>turizm kategorisi</span></div>`;
 
     // hızlı çipler
@@ -1092,13 +1103,13 @@
         <div class="container">
           <nav class="crumb"><a href="#/">Ana Sayfa</a><span>/</span><b>Rotalar</b></nav>
           <h1>${ilIdx !== null ? esc(ILS[ilIdx].n) + " Rotaları" : "Türkiye Rota Rehberi"}</h1>
-          <p class="page-sub">${nf(ALL_ROUTES.length)} rota • her il için 5 tema • durak durak konum bağlantılı</p>
+          <p class="page-sub">${nf(ROUTE_COUNT)} rota • her il için 5 tema • durak durak konum bağlantılı</p>
         </div>
       </div>
       <div class="container">
         <div class="filter-bar">
           <select id="ril" aria-label="İl">
-            <option value="">Tüm iller (${nf(ALL_ROUTES.length)} rota)</option>
+            <option value="">Tüm iller (${nf(ROUTE_COUNT)} rota)</option>
             ${ILS.map((il, i) => `<option value="${i}"${i === ilIdx ? " selected" : ""}>${String(il.p).padStart(2, "0")} ${esc(il.n)}</option>`).join("")}
           </select>
           <select id="rtheme" aria-label="Tema">
@@ -1118,7 +1129,7 @@
     function paint() {
       const selIl = $("#ril").value;
       const selTheme = $("#rtheme").value;
-      let list = ALL_ROUTES;
+      let list = allRoutes();
       if (selIl !== "") list = list.filter((r) => r.ilIdx === Number(selIl));
       if (selTheme) list = list.filter((r) => r.theme.key === selTheme);
       const shown = list.slice(0, (page + 1) * PER);
@@ -1130,7 +1141,7 @@
     $("#ril").addEventListener("change", () => { page = 0; paint(); });
     $("#rtheme").addEventListener("change", () => { page = 0; paint(); });
     $("#rMore").addEventListener("click", () => { page++; paint(); });
-    $("#rAll").addEventListener("click", () => { page = Math.ceil(ALL_ROUTES.length / PER); paint(); });
+    $("#rAll").addEventListener("click", () => { page = Math.ceil(ROUTE_COUNT / PER); paint(); });
     paint();
   }
 
@@ -1986,7 +1997,7 @@
   const routeDirUrlish = () => SITE;
 
   async function shareRoute(id) {
-    const r = ALL_ROUTES.find((x) => x.id === id);
+    const r = allRoutes().find((x) => x.id === id);
     if (!r) return;
     const text = routeShareText(r);
     if (navigator.share) {
@@ -1996,7 +2007,7 @@
   }
 
   function downloadIcs(id) {
-    const r = ALL_ROUTES.find((x) => x.id === id);
+    const r = allRoutes().find((x) => x.id === id);
     if (!r) return;
     const pad = (n) => String(n).padStart(2, "0");
     const stamp = (d) => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
@@ -2054,7 +2065,7 @@
   }
   function applyMeta(seg, params) {
     const base = "Türkiye Keşif";
-    let title = `${base} — 81 İl · 15 Kategori · ${nf(ALL_ROUTES.length)} Hazır Rota`;
+    let title = `${base} — 81 İl · 15 Kategori · ${nf(ROUTE_COUNT)} Hazır Rota`;
     let desc = `81 il, 1.004 ilçe, 45.060 köy/mahalle; 15 kategoride ${nf(PLACE_COUNT)} keşif kaydı ve her il için 5 gezi rotası. Haritada doğrulanmış konumlar, tek dokunuşla rota başlatma.`;
     let path = "";
     if (seg[0] === "il" && seg[1] && ilBySlug[seg[1]] !== undefined) {
@@ -2080,8 +2091,8 @@
       desc = "Türkiye'nin 81 ili, 1.004 ilçesi: her il için keşif noktaları, rota ve hava durumu.";
       path = "iller/";
     } else if (seg[0] === "rotalar") {
-      title = `${nf(ALL_ROUTES.length)} Hazır Gezi Rotası — 5 Tema | ${base}`;
-      desc = `81 il için ${nf(ALL_ROUTES.length)} hazır rota: tarih, doğa, inanç, lezzet ve deniz temaları; her durak tek dokunuşla navigasyona bağlı.`;
+      title = `${nf(ROUTE_COUNT)} Hazır Gezi Rotası — 5 Tema | ${base}`;
+      desc = `81 il için ${nf(ROUTE_COUNT)} hazır rota: tarih, doğa, inanç, lezzet ve deniz temaları; her durak tek dokunuşla navigasyona bağlı.`;
       path = "rotalar/";
     } else if (seg[0] === "mevsim" && seg[1] && seasonById[seg[1]]) {
       const se = seasonById[seg[1]];
