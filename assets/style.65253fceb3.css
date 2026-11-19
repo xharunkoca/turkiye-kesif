@@ -2227,3 +2227,19 @@ html,body{max-width:100%;overflow-x:hidden}
 @media (min-width:600px){
   .mini-link,.dist-name{min-height:32px;display:inline-block;padding-block:6px}
 }
+
+/* --- 38. Mobil arama çubuğu: simge + alan tek satır, butonlar tam genişlik --- */
+@media (max-width:599px){
+  .search-wrap .search-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:16px;min-height:0}
+  .search-bar .s-icon{flex:0 0 auto;width:18px;height:18px;margin:0}
+  .search-bar input{flex:1 1 0!important;width:auto!important;min-width:0!important;min-height:44px!important;font-size:15px;padding:0 2px}
+  .search-bar .search-divider{display:none}
+  .search-bar .scope-btn{flex:1 1 100%;min-height:44px;justify-content:flex-start;margin:0;padding:0 4px;border-radius:0;border-top:1px solid var(--line)}
+  .search-bar .search-submit{flex:1 1 100%;width:100%;min-height:44px;justify-content:center;border-radius:12px}
+}
+
+/* --- 39. Mobil arama butonu: simge + "Ara" yazısı --- */
+@media (max-width:599px){
+  .search-bar .search-submit{font-size:15px!important;gap:8px;letter-spacing:0}
+  .search-bar .search-submit svg{width:16px;height:16px;flex:0 0 auto}
+}
