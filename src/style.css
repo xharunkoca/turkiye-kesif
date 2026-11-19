@@ -1247,3 +1247,15 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
 .mm-link{min-height:46px;width:100%}
 .footer-btn{min-height:32px;font-size:12px}
 .footer-btn:hover,.mm-link:hover{text-decoration:underline}
+
+/* v12e: mobil başlık taşması (390 px'te burger kırpılıyordu) */
+@media (max-width:520px){
+  .header-inner{width:100%;max-width:100vw;box-sizing:border-box;padding-left:12px;padding-right:12px;gap:8px}
+  .brand{min-width:0;flex:1 1 auto}
+  .brand-tag{display:none}
+  .brand-name,.brand b,.brand strong{font-size:16px;line-height:1.15}
+  .btn-auth{padding:8px 10px;min-width:44px;justify-content:center}
+  .btn-auth span{display:none}
+  .burger{flex:0 0 auto;margin-left:0}
+  .cat-strip,.categories{overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+}
