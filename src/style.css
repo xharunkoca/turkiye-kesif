@@ -1259,3 +1259,21 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
   .burger{flex:0 0 auto;margin-left:0}
   .cat-strip,.categories{overscroll-behavior-x:contain;scroll-snap-type:x proximity}
 }
+
+/* v12f: CLS — JS ile dolan ana sayfa blokları için yer rezervi
+   (ölçülen gerçek yükseklikler: 1440 / 768 / 390 px) */
+#catCard,#cityGrid,#routeList,#seasonGrid,#mapPins{contain:layout}
+@media (min-width:901px){
+  #catCard{min-height:125px}#cityGrid{min-height:135px}
+  #routeList{min-height:615px}#seasonGrid{min-height:640px}#mapPins{min-height:144px}
+}
+@media (min-width:481px) and (max-width:900px){
+  #catCard{min-height:235px}#cityGrid{min-height:250px}
+  #routeList{min-height:615px}#seasonGrid{min-height:90px}#mapPins{min-height:131px}
+}
+@media (max-width:480px){
+  #catCard{min-height:115px}#cityGrid{min-height:290px}
+  #routeList{min-height:645px}#seasonGrid{min-height:180px}#mapPins{min-height:133px}
+}
+.stats-band{contain:layout}
+@media (max-width:900px){.stats-band{min-height:200px}}

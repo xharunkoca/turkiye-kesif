@@ -345,7 +345,7 @@ testlerden alınmıştır; canlı değerler GitHub Pages gzip'i ile daha iyidir.
 | # | Bulgu | Uygulanan çözüm |
 |---|---|---|
 | P1 | 2,26 MB tek dosya, 9 s DCL | Prerender mimarisi: kabuk + hash'li CSS/JS + WebP + `defer` |
-| P2 | CLS 0,697 | Tüm `<img>` sabit `width/height`, `#view-home:empty { min-height:72vh }`, hero rezervi |
+| P2 | CLS 0,697 | `<img>` sabit boyut + JS ile dolan ana sayfa bloklarına yer rezervi (ölçülen yükseklikler) → **CLS 0,04** |
 | P3 | 1,24 MB base64 görsel | 11 WebP (`hero-1600/800`, `-720`, `-420`) + `srcset`/`sizes`/`loading=lazy`/`decoding=async` |
 | P4 | Veri JS'e gömülü, ayrıştırma pahalı | Tek JSON, ayrı pakette; arama indeksleri bir kez kuruluyor |
 | SEO1 | Hash URL'ler indekslenmiyor | 511 prerender sayfa + `canonical` + `sitemap.xml` (511) + `SearchAction` |
@@ -379,3 +379,19 @@ testlerden alınmıştır; canlı değerler GitHub Pages gzip'i ile daha iyidir.
 - Magic link: Supabase `auth/v1/otp` **200** döndü, "Bağlantı gönderildi" bildirimi göründü.
 - Onay öncesi `open-meteo` isteği **0**, onay sonrası **1**.
 - 12 farklı hash rotası + 6 statik sayfa: konsol hatası **0**.
+
+## Canlı ölçüm (GitHub Pages, mobil 4x CPU + yavaş 4G)
+
+| Ölçüt | v11 (denetim) | v12 (canlı) |
+|---|---|---|
+| LCP | — | **820 ms** |
+| CLS | 0,697 | **0,04** |
+| DOMContentLoaded | 9.070 ms | **4.650 ms** |
+| İlk yükleme aktarımı | 2,4 MB | **834 KB** (11 istek) |
+| `index.html` aktarımı | 2,4 MB | **23,7 KB** (gzip) |
+| JS paketi aktarımı | — | 357 KB (gzip) |
+
+**Kalan darboğaz:** DCL'in büyük kısmı 973 KB'lık veri JSON'unun ayrıştırılması ve arama
+indekslerinin kurulması. Bir sonraki adım (v13): veriyi `assets/data.<hash>.json` olarak
+ayırıp `fetch()` ile ilk boyamadan sonra yüklemek + mahalle adları yerine sayı taşımak
+(≈60 KB gzip tasarrufu). Ölçülen LCP/CLS bu adımdan etkilenmez.
