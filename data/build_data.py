@@ -361,9 +361,16 @@ def curated_places(provs, dists):
         pts = [(dn, (rec["lat"], rec["lon"])) for dn, rec in dists.get(il, {}).items() if rec["lat"]]
         if pts:
             dist = min(pts, key=lambda kv: haversine((lat, lon), kv[1]))[0]
+        # il merkezine sabitlenmiş yaklaşık koordinat = doğrulanmamış konum
+        # (gastronomi kayıtları bölgesel olduğu için il merkezi kabul edilir)
+        if approx:
+            dist = None
+            out.append({"cat": r["cat"], "name": r["name"], "il": il, "dist": dist,
+                        "lat": None, "lon": None, "type": None, "links": 0, "src": "approx"})
+            continue
         out.append({"cat": r["cat"], "name": r["name"], "il": il, "dist": dist,
                     "lat": round(lat, 4), "lon": round(lon, 4),
-                    "type": None, "links": 0, "src": "approx" if approx else "wikipedia"})
+                    "type": None, "links": 0, "src": "wikipedia"})
     # gastronomi: coğrafi işaretli ürünler (il merkezi)
     for name, il in curated.GASTRO:
         il = ALIAS.get(il, il)

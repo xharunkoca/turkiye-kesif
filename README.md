@@ -172,6 +172,16 @@ kaynaklarla güncel mi diye `build.py` çıktısını karşılaştırır.
 - Kategori envanter sayıları resmî/derleme istatistiklerdir (TÜİK, Kültür ve Turizm
   Bakanlığı, TÜRÇEV, TÜRKPATENT vb.).
 
+### Rotayı başlat (canlı mod)
+
+Her rota kartında **Başlat**, rota detayında **Rotayı başlat** düğmesi vardır:
+
+- Adım adım panel: *Durak 2 / 5*, ilerleme çubuğu, o anki durak, önceki duraktan ve
+  sonraki durağa mesafe, "Yol tarifi al" (Google Maps'te o bacağın sürüş tarifi),
+  "Haritada aç", **Sonraki durak / Önceki**, son durakta **Rotayı bitir**.
+- **Google'da başlat / Google'da tüm rota**: rotanın tamamını tek linkte açar
+  (`maps/dir/?api=1&origin=…&destination=…&waypoints=…&travelmode=driving`).
+
 ### Konum doğruluğu
 
 - Koordinatı olan kayıtlar **"Konuma git"** ile doğrudan noktaya gider (`maps?query=lat,lon`).
@@ -179,6 +189,8 @@ kaynaklarla güncel mi diye `build.py` çıktısını karşılaştırır.
   ve **"Haritada ara"** düğmesi bulunur → Google Maps'te *ad + ilçe + il* ile arama yapar
   (yanlış bir koordinata göndermek yerine doğru sonucu bulur).
 - İlçe merkezinden 90 km'den uzak koordinatlar en yakın ilçeye taşınır (9 kayıt düzeltildi).
+- İl merkezine sabitlenmiş yaklaşık koordinatlar (175 kayıt) doğrulanmamış sayılır;
+  bunlar da "Haritada ara" ile ada göre aranır (gastronomi kayıtları bölgesel olduğu için il merkezi kabul edilir).
 - **Hazır rotalar yalnızca konumu doğrulanmış duraklarla kurulur**; konumsuz kayıtlar rota
   üretimine hiç girmez. Rotalar kompakt kümeleme (çekirdek durak + çevresindeki en yakın
   duraklar), en yakın komşu sıralaması ve 2-opt kısaltmasıyla kurulur; aynı yerin iki kaydı

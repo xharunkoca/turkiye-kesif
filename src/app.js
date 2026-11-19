@@ -157,6 +157,19 @@
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
   };
   const hasCoord = (p) => p[4] != null && p[5] != null;
+  // iki durak arası yol tarifi
+  const dirUrl = (a, b) =>
+    `https://www.google.com/maps/dir/?api=1&origin=${a[4]},${a[5]}&destination=${b[4]},${b[5]}&travelmode=driving`;
+  // rotanın tamamı: ilk durak → son durak, aradakiler ara durak (waypoints)
+  function routeDirUrl(r) {
+    const st = r.stops.filter(hasCoord);
+    if (st.length === 0) return "#";
+    if (st.length === 1) return maps(st[0][4], st[0][5]);
+    const o = st[0], d = st[st.length - 1];
+    const w = st.slice(1, -1).map((p) => `${p[4]},${p[5]}`).join("|");
+    return `https://www.google.com/maps/dir/?api=1&origin=${o[4]},${o[5]}&destination=${d[4]},${d[5]}` +
+      (w ? `&waypoints=${encodeURIComponent(w)}` : "") + "&travelmode=driving";
+  }
   const wdUrl = (name) => `https://www.wikidata.org/w/index.php?search=${encodeURIComponent(name)}`;
   const wikiUrl = (name) => `https://tr.wikipedia.org/w/index.php?search=${encodeURIComponent(name)}`;
 
@@ -397,7 +410,10 @@
         <span>${icon("i-level")}${r.level}</span>
         <span>${icon("i-pin")}${r.stops.length} durak</span>
       </div>
-      <button class="btn btn-red ri-btn" data-route="${r.id}">Rotayı İncele ${icon("i-arrow-right")}</button>
+      <div class="ri-actions">
+        <button class="btn btn-red ri-btn" data-live-start="${r.id}">${icon("i-nav")}Başlat</button>
+        <button class="btn btn-ghost ri-btn2" data-route="${r.id}">İncele ${icon("i-arrow-right")}</button>
+      </div>
     </article>`;
   }
 
@@ -602,6 +618,79 @@
     wxLoad(ilIdx).then(paint).catch(() => { if (box.isConnected) box.innerHTML = `<span class="wx-off">Hava durumu alınamadı</span>`; });
   }
 
+
+  /* ---------------------------------------------------- rota başlatma (canlı mod) */
+  let liveRoute = null;   // { rid, i }
+
+  function liveHtml() {
+    const r = ALL_ROUTES.find((x) => x.id === liveRoute.rid);
+    if (!r) return "";
+    const il = ILS[r.ilIdx];
+    const stops = r.stops;
+    const i = Math.max(0, Math.min(liveRoute.i, stops.length - 1));
+    const cur = stops[i];
+    const prev = i > 0 ? stops[i - 1] : null;
+    const next = stops[i + 1] || null;
+    const from = prev ? [prev[4], prev[5]] : [il.lat, il.lon];
+    const legKm = Math.round(haversine(from, [cur[4], cur[5]]));
+    const nextKm = next ? Math.round(haversine([cur[4], cur[5]], [next[4], next[5]])) : 0;
+    const pct = Math.round((i / Math.max(1, stops.length - 1)) * 100);
+    const done = i === stops.length - 1;
+    return `
+      <div class="modal-hero" style="background:linear-gradient(135deg,${r.theme.color},#0a2c52)">
+        <span class="mh-ic">${icon("i-nav", "i24")}</span>
+        <span class="mh-cat">${esc(il.n)} • rota başlatıldı</span>
+      </div>
+      <div class="modal-body">
+        <h3 id="modalTitle">${esc(il.n)} — ${esc(r.theme.label)}</h3>
+        <p class="sub">${nf(r.km)} km • ${r.days} gün • ${stops.length} durak</p>
+        <div class="live-bar"><span style="width:${pct}%"></span></div>
+        <p class="live-step">Durak <b>${i + 1}</b> / ${stops.length}${done ? " • rota tamamlandı" : ""}</p>
+        <div class="live-card">
+          <span class="live-no">${i + 1}</span>
+          <div>
+            <h4>${esc(cur[0])}</h4>
+            <p class="live-meta">${esc(CATS[cur[1]].label)} • ${esc(cur[3] || il.n)}</p>
+            <p class="live-leg">${prev ? `Önceki duraktan <b>${nf(legKm)} km</b>` : `İl merkezinden <b>${nf(legKm)} km</b>`}${next ? ` • sonraki durak <b>${nf(nextKm)} km</b>` : ""}</p>
+          </div>
+        </div>
+        <div class="live-actions">
+          <a class="btn btn-red" href="${prev ? dirUrl(prev, cur) : maps(cur[4], cur[5])}" target="_blank" rel="noopener noreferrer">${icon("i-nav")}${prev ? "Yol tarifi al" : "Konuma git"}</a>
+          <a class="btn btn-ghost" href="${mapsPlace(cur)}" target="_blank" rel="noopener noreferrer">${icon("i-pin")}Haritada aç</a>
+        </div>
+        <div class="live-actions">
+          <button class="btn btn-ghost" data-live-prev ${i === 0 ? "disabled" : ""}>${icon("i-back")}Önceki</button>
+          ${done
+            ? `<button class="btn btn-red" data-live-end>${icon("i-check")}Rotayı bitir</button>`
+            : `<button class="btn btn-red" data-live-next>Sonraki durak ${icon("i-arrow-right")}</button>`}
+        </div>
+        <p class="live-next">${next ? `Sıradaki: <b>${esc(next[0])}</b> — ${esc(next[3] || il.n)}` : "Son duraktasınız."}</p>
+        <ol class="live-list">
+          ${stops.map((sp, k) => `<li class="${k < i ? "done" : k === i ? "now" : ""}">
+            <span class="stop-no">${k < i ? "✓" : k + 1}</span>
+            <span class="live-li-name">${esc(sp[0])}</span>
+            <span class="live-li-meta">${esc(sp[3] || il.n)}</span>
+          </li>`).join("")}
+        </ol>
+        <div class="modal-actions">
+          <a class="btn btn-ghost" href="${routeDirUrl(r)}" target="_blank" rel="noopener noreferrer">${icon("i-external")}Google'da tüm rota</a>
+          <button class="btn btn-ghost" data-live-close>${icon("i-close")}Paneli kapat</button>
+        </div>
+      </div>`;
+  }
+
+  function startRoute(rid, i) {
+    liveRoute = { rid, i: i || 0 };
+    openModal(liveHtml(), "modal-live");
+  }
+  function liveGo(delta) {
+    if (!liveRoute) return;
+    const r = ALL_ROUTES.find((x) => x.id === liveRoute.rid);
+    liveRoute.i = Math.max(0, Math.min(liveRoute.i + delta, r.stops.length - 1));
+    modalContent.innerHTML = liveHtml();
+    window.scrollTo({ top: 0 });
+  }
+
   function openRoute(routeId) {
     const r = ALL_ROUTES.find((x) => x.id === routeId);
     if (!r) return;
@@ -627,7 +716,11 @@
           </li>`).join("")}
         </ol>
         <div class="modal-actions">
-          <a class="btn btn-red" href="#/il/${IL_SLUG[r.ilIdx]}" data-close-nav>${icon("i-pin")}İl sayfası</a>
+          <button class="btn btn-red" data-live-start="${r.id}">${icon("i-nav")}Rotayı başlat</button>
+          <a class="btn btn-ghost" href="${routeDirUrl(r)}" target="_blank" rel="noopener noreferrer">${icon("i-external")}Google'da başlat</a>
+        </div>
+        <div class="modal-actions">
+          <a class="btn btn-ghost" href="#/il/${IL_SLUG[r.ilIdx]}" data-close-nav>${icon("i-pin")}İl sayfası</a>
           <button class="btn btn-ghost" data-toast="Rota dışa aktarma demo sürümde örnek olarak yer alıyor.">${icon("i-route")}Rotayı kaydet</button>
         </div>
       </div>`);
@@ -1499,6 +1592,12 @@
     }
     const placeEl = e.target.closest("[data-place]");
     if (placeEl) { e.preventDefault(); openPlace(Number(placeEl.dataset.place)); return; }
+    const liveStart = e.target.closest("[data-live-start]");
+    if (liveStart) { e.preventDefault(); e.stopPropagation(); startRoute(liveStart.dataset.liveStart, 0); return; }
+    if (e.target.closest("[data-live-next]")) { e.preventDefault(); liveGo(1); return; }
+    if (e.target.closest("[data-live-prev]") && !e.target.closest("[data-live-prev]").disabled) { e.preventDefault(); liveGo(-1); return; }
+    if (e.target.closest("[data-live-end]")) { e.preventDefault(); closeModal(); liveRoute = null; toast("Rota tamamlandı 🎉"); return; }
+    if (e.target.closest("[data-live-close]")) { e.preventDefault(); closeModal(); liveRoute = null; return; }
     const routeEl = e.target.closest("[data-route]");
     if (routeEl) { e.preventDefault(); openRoute(routeEl.dataset.route); return; }
     const ilEl = e.target.closest("[data-il]");
