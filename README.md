@@ -58,11 +58,26 @@ kategori sayfasında envanter şeridi olarak gösterilir.
 | `#/ilce/<il-slug>/<ilce-slug>` | İlçe sayfası: yerleşim birimleri, ilçedeki keşif noktaları, komşu ilçe bağlantıları |
 | `#/rotalar` | 405 rota; il ve tema filtreli |
 | `#/kategori/<id>` | Kategori sayfası: açıklama, envanter şeridi, tüm Türkiye sonuçları |
+| `#/mevsim/<sezon>` | Mevsim sayfası: `ilkbahar` · `yaz` · `sonbahar` · `kis` — uygun iller, önerilen rotalar, filtreli keşifler |
 
 Mekân kartlarında ad, tür, ilçe/il, "doğrulandı" işareti ve **"Konuma git"** butonu
 (kartın altında, Google Maps'e koordinatla gider) bulunur. Karta tıklayınca detay
 penceresi açılır: koordinat, plaka, yakındaki keşifler, favori ve kaynak bağlantısı.
 Rota penceresinde duraklar numaralı bir **mini güzergâh haritası** üzerinde gösterilir.
+
+### Canlı hava durumu ve seyahat puanı
+
+İl sayfalarında [Open-Meteo](https://open-meteo.com) (anahtarsız) verisiyle 5 günlük tahmin
+gösterilir: günlük ikon, en yüksek/en düşük sıcaklık, yağış olasılığı ve her gün için
+**0–100 seyahat uygunluğu puanı**. Puan; fırtına/kar/yağış, aşırı sıcak-soğuk, rüzgâr ve
+konfor aralığına (13–25 °C) göre hesaplanır; "en uygun gün" önerilir ve rota penceresinde
+tek satır özet olarak görünür. Veriler 3 saat `localStorage`'da önbelleklenir, istek 8 saniye
+içinde yanıt vermezse sessizce devre dışı kalır (site çevrimdışı da çalışır).
+
+### Mevsim katmanı
+
+`#/mevsim/<sezon>` sayfaları her mevsim için kategori setini, uygun illeri ve temalı
+rotaları bir araya getirir; ana sayfadaki mevsim kartları bu sayfalara gider.
 
 <p align="center">
   <img src="docs/screenshots/02-rota.jpg" width="49%" alt="Rota penceresi ve mini güzergâh haritası">
@@ -70,6 +85,10 @@ Rota penceresinde duraklar numaralı bir **mini güzergâh haritası** üzerinde
 </p>
 <p align="center">
   <img src="docs/screenshots/04-ilce.jpg" width="98%" alt="İlçe sayfası">
+</p>
+<p align="center">
+  <img src="docs/screenshots/05-mevsim.jpg" width="49%" alt="Mevsim sayfası">
+  <img src="docs/screenshots/06-hava.jpg" width="49%" alt="Hava durumu ve seyahat puanı">
 </p>
 
 ## Kurulum
@@ -141,6 +160,7 @@ kaynaklarla güncel mi diye `build.py` çıktısını karşılaştırır.
   höyük, kale, müze, millî park, göl, şelale, mağara, kanyon, plaj, cami/külliye,
   hamam, kervansaray, bedesten/çarşı…
 - **Natural Earth 10m** (kamu malı): Türkiye sınır geometrisi.
+- **Open-Meteo** (ücretsiz, anahtarsız): canlı hava durumu ve seyahat puanı.
 - Kategori envanter sayıları resmî/derleme istatistiklerdir (TÜİK, Kültür ve Turizm
   Bakanlığı, TÜRÇEV, TÜRKPATENT vb.).
 
