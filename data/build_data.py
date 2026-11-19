@@ -2,6 +2,7 @@
 """Ham verilerden sitenin kullanacağı sıkıştırılmış veri setini üretir."""
 import json
 import math
+import os
 import pathlib
 import re
 from collections import defaultdict
@@ -9,6 +10,7 @@ from collections import defaultdict
 import curated
 
 RAW = pathlib.Path(__file__).parent / "raw"
+
 OUT = pathlib.Path(__file__).parent / "turkiye-data.json"
 
 REGIONS = {
@@ -475,6 +477,108 @@ def extra_wiki(provs, dists):
     return out
 
 
+CITY_ALIAS = {"Afyon": "Afyonkarahisar"}
+
+
+def _pip(lon, lat, ring):
+    """Ray casting: nokta halka içinde mi?"""
+    inside = False
+    n = len(ring)
+    j = n - 1
+    for i in range(n):
+        xi, yi = ring[i]
+        xj, yj = ring[j]
+        if ((yi > lat) != (yj > lat)) and (lon < (xj - xi) * (lat - yi) / (yj - yi + 1e-12) + xi):
+            inside = not inside
+        j = i
+    return inside
+
+
+def load_city_geoms():
+    """İl sınır poligonları (data/raw/tr-cities.json)."""
+    path = os.path.join(RAW, "tr-cities.json")
+    if not os.path.exists(path):
+        return {}
+    data = json.load(open(path, encoding="utf-8"))
+    geoms = {}
+    for f in data["features"]:
+        name = CITY_ALIAS.get(f["properties"]["name"], f["properties"]["name"])
+        polys = []
+        g = f["geometry"]
+        groups = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
+        for poly in groups:
+            ring = [(float(x), float(y)) for x, y in poly[0]]
+            xs = [c[0] for c in ring]
+            ys = [c[1] for c in ring]
+            polys.append((ring, min(xs), min(ys), max(xs), max(ys)))
+        geoms[name] = polys
+    return geoms
+
+
+def _in_province(pt, polys, pad=0.0):
+    lon, lat = pt[1], pt[0]
+    for ring, x0, y0, x1, y1 in polys:
+        if lon < x0 - pad or lon > x1 + pad or lat < y0 - pad or lat > y1 + pad:
+            continue
+        if _pip(lon, lat, ring):
+            return True
+    return False
+
+
+def _nearest_prov(pt, geoms, max_deg=0.2):
+    """Hiçbir il poligonu içinde değilse en yakın il sınırı (kıyı/ada tolerasyonu)."""
+    lon, lat = pt[1], pt[0]
+    best, bestd = None, None
+    for name, polys in geoms.items():
+        for ring, x0, y0, x1, y1 in polys:
+            if lon < x0 - max_deg or lon > x1 + max_deg or lat < y0 - max_deg or lat > y1 + max_deg:
+                continue
+            for x, y in ring:
+                d = (x - lon) ** 2 + (y - lat) ** 2
+                if bestd is None or d < bestd:
+                    bestd, best = d, name
+    if bestd is not None and math.sqrt(bestd) <= max_deg:
+        return best
+    return None
+
+
+def fix_province_by_geom(places, geoms, dists):
+    """Koordinatı kendi ilinin sınırı dışına düşen kayıtları düzelt."""
+    if not geoms:
+        print("  - il sınırı denetimi: atlandı (tr-cities.json yok)")
+        return places
+    moved = dropped = 0
+    for p in places:
+        if p.get("lat") is None:
+            continue
+        pt = (p["lat"], p["lon"])
+        cur = p["il"]
+        own = geoms.get(cur)
+        if own and _in_province(pt, own):
+            continue
+        hits = [n for n, polys in geoms.items() if n != cur and _in_province(pt, polys)]
+        if len(hits) == 1:
+            p["il"] = hits[0]
+            nd = nearest_district_in(dists, hits[0], pt)
+            if nd:
+                p["dist"] = nd
+            moved += 1
+        else:
+            near = _nearest_prov(pt, geoms)
+            if near:
+                if near != cur:
+                    p["il"] = near
+                    nd = nearest_district_in(dists, near, pt)
+                    if nd:
+                        p["dist"] = nd
+                    moved += 1
+            else:
+                p["lat"] = p["lon"] = None
+                dropped += 1
+    print(f"  - il sınırı denetimi: {moved} kayıt doğru ile taşındı, {dropped} hatalı koordinat aranır duruma alındı")
+    return places
+
+
 def fix_districts(places, dists):
     """İlçe merkezinden 90 km'den uzak kayıtları en yakın ilçeye taşı (P131 hatası düzeltmesi)."""
     moved = 0
@@ -570,7 +674,8 @@ if __name__ == "__main__":
         dedup.append(p)
     uniq = dedup
 
-    places = fix_districts(select(uniq), dists)
+    CITY_GEOMS = load_city_geoms()
+    places = fix_districts(fix_province_by_geom(select(uniq), CITY_GEOMS, dists), dists)
     print(f"seçilen mekân: {len(places)}")
 
     # il sıralaması: plaka koduna göre
