@@ -621,3 +621,15 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Boyut ekrana göre: telefonda 9.5 px, tablette 11.5 px, masaüstünde 13 px (yazı 0.62 × boyut).
 - Çakışma: her rozet için 21 aday konum denenir; hiçbiri boş değilse rozet tam koordinatına yerleştirilir — böylece **81 ilin hepsi her ekran boyutunda görünür** (320 px'te bile).
 - SVG'deki beyaz nokta gizlendi, kırmızı halka korundu; üzerine gelince tam il adı `<title>` ile görünür ve il sayfasına gider.
+
+## v21 — il il renkli Türkiye haritası (81 il poligonu + adları)
+
+**Kullanıcı isteği:** klasik idari harita gibi "her il ayrı renk, içinde adı yazsın".
+
+- **Veri:** 81 ilin sınır poligonları GeoJSON'dan alındı (`tools/make_provinces.py`), eşdikdörtgen + orta enlem kosinüs düzeltmesiyle 1000×438 viewBox'a projeksiyonlandı. Çıktı `src/tr-provinces.json` (61 KB, 81 il, ~6.000 nokta) — build sırasında `window.TR_PROVINCES` olarak pakete giriyor. Tek parça `TR_PATH` paketten çıkarıldı.
+- **Renkler:** altın oran adımlı HSL paletiyle her ile sabit, yumuşak ama ayırt edilebilir bir ton; arada beyaz 1.1 px sınır (vektör ölçekten bağımsız). Hover'da hafif koyulaşma + doygunluk.
+- **Etkileşim:** noktalar yerine ilin kendisi tıklanabilir/tab-odaklanabilir; `data-il` ile il sayfasına gider, `<title>` ile adı gösterir. Panelde ve modalda aynı katman çalışıyor.
+- **Adlar:** HTML katmanı, `getScreenCTM()` ile poligon merkezine yerleştirilir, üç geçişli çakışma çözümü (10.5 → 8.6 → 7.0 px). Masaüstünde **81/81**, tablette 78, telefonda harita 315 px olduğu için **baş harfler** (80/81) — dokununca adı ve il sayfası gelir.
+- **Düzen:** masaüstünde keşif bandı yeniden dengelendi — harita tam genişlik (1078×472, tüm adlar okunur), rotalar 3 sütun, mevsimler 4 sütun. Böylece haritanın altında kalan ölü boşluk da kalktı.
+
+**Ölçümler:** 6 genişlik × 11 sayfa → 0 yatay taşma; JS hatası 0; tıklama testi `#/il/ankara`'ya gitti.

@@ -310,6 +310,7 @@ def main():
         css += "\n" + theme.read_text(encoding="utf-8")
     js = (SRC / "app.js").read_text(encoding="utf-8")
     tr_path = (SRC / "tr-path.txt").read_text(encoding="utf-8").strip()
+    tr_prov = (SRC / "tr-provinces.json").read_text(encoding="utf-8").strip()
     data = json.loads(DATA.read_text(encoding="utf-8"))
 
     ils, cats, places = data["ils"], data["cats"], data["places"]
@@ -333,7 +334,7 @@ def main():
     n_routes = len(routes)
 
     # --- 1) SPA paketleri (dış dosya, hash'li ad → önbelleklenebilir)
-    bundle = ("window.TR_PATH=" + json.dumps(tr_path) + ";\n"
+    bundle = ("window.TR_PROVINCES=" + tr_prov + ";\n"
               + "window.__DATA__=" + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n"
               + js)
     css_hash = hashlib.sha1(css.encode()).hexdigest()[:10]

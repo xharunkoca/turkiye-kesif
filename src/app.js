@@ -224,66 +224,83 @@
   })();
   const project = (lat, lon) => [MB.pad + (lon - MB.lon0) * MB.sx, MB.pad + (MB.lat1 - lat) * MB.sy];
 
-  function mapPins(interactive) {
-    return ILS.map((il, i) => {
-      if (il.lat == null) return "";
-      const [x, y] = project(il.lat, il.lon);
-      return `<g class="map-pin${interactive ? " big" : ""}" data-il="${i}" tabindex="0" role="button" aria-label="${esc(il.n)}">
-        <title>${esc(il.n)}</title>
-        <circle class="pulse" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${interactive ? 8 : 6.4}"/>
-        <circle class="core" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${interactive ? 6 : 4.6}"/>
-      </g>`;
+  const PROV = (window.TR_PROVINCES || []);
+  const IL_BY_NAME = {};
+  ILS.forEach((il, i) => { IL_BY_NAME[il.n] = i; });
+
+  function provColor(i) {
+    const h = (i * 0.61803398875) % 1;
+    const s = 0.58 + ((i * 7) % 5) * 0.038;
+    const l = 0.825 + ((i * 3) % 4) * 0.014;
+    const f = (n) => {
+      const k = (n + h * 12) % 12;
+      const a = s * Math.min(l, 1 - l);
+      const c = (x) => l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+      return Math.round(255 * c(n));
+    };
+    return `rgb(${f(0)},${f(8)},${f(4)})`;
+  }
+
+  function provPaths() {
+    return PROV.map((p, i) => {
+      const idx = IL_BY_NAME[p.n];
+      const label = idx == null ? p.n : ILS[idx].n;
+      return `<path class="prov" d="${p.d}" fill="${provColor(i)}"${idx == null ? "" : ` data-il="${idx}"`}
+        tabindex="${idx == null ? "-1" : "0"}" role="button" aria-label="${esc(label)}"><title>${esc(label)}</title></path>`;
     }).join("");
   }
 
-  /* ------------------------------------------------- harita: il baş harfleri */
-  const LABEL_PRIORITY = ["İstanbul","Ankara","İzmir","Antalya","Bursa","Muğla","Adana","Konya","Kayseri",
-    "Gaziantep","Trabzon","Samsun","Diyarbakır","Erzurum","Mersin","Kocaeli","Eskişehir","Şanlıurfa","Van",
-    "Malatya","Sivas","Denizli","Balıkesir","Manisa","Aydın","Çanakkale","Hatay","Sakarya","Tekirdağ","Ordu",
-    "Rize","Nevşehir","Kars","Afyonkarahisar","Kahramanmaraş","Elazığ","Ağrı","Zonguldak","Sinop"];
-  const labelRank = {};
-  ILS.forEach((il) => { const k = LABEL_PRIORITY.indexOf(il.n); labelRank[il.n] = k < 0 ? 900 : k; });
-
+  /* ------------------------------------------ harita: il adı / baş harf katmanı */
   function mountMapLabels(wrap, svg) {
-    if (!wrap || !svg) return;
+    if (!wrap || !svg || !PROV.length) return;
     wrap.classList.add("has-labels");
     let layer = wrap.querySelector(".map-labels");
     if (!layer) { layer = document.createElement("div"); layer.className = "map-labels"; wrap.appendChild(layer); }
+    const canvas = mountMapLabels._c || (mountMapLabels._c = document.createElement("canvas"));
+    const ctx = canvas.getContext("2d");
     const place = () => {
       layer.innerHTML = "";
       const ctm = svg.getScreenCTM && svg.getScreenCTM();
       const wr = wrap.getBoundingClientRect();
       if (!ctm || wr.width < 60) return;
-      const size = wr.width < 420 ? 9.5 : wr.width < 720 ? 11.5 : 13;
+      const names = wr.width >= 600;                 // geniş haritada il adı, dar haritada baş harf
+      const base = names ? (wr.width >= 900 ? 10.5 : 9.5) : (wr.width < 420 ? 8.5 : 9.5);
+      const pt = svg.createSVGPoint ? svg.createSVGPoint() : null;
       const used = [];
-      const spots = ILS.map((il, i) => ({ il, i })).filter((x) => x.il.lat != null)
-        .sort((a, b) => (labelRank[a.il.n] - labelRank[b.il.n]) || a.il.n.localeCompare(b.il.n, "tr"));
-      const nudges = [[0, 0], [-2, 0], [2, 0], [0, -2], [0, 2], [-3, -3], [3, 3], [-3, 3], [3, -3],
-        [-4, 0], [4, 0], [0, -4], [0, 4], [-5, -2], [5, 2], [-5, 2], [5, -2], [-6, 0], [6, 0], [0, -6], [0, 6]];
-      for (const { il } of spots) {
-        const [ux, uy] = project(il.lat, il.lon);
-        let sx, sy;
-        try { const pt = svg.createSVGPoint(); pt.x = ux; pt.y = uy; const sc = pt.matrixTransform(ctm); sx = sc.x; sy = sc.y; }
-        catch (e) { continue; }
-        const cx = sx - wr.left, cy = sy - wr.top;
-        let pick = null;
-        for (const [dx, dy] of nudges) {
-          const r = { x: cx + dx - size / 2, y: cy + dy - size / 2, w: size, h: size };
-          const hit = used.some((u) => !(r.x + r.w - 1 < u.x || r.x + 1 > u.x + u.w || r.y + r.h - 1 < u.y || r.y + 1 > u.y + u.h));
-          if (!hit) { pick = { ...r, cx: cx + dx, cy: cy + dy }; break; }
+      const spots = PROV.map((p) => p).sort((a, b) => b.a - a.a);
+      const cands = [[0, 0], [0, -3], [0, 3], [-3, 0], [3, 0], [0, -6], [0, 6], [-6, 0], [6, 0], [0, -9], [0, 9], [-9, 0], [9, 0]];
+      const done = new Set();
+      // iki geçiş: önce normal boy, sığmayanlar biraz küçük yazıyla
+      for (const fs of [base, Math.max(6.8, base * 0.82), Math.max(6.2, base * 0.70)]) {
+        ctx.font = `600 ${fs}px -apple-system, "SF Pro Text", system-ui, sans-serif`;
+        const h = fs + 1;
+        for (const p of spots) {
+          if (done.has(p.n)) continue;
+          let sx, sy;
+          try { pt.x = p.x; pt.y = p.y; const sc = pt.matrixTransform(ctm); sx = sc.x; sy = sc.y; }
+          catch (e) { continue; }
+          const cx = sx - wr.left, cy = sy - wr.top;
+          if (cx < 0 || cy < 0 || cx > wr.width || cy > wr.height) continue;
+          const text = names ? p.n : p.n.charAt(0).toLocaleUpperCase("tr");
+          const tw = ctx.measureText(text).width;
+          let pick = null;
+          for (const [dx, dy] of cands) {
+            const r = { x: cx + dx - tw / 2 - 1, y: cy + dy - h / 2, w: tw + 2, h };
+            if (r.x < 1 || r.y < 1 || r.x + r.w > wr.width - 1 || r.y + r.h > wr.height - 1) continue;
+            const hit = used.some((u) => !(r.x + r.w + 1.5 < u.x || r.x > u.x + u.w + 1.5 || r.y + r.h + 1 < u.y || r.y > u.y + u.h + 1));
+            if (!hit) { pick = r; break; }
+          }
+          if (!pick) continue;
+          used.push(pick);
+          done.add(p.n);
+          const sp = document.createElement("span");
+          sp.className = "map-label" + (names ? "" : " initial");
+          sp.textContent = text;
+          sp.style.left = (pick.x + pick.w / 2).toFixed(1) + "px";
+          sp.style.top = (pick.y + pick.h / 2).toFixed(1) + "px";
+          sp.style.fontSize = fs + "px";
+          layer.appendChild(sp);
         }
-        if (!pick) { pick = { x: cx - size / 2, y: cy - size / 2, w: size, h: size, cx, cy }; }
-        used.push({ x: pick.x, y: pick.y, w: pick.w, h: pick.h });
-        const sp = document.createElement("span");
-        sp.className = "map-initial";
-        sp.textContent = il.n.charAt(0).toLocaleUpperCase("tr");
-        sp.title = il.n;
-        sp.style.left = (pick.cx - size / 2).toFixed(1) + "px";
-        sp.style.top = (pick.cy - size / 2).toFixed(1) + "px";
-        sp.style.width = size + "px";
-        sp.style.height = size + "px";
-        sp.style.fontSize = Math.round(size * 0.62) + "px";
-        layer.appendChild(sp);
       }
     };
     place();
@@ -824,8 +841,7 @@
                 <stop offset="0%" stop-color="#3f9fd6"/><stop offset="100%" stop-color="#1c6fae"/>
               </linearGradient>
             </defs>
-            <path class="tr-land" style="fill:url(#trGrad2)" d="${window.TR_PATH}"/>
-            <g>${mapPins(true)}</g>
+            <g>${provPaths()}</g>
           </svg>
         </div>
         <div class="region-grid">
@@ -933,7 +949,8 @@
         : `<a class="chip" href="${target}">${esc(label)}</a>`).join("");
 
     // harita iğneleri (81 il)
-    $("#mapPins").innerHTML = mapPins(false);
+    const pl = $("#provLayer");
+    if (pl) pl.innerHTML = provPaths();
     mountMapLabels(document.querySelector(".map-stage"), document.querySelector(".map-stage .map-svg"));
 
     // menü + footer kategori listeleri
