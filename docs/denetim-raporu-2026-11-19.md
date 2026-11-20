@@ -685,3 +685,34 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Aynı kurallar yer/ilçe/harita pencerelerini de düzeltti (hepsi `.modal-actions` kullanıyor). Masaüstü düzeni değişmedi (`flex`).
 
 **Doğrulama:** 390 px'te rota penceresi düğmeleri 44 px ve eşit; yer penceresi 2 sütun; harita penceresinde kapatma 44×44 sabit; masaüstünde davranış aynı. JS hatası 0.
+
+## v26 — mobil menü paneli + pencere (modal) iskeleti
+
+**Kullanıcı geri bildirimi:** iki ekran görüntüsü — mobil menü ve giriş penceresi; "bu ekranları da düzenle, kayma vs var".
+
+**Mobil menü — kök neden**
+- Panel `src/style.css` içinde koyu lacivert (`#08294c`) tanımlıydı; `theme-light.css` yalnız `background:#fff` + `border-right` yazdığı için açık temada panel **şeffaf** kalıyordu. `a{color:#fff}` ise beyaz zemin üzerinde beyaz yazı üretiyordu: ekranda yalnız birkaç satır ve kırmızı CTA görünüyor, "Harita" / "Favorilerim" satırları tamamen kayboluyordu.
+- Panel `inset:var(--header-h) 0 auto 0` + `height:auto` olduğu için içerik yüksekliğinde (≈440 px) kesiliyor, altında beyaz sayfa sızıyordu.
+
+**Yapılanlar (mobil menü)**
+- Panel opak beyaz, `inset:var(--header-h) 0 0 0`, `flex column` → başlıktan ekranın altına kadar tam yükseklik, arkasındaki sayfa görünmüyor.
+- Her satır `min-height:52px` + ince alt çizgi; metin `--ink`, ikonlar `--ink-3` (artık 8 satırın tamamı okunur).
+- `data-open-map` / `data-open-favs` butonları (`.mm-link`) da aynı satır stiline alındı — daha önce hiç stil almıyorlardı.
+- CTA "Keşfetmeye başla" `--accent` pill olarak satırların altında.
+
+**Pencere — kök neden**
+- Kart `max-height:86vh` + `place-items:center`; kapatma düğmesi `position:fixed` olduğu için telefonda içeriğin üstüne biniyordu.
+- `theme-light.css` `.modal-hero` ezmesi `border-radius` yazmadığı ve kart `overflow:hidden` olmadığı için kartın **alt köşeleri düz** kalıyordu (`14px 14px 0 0`) — pencere yarım kalmış gibi görünüyordu.
+
+**Yapılanlar (pencere)**
+- `.modal-card` `overflow:hidden` + `flex column` + `max-height:86vh`; kaydırma `#modalContent` üzerinde → başlık ve kapatma sabit, içerik kendi içinde kayıyor.
+- `.modal-close` kartın içinde `absolute 10/10`, 44×44, yarı saydam beyaz daire + gölge; `.modal-hero{padding-right:64px}` ile başlık düğmenin altına girmiyor.
+- Telefonda `.modal{padding:12px}` ve `max-height:calc(100dvh - 24px)` → adres çubuğu yüksekliği değişse de pencere ekrandan taşmıyor.
+- `border-radius: 18px` (telefon 16px) **dört köşe**; `.modal-hero` ezmesi `border-radius: inherit` ile uyumlu.
+
+**Doğrulama**
+- 390 px: menü paneli `58..844` (tam ekran), 7 satır 52 px + CTA 48 px; giriş penceresi kartı `187..657`, kapatma 44×44 `top=22`, `#modalContent` `overflow:auto` (kaydırma içeride).
+- Rota penceresi: `#modalContent.scrollTop=597` = maksimum, kapatma yerinde sabit.
+- 768 px: menü `top=64 h=960`, 7 satır. 1440 px: kart `469..971`, kapatma kart içinde (`right=961`).
+- Köşe yarıçapı dört köşede 16 px; JS hatası 0.
+- Yatay taşma taraması: 5 genişlik (320–1440) × 7 sayfa → **0 taşma**.

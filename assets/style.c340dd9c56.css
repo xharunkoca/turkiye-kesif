@@ -2537,3 +2537,54 @@ html{scroll-padding-top:calc(var(--header-h) + 12px)}
   .modal-actions .btn{font-size:13.5px!important;gap:6px!important;padding-inline:8px!important}
   .modal-actions .btn svg{width:14px;height:14px;flex:0 0 auto}
 }
+
+/* ================================================================
+   v26 — mobil menü (görünmez bağlantılar, yarım panel) + pencere kapatma
+   ================================================================ */
+
+/* 62. Mobil menü: tam yükseklik, beyaz zemin üzerinde koyu yazı */
+.mobile-menu{
+  background:#fff!important;color:var(--ink)!important;
+  inset:var(--header-h) 0 0 0!important;
+  border-top:1px solid var(--line);
+  border-right:0!important;
+  box-shadow:none!important;
+  padding:10px 0 28px!important;
+  overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;align-items:stretch;gap:0;
+}
+.mobile-menu a,.mobile-menu .mm-link{
+  display:flex!important;align-items:center;gap:12px;
+  width:100%;min-height:52px;padding:14px 20px!important;
+  margin:0;border:0;border-bottom:1px solid var(--line);
+  background:none;border-radius:0;box-shadow:none;
+  font:inherit;font-size:15.5px;font-weight:550;letter-spacing:-.01em;
+  color:var(--ink)!important;text-align:left;cursor:pointer;
+}
+.mobile-menu a:active,.mobile-menu .mm-link:active{background:var(--bg-2)}
+.mobile-menu a svg,.mobile-menu .mm-link svg{width:19px;height:19px;color:var(--ink-3)!important;opacity:1}
+.mobile-menu a:last-of-type{border-bottom:0}
+.mobile-menu .mm-cta{
+  margin:18px 20px 0!important;min-height:48px!important;
+  justify-content:center;border-radius:999px!important;background:var(--accent)!important;color:#fff!important;
+  font-weight:600;font-size:15px;border:0!important;
+}
+
+/* 63. Pencere: kart içindeki içerik kaydırılır, kapatma köşede sabit kalır */
+.modal-card{overflow:hidden!important;display:flex;flex-direction:column;max-height:86vh}
+#modalContent{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;min-height:0}
+.modal-close{
+  position:absolute!important;top:10px!important;right:10px!important;left:auto!important;
+  z-index:5;width:44px;height:44px;
+  background:rgba(255,255,255,.94)!important;backdrop-filter:blur(6px);
+  border:var(--bw) solid var(--line)!important;box-shadow:0 4px 14px rgba(10,30,60,.10);
+}
+.modal-hero{padding-right:64px!important}
+@media (max-width:899px){
+  .modal{padding:12px}
+  .modal-card{max-height:calc(100dvh - 24px)}
+}
+
+/* --- 64. Pencere kartı: dört köşe de yuvarlak (yarım kalan köşe düzeltmesi) --- */
+.modal-card{border-radius:18px!important}
+@media (max-width:899px){ .modal-card{border-radius:16px!important} }
