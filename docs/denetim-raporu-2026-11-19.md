@@ -716,3 +716,7 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - 768 px: menü `top=64 h=960`, 7 satır. 1440 px: kart `469..971`, kapatma kart içinde (`right=961`).
 - Köşe yarıçapı dört köşede 16 px; JS hatası 0.
 - Yatay taşma taraması: 5 genişlik (320–1440) × 7 sayfa → **0 taşma**.
+
+### v26c — mobil menü açıkken onay şeridi
+
+- KVKK onay şeridi (`z-index:180`) menü panelinin üstüne biniyordu. `body.nav-open .consent{display:none!important}` eklendi: menü açıkken şerit gizleniyor, menü kapanınca geri geliyor.
