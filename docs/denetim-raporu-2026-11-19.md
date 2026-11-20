@@ -720,3 +720,30 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 ### v26c — mobil menü açıkken onay şeridi
 
 - KVKK onay şeridi (`z-index:180`) menü panelinin üstüne biniyordu. `body.nav-open .consent{display:none!important}` eklendi: menü açıkken şerit gizleniyor, menü kapanınca geri geliyor.
+
+## v27 — e-postaya giriş bağlantısı yerine **kod** gönderimi
+
+**Kullanıcı isteği:** "üye olmak için kod gitsin" — bağlantıya tıklamak yerine e-postayla gelen kod girilsin.
+
+**Akış (iki adım, aynı pencere içinde)**
+1. **E-posta adımı:** e-posta alanı + "Kod gönder" (`POST /auth/v1/otp`, `create_user:true`). Son kullanılan adres `tk-last-email-v1` olarak hatırlanıyor.
+2. **Kod adımı:** "Kodu girin" — `8 haneli kod` alanı (`inputmode=numeric`, `autocomplete=one-time-code`), `Giriş yap` düğmesi, altta **Yeniden gönder (30 sn)** sayacı ve **E-posta değiştir** bağlantısı.
+   Kod 8 hane girilince otomatik doğrulanıyor (`POST /auth/v1/verify`, `type:"email"`); yarım kodda düğme/Enter ile gönderilebiliyor.
+   Hatalı/süresi dolmuş kodda: "Kod hatalı veya süresi doldu — yeni kod isteyin." Rate limit (429) ayrı mesajla bildiriliyor.
+3. Doğrulama başarılıysa oturum kaydediliyor, pencere kapanıyor, favoriler eşitleniyor, rota ilerlemesi çekiliyor — eski bağlantı akışıyla aynı sonuç.
+
+**Neden 8 hane:** projedeki `mailer_otp_length` = 8 (`mailer_otp_exp` = 3600 sn). Arayüz bu uzunluğa göre ayarlandı (`OTP_LEN`), böylece kod tek seferde kabul ediliyor.
+
+**Arayüz**
+- Kod alanı: 56 px yükseklik, 21 px tabular rakam, `.4em` aralık, açık gri zemin; odak halkası yumuşak kırmızı (eski sarı halka kaldırıldı).
+- "Yeniden gönder" 30 sn geri sayımlı; süre bitince kırmızı bağlantı olur, tıklayınca yeni kod istenir.
+- "E-posta değiştir" ile 1. adıma dönülür, adres korunur.
+- Satır içi bağlantılar 390 px'te tek satıra sığacak şekilde kısaltıldı ("Yeniden gönder (30 sn)" / "E-posta değiştir").
+
+**Sunucu tarafı — kullanıcının yapması gereken tek adım**
+- Supabase → Authentication → Emails → **Magic Link** şablonu, kod satırını içermeli:
+  `<p style="font-size:28px;letter-spacing:6px;font-weight:700">{{ .Token }}</p>`
+  (Şablonda `{{ .ConfirmationURL }}` bağlantısı da kalabilir; iki yol da çalışır.)
+- Varsayılan Supabase e-posta servisi **saatlik 2 mail** (`rate_limit_email_sent: 2`) gönderir. Gerçek üyelik için özel SMTP (Resend / Brevo) gerekir — `smtp_host` şu an boş.
+
+**Doğrulama (yerel, ağ taklidi ile):** 390 px — 1. adım "Kod gönder" → `POST otp {"email":"…","create_user":true}`; 2. adım odak kod alanında, `inputmode=numeric`, `maxlength=8`; 8 hane yazılınca `POST verify {"type":"email","token":"12345678"}`; pencere kapanıyor, başlıkta kullanıcı adı, mobil CTA "Hesabım". Yeniden gönder → yeni istek + sayaç sıfırlanıyor; e-posta değiştir → adres korunuyor. Harf girişi otomatik temizleniyor. Yatay taşma yok, JS hatası 0.

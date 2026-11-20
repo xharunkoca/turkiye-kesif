@@ -1782,6 +1782,19 @@
       if (auth) { location.hash = "#/hesabim"; } else openAuthModal();
       return;
     }
+    if (e.target.closest("[data-auth-resend]")) {
+      e.preventDefault();
+      const rb = e.target.closest("[data-auth-resend]");
+      if (rb.disabled || !pendingEmail) return;
+      doSendCode(pendingEmail, true);
+      return;
+    }
+    if (e.target.closest("[data-auth-back]")) {
+      e.preventDefault();
+      pendingEmail = "";
+      authEmailStep("Farklı bir e-posta kullanabilirsiniz.");
+      return;
+    }
     if (e.target.closest("[data-resume]")) {
       e.preventDefault();
       const b = e.target.closest("[data-resume]");
@@ -2144,36 +2157,155 @@
         </div>`);
       return;
     }
-    openModal(`
+    authEmailStep("");
+  }
+
+  /* ------------------------------------------- v27: e-posta kodlu (OTP) giriş */
+  const LAST_EMAIL_KEY = "tk-last-email-v1";
+  let pendingEmail = "";
+  const OTP_LEN = 8; // Supabase projesindeki mailer_otp_length ile aynı
+  let resendTimer = null;
+  const readLastEmail = () => { try { return localStorage.getItem(LAST_EMAIL_KEY) || ""; } catch (e) { return ""; } };
+  const writeLastEmail = (v) => {
+    try { v ? localStorage.setItem(LAST_EMAIL_KEY, v) : localStorage.removeItem(LAST_EMAIL_KEY); } catch (e) { /* yoksay */ }
+  };
+
+  const authHeroHtml = () => `
       <div class="modal-hero" style="background:linear-gradient(135deg,#b3261e,#0a2c52)">
         <span class="mh-ic">${icon("i-user", "i24")}</span>
         <span class="mh-cat">Giriş / Üyelik</span>
-      </div>
+      </div>`;
+
+  const authFineHtml = `<p class="auth-fine">Kişisel verileriniz yalnızca kimlik doğrulama ve favori listesi için işlenir.
+          Ayrıntı: <a href="kvkk-aydinlatma/">KVKK Aydınlatma</a> · <a href="gizlilik/">Gizlilik</a></p>`;
+
+  const setAuthNote = (t) => { const n = $("#authNote"); if (n) n.textContent = t; };
+
+  function authEmailStep(msg) {
+    openModal(`${authHeroHtml()}
       <div class="modal-body">
         <h3 id="modalTitle">E-posta ile giriş</h3>
-        <p class="sub">Şifre yok — tek kullanımlık giriş bağlantısı gönderilir.</p>
+        <p class="sub">Şifre yok — e-postanıza <b>${OTP_LEN} haneli giriş kodu</b> gönderilir.</p>
         <form class="auth-form" id="authForm" novalidate>
           <label for="authEmail">E-posta adresiniz</label>
-          <input id="authEmail" type="email" autocomplete="email" inputmode="email" placeholder="ornek@eposta.com" required>
-          <button class="btn btn-red" type="submit">Giriş bağlantısı gönder</button>
+          <input id="authEmail" type="email" autocomplete="email" inputmode="email" placeholder="ornek@eposta.com" value="${esc(readLastEmail())}" required>
+          <button class="btn btn-red" type="submit">${icon("i-arrow-right")}Kod gönder</button>
         </form>
-        <p class="form-note" id="authNote" role="status" aria-live="polite">Favorileriniz giriş sonrası bu hesaba bağlanır ve tüm cihazlarınızda görünür.</p>
-        <p class="auth-fine">Kişisel verileriniz yalnızca kimlik doğrulama ve favori listesi için işlenir.
-          Ayrıntı: <a href="kvkk-aydinlatma/">KVKK Aydınlatma</a> · <a href="gizlilik/">Gizlilik</a></p>
+        <p class="form-note" id="authNote" role="status" aria-live="polite">${esc(msg || "Kod geldikten sonra bir sonraki adımda girmeniz yeterli. Favorileriniz bu hesaba bağlanır.")}</p>
+        ${authFineHtml}
       </div>`);
   }
 
-  async function doSignIn(email, noteEl) {
-    const note = noteEl || $("#authNote") || $("#loginNote");
-    const setNote = (t) => { if (note) note.textContent = t; };
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setNote("Geçerli bir e-posta adresi girin."); return; }
-    setNote("Gönderiliyor…");
-    try {
-      await sendLoginLink(email);
-      setNote(`Bağlantı gönderildi: ${email}. Gelen kutunuza (ve spam klasörüne) bakın; bağlantı 1 saat geçerli.`);
-    } catch (e) {
-      setNote(`Gönderilemedi: ${String(e.message || e).slice(0, 90)} — birkaç dakika sonra tekrar deneyin.`);
+  function startResendCooldown(sec) {
+    if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+    let left = sec;
+    const tick = () => {
+      const b = document.querySelector("[data-auth-resend]");
+      if (!b) { if (resendTimer) clearInterval(resendTimer); resendTimer = null; return; }
+      if (left <= 0) {
+        b.disabled = false; b.textContent = "Yeniden gönder";
+        clearInterval(resendTimer); resendTimer = null; return;
+      }
+      b.disabled = true; b.textContent = `Yeniden gönder (${left} sn)`;
+      left -= 1;
+    };
+    tick();
+    resendTimer = setInterval(tick, 1000);
+  }
+
+  function authCodeStep(email, note) {
+    pendingEmail = email;
+    openModal(`${authHeroHtml()}
+      <div class="modal-body">
+        <h3 id="modalTitle">Kodu girin</h3>
+        <p class="sub"><b>${esc(email)}</b> adresine ${OTP_LEN} haneli giriş kodu gönderdik. Kod 1 saat geçerlidir.</p>
+        <form class="auth-form" id="authCodeForm" novalidate>
+          <label for="authCode">${OTP_LEN} haneli kod</label>
+          <input id="authCode" class="auth-code" type="text" inputmode="numeric" autocomplete="one-time-code"
+                 pattern="[0-9]*" maxlength="${OTP_LEN}" placeholder="12345678" aria-describedby="authNote" required>
+          <button class="btn btn-red" type="submit">${icon("i-check")}Giriş yap</button>
+        </form>
+        <p class="form-note" id="authNote" role="status" aria-live="polite">${esc(note || "Kod gelmediyse spam / gereksiz klasörüne bakın.")}</p>
+        <div class="auth-alt">
+          <button type="button" class="linkish" data-auth-resend>Yeniden gönder</button>
+          <button type="button" class="linkish" data-auth-back>E-posta değiştir</button>
+        </div>
+        ${authFineHtml}
+      </div>`);
+    const inp = $("#authCode");
+    if (inp) {
+      inp.addEventListener("input", () => {
+        const clean = inp.value.replace(/\D/g, "").slice(0, OTP_LEN);
+        if (clean !== inp.value) inp.value = clean;
+        if (clean.length === OTP_LEN) {
+          const f = $("#authCodeForm");
+          if (f) { if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true })); }
+        }
+      });
+      const focusIn = () => {
+        if (!document.body.contains(inp)) return;
+        inp.focus();
+        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) { /* yoksay */ }
+      };
+      requestAnimationFrame(() => requestAnimationFrame(focusIn));
+      setTimeout(focusIn, 120);
     }
+    startResendCooldown(30);
+  }
+
+  function afterLogin(d, emailFallback) {
+    const info = jwtEmail(d.access_token || "");
+    saveAuth({
+      access_token: d.access_token,
+      refresh_token: d.refresh_token,
+      uid: info.uid || (d.user && d.user.id) || null,
+      email: info.email || (d.user && d.user.email) || emailFallback || null,
+      exp: Date.now() + (Number(d.expires_in) || 3600) * 1000
+    });
+    if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+    closeModal();
+    toast(auth && auth.email ? `Giriş yapıldı — ${auth.email}` : "Giriş yapıldı");
+    syncFavorites();
+    progPull().then(() => { if (location.hash.startsWith("#/hesabim")) renderHesabim(); });
+  }
+
+  async function doSendCode(email, isResend) {
+    const em = String(email || "").trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { setAuthNote("Geçerli bir e-posta adresi girin."); return; }
+    writeLastEmail(em);
+    if (!isResend) setAuthNote("Kod gönderiliyor…");
+    try {
+      await sendLoginLink(em);
+      authCodeStep(em, `Kod gönderildi: ${em}. Gelen kutunuza (ve spam klasörüne) bakın.`);
+    } catch (e2) {
+      const m = String(e2.message || e2);
+      const msg = /rate|too many|429/i.test(m)
+        ? "Kısa sürede çok kod istendi — birkaç dakika sonra tekrar deneyin."
+        : `Gönderilemedi: ${m.slice(0, 90)}`;
+      if (isResend) setAuthNote(msg); else setAuthNote(msg);
+    }
+  }
+
+  async function doVerifyCode(email, code) {
+    const em = String(email || "").trim().toLowerCase();
+    const tok = String(code || "").replace(/\D/g, "").slice(0, OTP_LEN);
+    if (tok.length < 6) { setAuthNote(`Kodu tam girin — ${OTP_LEN} hane (yalnızca rakam).`); return; }
+    setAuthNote("Doğrulanıyor…");
+    try {
+      const d = await sbAuth("verify", { type: "email", email: em, token: tok });
+      if (!d || !d.access_token) throw new Error("Kod doğrulanamadı");
+      afterLogin(d, em);
+    } catch (e2) {
+      const m = String(e2.message || e2);
+      setAuthNote(/expired|invalid|token|not found/i.test(m)
+        ? "Kod hatalı veya süresi doldu — yeni kod isteyin."
+        : `Doğrulanamadı: ${m.slice(0, 90)}`);
+    }
+  }
+
+  async function doSignIn(email, noteEl) {
+    void noteEl;
+    return doSendCode(email, false);
   }
 
   function signOut() {
@@ -2328,6 +2460,8 @@
   document.addEventListener("submit", (e) => {
     const authForm = e.target.closest("#authForm");
     if (authForm) { e.preventDefault(); doSignIn(($("#authEmail") || {}).value, $("#authNote")); return; }
+    const codeForm = e.target.closest("#authCodeForm");
+    if (codeForm) { e.preventDefault(); doVerifyCode(pendingEmail, ($("#authCode") || {}).value); return; }
     const loginForm = e.target.closest("#loginForm");
     if (loginForm) { e.preventDefault(); doSignIn(($("#loginEmail") || {}).value, $("#loginNote")); return; }
   });

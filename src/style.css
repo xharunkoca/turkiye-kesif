@@ -1209,6 +1209,17 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
 .form-note{margin:8px 0 0;font-size:.85rem;color:#2b3a4a;line-height:1.5}
 .auth-fine{margin:12px 0 0;font-size:.8rem;color:#5b6b7c;line-height:1.55}
 .auth-fine a{color:#b3261e}
+/* v27 — e-posta kodlu giriş */
+.auth-form input.auth-code{height:56px;font-size:1.34rem;font-weight:600;letter-spacing:.4em;text-indent:.4em;text-align:center;
+  font-variant-numeric:tabular-nums;background:#f7f9fc}
+.auth-form input.auth-code::placeholder{letter-spacing:.3em;text-indent:.3em;font-weight:500;color:#9aa8b6}
+.auth-form input:focus-visible{outline:3px solid rgba(200,16,46,.22);outline-offset:2px;border-color:#c8102e}
+.auth-alt{display:flex;flex-wrap:wrap;gap:2px 16px;margin-top:2px;border-top:1px solid #e6ecf2;padding-top:4px}
+.linkish{white-space:nowrap}
+.linkish{background:none;border:0;padding:11px 0;min-height:44px;font:inherit;font-size:.86rem;font-weight:600;
+  color:#b3261e;text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
+.linkish:disabled{color:#7f8c99;text-decoration:none;cursor:default}
+.linkish:focus-visible{outline:3px solid #ffd21e;outline-offset:2px;border-radius:6px}
 .btn-auth span{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* odak görünürlüğü (klavye) */
