@@ -747,3 +747,23 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Varsayılan Supabase e-posta servisi **saatlik 2 mail** (`rate_limit_email_sent: 2`) gönderir. Gerçek üyelik için özel SMTP (Resend / Brevo) gerekir — `smtp_host` şu an boş.
 
 **Doğrulama (yerel, ağ taklidi ile):** 390 px — 1. adım "Kod gönder" → `POST otp {"email":"…","create_user":true}`; 2. adım odak kod alanında, `inputmode=numeric`, `maxlength=8`; 8 hane yazılınca `POST verify {"type":"email","token":"12345678"}`; pencere kapanıyor, başlıkta kullanıcı adı, mobil CTA "Hesabım". Yeniden gönder → yeni istek + sayaç sıfırlanıyor; e-posta değiştir → adres korunuyor. Harf girişi otomatik temizleniyor. Yatay taşma yok, JS hatası 0.
+
+## v28 — e-posta + şifre ile üyelik, Supabase onay maili (v27 kod akışı kaldırıldı)
+
+**Kullanıcı geri bildirimi (v27 sonrası):** "Bu şekilde değil — insanlar kayıt olduğunda maile onay kodu ya da giriş bağlantısı gitsin, Supabase üzerinden." → klasik, tanıdık üyelik akışı istendi.
+
+**Sunucu tarafı (Supabase)**
+- `mailer_autoconfirm` **false** yapıldı: kayıt artık otomatik onaylanmıyor, Supabase **onay e-postası** gönderiyor; kullanıcı bağlantıya dokununca hesap aktifleşiyor.
+- `site_url` + `uri_allow_list` doğru; onay bağlantısı `https://xharunkoca.github.io/turkiye-kesif/` adresine dönüyor ve `adoptTokens()` oturumu devralıyor.
+- `password_min_length` 6 (arayüz aynı sınırı uyguluyor).
+
+**Arayüz**
+- Giriş penceresinde **iki sekme**: "Giriş yap" / "Üye ol" (segment kontrol, 40 px yüksek).
+- **Üye ol:** e-posta + şifre + şifre tekrar (`autocomplete="new-password"`), "Hesap oluştur" → `POST /auth/v1/signup`. Onay gerektiğinde pencere "Giriş yap" sekmesine dönüp "Onay bağlantısı gönderildi: …" notunu gösteriyor.
+- **Giriş yap:** e-posta + şifre (`current-password`) → `POST /auth/v1/token?grant_type=password`.
+- Şifre alanında **Göster/Gizle** düğmesi; "Şifremi unuttum" → `POST /auth/v1/recover`; onaylanmamış hesapta "E-posta henüz onaylanmadı" notu + **"Onay e-postasını yeniden gönder"** (`POST /auth/v1/resend`, `type:"signup"`).
+- Hata mesajları Türkçeleştirildi: "E-posta veya şifre hatalı.", "Bu e-posta ile bir hesap var — Giriş yap sekmesini kullanın.", zayıf şifre, 429 limitleri.
+- "Hesabım" sayfasının girişsiz hâli de aynı akışa bağlandı: "Giriş yap" / "Üye ol" düğmeleri pencereyi doğru sekmede açıyor (`data-auth-open="signup"`).
+- v27'nin kod adımı, geri sayımı ve `#authCodeForm` dinleyicileri tamamen kaldırıldı (ölü kod yok).
+
+**Doğrulama (yerel, ağ taklidi):** sekmeler doğru modda; üyelikte 3 alan (`new-password`), girişte 2 alan (`current-password`); şifre uyuşmazlığı uyarısı; Göster/Gizle çalışıyor; `POST signup {"email","password"}` gidiyor; onay notu görünüyor; hatalı şifre → "E-posta veya şifre hatalı."; doğru şifre → pencere kapanıyor, başlıkta kullanıcı adı, oturum kaydediliyor. 1440'ta kart 680 px, kaydırma yok. JS hatası 0.
