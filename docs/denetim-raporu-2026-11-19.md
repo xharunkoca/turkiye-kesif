@@ -767,3 +767,13 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - v27'nin kod adımı, geri sayımı ve `#authCodeForm` dinleyicileri tamamen kaldırıldı (ölü kod yok).
 
 **Doğrulama (yerel, ağ taklidi):** sekmeler doğru modda; üyelikte 3 alan (`new-password`), girişte 2 alan (`current-password`); şifre uyuşmazlığı uyarısı; Göster/Gizle çalışıyor; `POST signup {"email","password"}` gidiyor; onay notu görünüyor; hatalı şifre → "E-posta veya şifre hatalı."; doğru şifre → pencere kapanıyor, başlıkta kullanıcı adı, oturum kaydediliyor. 1440'ta kart 680 px, kaydırma yok. JS hatası 0.
+
+## v29 — giriş yapılmadan rota ilerlemesi gösterilmiyor
+
+**Kullanıcı geri bildirimi (ekran görüntüsü):** "Kayıt olmadan ilerleme çıkmasın, gözükmesin." — "Hesabım" sayfası girişsizken "Bu cihazdaki ilerleme" bloğu ve %20 çubuğu görünüyordu.
+
+- Girişsiz "Hesabım" görünümünden **"Bu cihazdaki ilerleme" bölümü tamamen kaldırıldı** (başlık, alt yazı ve rota satırları).
+- İlerleme verisi silinmedi: `tk-progress-v1` yerelde duruyor, kullanıcı giriş yaptığında hesabına bağlanıyor. Bu yüzden ilerleme kaybı yok, yalnızca girişsizken gösterilmiyor.
+- Giriş yapmış kullanıcıda "Devam eden rotalar" bölümü eskisi gibi çalışıyor (değişmedi).
+
+**Doğrulama:** 390 px — girişsiz hesabım sayfasında "Bu cihazdaki ilerleme" metni **yok**, sayfada hiç `%` göstergesi yok; `localStorage` içindeki ilerleme kaydı (`{"6-0":1}`) korunuyor; JS hatası 0.

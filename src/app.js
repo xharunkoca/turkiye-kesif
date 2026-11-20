@@ -2586,11 +2586,6 @@
                 Ayrıntı: <a href="kvkk-aydinlatma/">KVKK Aydınlatma</a> · <a href="gizlilik/">Gizlilik</a></p>
             </div>
           </section>
-          ${progIds.length ? `<section class="acc-section">
-            <h2>Bu cihazdaki ilerleme</h2>
-            <p class="acc-sub">Giriş yaparsanız bu ilerleme hesabınıza bağlanır.</p>
-            <div class="acc-list-rows">${progIds.slice(0, 6).map((id) => resumeRow(id, m[id], false)).join("")}</div>
-          </section>` : ""}
         </div>`;
       return;
     }
