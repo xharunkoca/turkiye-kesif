@@ -673,3 +673,15 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Statik sayfalarda tablolar `.tbl-scroll` kabına alındı (`build.py` → `wrap_tables`), altına "Tabloyu yana kaydırarak…" ipucu eklendi; tablo `display:table` + `min-width:100%` ile kabın içinde kaydırılıyor (sayfa taşmıyor).
 
 **Doğrulama:** 16 rota × 2 genişlikte otomatik "görünmez yazı" taraması (kontrast < 1.9) → **0 bulgu**. Yatay taşma: 4 genişlik × 15 sayfa → 0.
+
+## v25 — rota penceresi: düğme ızgarası, durak satırları, kapatma düğmesi
+
+**Kullanıcı geri bildirimi:** rota detay penceresinde (incele) "kayma ve hata" — alttaki düğmeler düzensiz, biri sağa taşıyor, biri tek başına alt satırda.
+
+- `.modal-actions` mobilde **2 sütunlu ızgara**: tüm düğmeler eşit genişlik (149 px) ve 44 px yükseklikte; tek kalan düğme tam genişliği kaplıyor (`:last-child:nth-child(odd){grid-column:1/-1}`). Taşma bitti.
+- "Google'da başlat" → **"Google'da aç"**: iki satıra kırılmıyor, tüm düğmeler tek satır.
+- Durak satırları ızgaraya alındı: numara solda, başlık ve "Kategori • İlçe" tam genişlikte, "Konuma git" alt satırda — başlıklar artık iki satıra sıkışmıyor.
+- Kapatma düğmesi mobilde **sabit köşede** (44 px, beyaz daire, gölgeli): uzun pencerelerde kaydırırken erişilebilir kalıyor, içeriğin üstüne binmiyor.
+- Aynı kurallar yer/ilçe/harita pencerelerini de düzeltti (hepsi `.modal-actions` kullanıyor). Masaüstü düzeni değişmedi (`flex`).
+
+**Doğrulama:** 390 px'te rota penceresi düğmeleri 44 px ve eşit; yer penceresi 2 sütun; harita penceresinde kapatma 44×44 sabit; masaüstünde davranış aynı. JS hatası 0.

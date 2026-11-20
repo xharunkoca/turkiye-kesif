@@ -823,7 +823,7 @@
         </ol>
         <div class="modal-actions">
           <button class="btn btn-red" data-live-start="${r.id}">${icon("i-nav")}Rotayı başlat</button>
-          <a class="btn btn-ghost" href="${routeDirUrl(r)}" target="_blank" rel="noopener noreferrer">${icon("i-external")}Google'da başlat</a>
+          <a class="btn btn-ghost" href="${routeDirUrl(r)}" target="_blank" rel="noopener noreferrer">${icon("i-external")}Google'da aç</a>
         </div>
         <div class="modal-actions">
           <a class="btn btn-ghost" href="#/il/${IL_SLUG[r.ilIdx]}" data-close-nav>${icon("i-pin")}İl sayfası</a>
