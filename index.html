@@ -44,7 +44,7 @@
 }
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a2c52'/%3E%3Ccircle cx='23' cy='10' r='4' fill='%23ffd21e'/%3E%3Cpath d='M4 24l7-11 5 7 3-4 5 8z' fill='%23fff'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="assets/style.e322669e05.css">
+<link rel="stylesheet" href="assets/style.e72bcc17de.css">
 </head>
 <body>
 <noscript>
@@ -214,6 +214,8 @@
             <h2 class="section-title"><svg><use href="#i-pin"/></svg>Türkiye Haritası ile Keşfet</h2>
           </div>
           <div class="map-stage">
+            <div class="map-scroll" id="mapScroll">
+              <div class="map-fit" id="mapFit">
             <svg class="map-svg" viewBox="0 0 1000 438" role="img" aria-label="81 ili gösteren Türkiye haritası">
               <defs>
                 <linearGradient id="trGrad" x1="0" y1="0" x2="0" y2="1">
@@ -227,6 +229,9 @@
                 <g id="provLayer" class="prov-layer"></g>
               </g>
             </svg>
+              </div>
+            </div>
+            <p class="map-hint"><svg><use href="#i-arrow-right"/></svg>Haritayı kaydırarak gezin</p>
           </div>
           <div class="map-cta"><button class="btn btn-navy" data-open-map>Haritayı Aç <svg><use href="#i-arrow-right"/></svg></button></div>
         </article>
@@ -344,6 +349,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"><svg><use href="#i-check"/></svg><span id="toastText"></span></div>
 
-<script src="assets/app.8cec5d1aa3.js" defer></script>
+<script src="assets/app.768440b18c.js" defer></script>
 </body>
 </html>

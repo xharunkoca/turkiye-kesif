@@ -1091,3 +1091,38 @@ html{scroll-padding-top:calc(var(--header-h) + 12px)}
   .explore-grid .route-list .route-item+.route-item{margin-top:0}
   .explore-grid .map-stage .map-svg{max-width:100%}
 }
+
+/* ================================================================
+   v22 — telefonda harita: yatay kaydırmalı, il adları okunur
+   ================================================================ */
+.map-stage{position:relative}
+.map-scroll{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.map-scroll::-webkit-scrollbar{display:none}
+.map-fit{position:relative;width:100%}
+.map-hint{display:none}
+.map-stage::before,.map-stage::after{
+  content:"";position:absolute;top:0;bottom:0;width:22px;pointer-events:none;z-index:4;opacity:0;transition:opacity .2s;
+}
+.map-stage::before{left:0;background:linear-gradient(90deg,#fff,rgba(255,255,255,0))}
+.map-stage::after{right:0;background:linear-gradient(270deg,#fff,rgba(255,255,255,0))}
+
+@media (max-width:899px){
+  .map-fit{width:820px}
+  .map-hint{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    margin:8px 0 0;font-size:12px;font-weight:550;color:var(--ink-3)
+  }
+  .map-hint svg{width:13px;height:13px}
+  .map-stage.pan-left::before{opacity:1}
+  .map-stage.pan-right::after{opacity:1}
+}
+
+/* --- 57. Kaydırma kabı kart genişliğini aşmasın --- */
+.map-scroll{width:100%;min-width:0;max-width:100%}
+.map-stage{min-width:0}
+
+/* --- 58. Harita kabı: modalda da kaydırma + ölçek sınırı yok --- */
+.map-fit .map-svg,.modal-map .map-svg{max-height:none!important;width:100%;height:auto;display:block}
+.modal-map.map-scroll{padding:0;background:transparent;border:0}
+.modal-map .map-fit{width:820px}
+@media (min-width:900px){ .modal-map .map-fit{width:100%} }

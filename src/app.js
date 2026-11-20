@@ -834,7 +834,8 @@
       <div class="modal-body" style="padding-top:26px">
         <h3 id="modalTitle">Türkiye Haritası — 81 İl</h3>
         <p class="sub">İl işaretine dokunarak o ilin keşif sayfasına gidin</p>
-        <div class="modal-map">
+        <div class="modal-map map-scroll">
+          <div class="map-fit">
           <svg class="map-svg" viewBox="0 0 1000 438" role="img" aria-label="81 il haritası">
             <defs>
               <linearGradient id="trGrad2" x1="0" y1="0" x2="0" y2="1">
@@ -843,6 +844,7 @@
             </defs>
             <g>${provPaths()}</g>
           </svg>
+          </div>
         </div>
         <div class="region-grid">
           ${["Marmara", "Ege", "Akdeniz", "İç Anadolu", "Karadeniz", "Doğu Anadolu", "Güneydoğu Anadolu"].map((reg) => {
@@ -854,7 +856,11 @@
           }).join("")}
         </div>
       </div>`, "map-modal");
-    requestAnimationFrame(() => mountMapLabels(document.querySelector(".modal-map"), document.querySelector(".modal-map .map-svg")));
+    requestAnimationFrame(() => {
+      mountMapLabels(document.querySelector(".modal-map .map-fit"), document.querySelector(".modal-map .map-svg"));
+      const ms = document.querySelector(".modal-map");
+      if (ms) setTimeout(() => { if (ms.scrollWidth > ms.clientWidth + 4) ms.scrollLeft = (ms.scrollWidth - ms.clientWidth) / 2; }, 120);
+    });
   }
 
   function openFavs() {
@@ -949,9 +955,27 @@
         : `<a class="chip" href="${target}">${esc(label)}</a>`).join("");
 
     // harita iğneleri (81 il)
+    // telefonda harita kaydırma: kenar ipuçları + ortadan başla
+    const sc = $("#mapScroll");
+    if (sc) {
+      const stage = sc.closest(".map-stage");
+      const upd = () => {
+        const canScroll = sc.scrollWidth > sc.clientWidth + 4;
+        if (!stage) return;
+        stage.classList.toggle("pan-left", canScroll && sc.scrollLeft > 4);
+        stage.classList.toggle("pan-right", canScroll && sc.scrollLeft + sc.clientWidth < sc.scrollWidth - 4);
+      };
+      if (!sc.dataset.ready) {
+        sc.dataset.ready = "1";
+        sc.addEventListener("scroll", upd, { passive: true });
+        window.addEventListener("resize", () => setTimeout(upd, 200), { passive: true });
+        setTimeout(() => { sc.scrollLeft = Math.max(0, (sc.scrollWidth - sc.clientWidth) / 2); upd(); }, 260);
+      }
+      setTimeout(upd, 400);
+    }
     const pl = $("#provLayer");
     if (pl) pl.innerHTML = provPaths();
-    mountMapLabels(document.querySelector(".map-stage"), document.querySelector(".map-stage .map-svg"));
+    mountMapLabels(document.querySelector("#mapFit"), document.querySelector("#mapFit .map-svg"));
 
     // menü + footer kategori listeleri
     $("#ddCats").innerHTML = `<div class="dd-title">15 kategori</div>` +

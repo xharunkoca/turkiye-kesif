@@ -633,3 +633,16 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - **Düzen:** masaüstünde keşif bandı yeniden dengelendi — harita tam genişlik (1078×472, tüm adlar okunur), rotalar 3 sütun, mevsimler 4 sütun. Böylece haritanın altında kalan ölü boşluk da kalktı.
 
 **Ölçümler:** 6 genişlik × 11 sayfa → 0 yatay taşma; JS hatası 0; tıklama testi `#/il/ankara`'ya gitti.
+
+## v22 — telefonda il adları okunur: yatay kaydırmalı harita
+
+**Kullanıcı geri bildirimi:** telefonda harita baş harflerle kalıyordu; "şehirlerin isimleri düzgünce, okunur şekilde, taşmadan" yazsın.
+
+- Kart içindeki harita katmanı yeniden yapılandırıldı: `.map-stage > .map-scroll > .map-fit > (svg + etiket katmanı)`. Etiketler svg ile aynı kapta olduğu için kaydırmada birlikte hareket ediyor.
+- **< 900 px:** harita 820 px genişlikte çiziliyor (telefonda 315 px karta sığan görünüm yerine), kart içinde yatay kaydırılıyor. Böylece il adları 9.5 px ile **gerçekten okunur** (320 px'te bile 79/81 ad). Sayfa yatay taşmıyor — kaydırma yalnız kartın içinde.
+- Kenar geçişleri (beyaz fade) kaydırma yönüne göre görünüyor, altında "Haritayı kaydırarak gezin" ipucu var; açılışta harita ortadan başlıyor.
+- **≥ 900 px:** kaydırma yok, harita yüzde yüz genişlik (masaüstünde 81/81 il adı).
+- "Haritayı Aç" modalı da aynı yapıya geçti: telefonda 820 px çizilip kaydırılıyor, adlar okunur.
+- `min-width:0` + `max-width:100%` ile kaydırma kabının kartı büyütmesi engellendi.
+
+**Ölçümler:** 9 genişlik (320–1440) × 10 sayfa → 0 yatay taşma; JS hatası 0.
