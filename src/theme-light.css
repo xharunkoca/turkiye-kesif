@@ -1032,3 +1032,24 @@ html{scroll-padding-top:calc(var(--header-h) + 12px)}
 .map-stage{height:auto!important;min-height:0!important;display:flex;flex-direction:column;gap:10px}
 .map-stage .map-svg{max-height:none!important;width:100%;height:auto;display:block}
 @media (min-width:900px){ .map-panel .map-stage{padding-bottom:2px} }
+
+/* --- 52. Harita: isim yerine il baş harfi rozetleri (81 il, doğru konumda) --- */
+.map-labels span.map-initial{
+  display:grid;place-items:center;
+  background:#fff;color:#0b2c4a;
+  border:1.4px solid rgba(200,16,46,.92);border-radius:50%;
+  font-weight:700;line-height:1;letter-spacing:0;padding:0;
+  box-shadow:0 1px 2px rgba(4,30,56,.30);
+  transform:none;
+}
+.map-labels span.map-initial::selection{background:transparent}
+.map-svg .map-pin .core{opacity:.001}
+.map-svg .map-pin .pulse{fill-opacity:.22}
+.map-svg .map-pin:hover .pulse,.map-svg .map-pin:focus-visible .pulse{fill-opacity:.14}
+
+/* --- 53. Harita rozetleri: daha ince, daha sakin --- */
+.map-labels span.map-initial{
+  border:1px solid rgba(11,44,74,.16);
+  box-shadow:0 1px 1.5px rgba(4,30,56,.18);
+  font-weight:700;
+}

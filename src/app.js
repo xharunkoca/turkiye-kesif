@@ -236,7 +236,7 @@
     }).join("");
   }
 
-  /* ------------------------------------------------- harita il adı etiketleri */
+  /* ------------------------------------------------- harita: il baş harfleri */
   const LABEL_PRIORITY = ["İstanbul","Ankara","İzmir","Antalya","Bursa","Muğla","Adana","Konya","Kayseri",
     "Gaziantep","Trabzon","Samsun","Diyarbakır","Erzurum","Mersin","Kocaeli","Eskişehir","Şanlıurfa","Van",
     "Malatya","Sivas","Denizli","Balıkesir","Manisa","Aydın","Çanakkale","Hatay","Sakarya","Tekirdağ","Ordu",
@@ -249,57 +249,41 @@
     wrap.classList.add("has-labels");
     let layer = wrap.querySelector(".map-labels");
     if (!layer) { layer = document.createElement("div"); layer.className = "map-labels"; wrap.appendChild(layer); }
-    const canvas = mountMapLabels._c || (mountMapLabels._c = document.createElement("canvas"));
-    const ctx = canvas.getContext("2d");
     const place = () => {
       layer.innerHTML = "";
       const ctm = svg.getScreenCTM && svg.getScreenCTM();
       const wr = wrap.getBoundingClientRect();
       if (!ctm || wr.width < 60) return;
-      const fs = wr.width < 420 ? 8.5 : wr.width < 720 ? 9.5 : 10.5;
-      ctx.font = `600 ${fs}px -apple-system, "SF Pro Text", system-ui, sans-serif`;
-      const maxN = wr.width < 420 ? 16 : wr.width < 720 ? 30 : 62;
-      const land = svg.querySelector(".tr-land");
-      const lr = land ? land.getBoundingClientRect() : null;
-      const area = lr ? {
-        x0: Math.max(2, lr.left - wr.left), y0: Math.max(2, lr.top - wr.top),
-        x1: Math.min(wr.width - 2, lr.right - wr.left), y1: Math.min(wr.height - 2, lr.bottom - wr.top),
-      } : { x0: 2, y0: 2, x1: wr.width - 2, y1: wr.height - 2 };
+      const size = wr.width < 420 ? 9.5 : wr.width < 720 ? 11.5 : 13;
       const used = [];
       const spots = ILS.map((il, i) => ({ il, i })).filter((x) => x.il.lat != null)
-        .sort((a, b) => (labelRank[a.il.n] - labelRank[b.il.n]) || (a.il.n.length - b.il.n.length) || a.il.n.localeCompare(b.il.n, "tr"));
-      let count = 0;
+        .sort((a, b) => (labelRank[a.il.n] - labelRank[b.il.n]) || a.il.n.localeCompare(b.il.n, "tr"));
+      const nudges = [[0, 0], [-2, 0], [2, 0], [0, -2], [0, 2], [-3, -3], [3, 3], [-3, 3], [3, -3],
+        [-4, 0], [4, 0], [0, -4], [0, 4], [-5, -2], [5, 2], [-5, 2], [5, -2], [-6, 0], [6, 0], [0, -6], [0, 6]];
       for (const { il } of spots) {
-        if (count >= maxN) break;
         const [ux, uy] = project(il.lat, il.lon);
         let sx, sy;
         try { const pt = svg.createSVGPoint(); pt.x = ux; pt.y = uy; const sc = pt.matrixTransform(ctm); sx = sc.x; sy = sc.y; }
         catch (e) { continue; }
-        const x = sx - wr.left, y = sy - wr.top;
-        if (x < 0 || y < 0 || x > wr.width || y > wr.height) continue;
-        const tw = ctx.measureText(il.n).width;
-        const gap = 5;
-        const cands = [
-          { l: x + gap, t: y - fs * 0.78 },
-          { l: x - tw - gap, t: y - fs * 0.78 },
-          { l: x - tw / 2, t: y - gap - fs * 1.02 },
-          { l: x - tw / 2, t: y + gap - fs * 0.15 },
-        ];
+        const cx = sx - wr.left, cy = sy - wr.top;
         let pick = null;
-        for (const c of cands) {
-          const r = { x: c.l - 1, y: c.t - 1, w: tw + 2, h: fs + 2 };
-          if (r.x < area.x0 || r.y < area.y0 || r.x + r.w > area.x1 || r.y + r.h > area.y1) continue;
-          const hit = used.some((u) => !(r.x + r.w + 3 < u.x || r.x > u.x + u.w + 3 || r.y + r.h + 2 < u.y || r.y > u.y + u.h + 2));
-          if (!hit) { pick = c; used.push(r); break; }
+        for (const [dx, dy] of nudges) {
+          const r = { x: cx + dx - size / 2, y: cy + dy - size / 2, w: size, h: size };
+          const hit = used.some((u) => !(r.x + r.w - 1 < u.x || r.x + 1 > u.x + u.w || r.y + r.h - 1 < u.y || r.y + 1 > u.y + u.h));
+          if (!hit) { pick = { ...r, cx: cx + dx, cy: cy + dy }; break; }
         }
-        if (!pick) continue;
+        if (!pick) { pick = { x: cx - size / 2, y: cy - size / 2, w: size, h: size, cx, cy }; }
+        used.push({ x: pick.x, y: pick.y, w: pick.w, h: pick.h });
         const sp = document.createElement("span");
-        sp.textContent = il.n;
-        sp.style.left = pick.l.toFixed(1) + "px";
-        sp.style.top = pick.t.toFixed(1) + "px";
-        sp.style.fontSize = fs + "px";
+        sp.className = "map-initial";
+        sp.textContent = il.n.charAt(0).toLocaleUpperCase("tr");
+        sp.title = il.n;
+        sp.style.left = (pick.cx - size / 2).toFixed(1) + "px";
+        sp.style.top = (pick.cy - size / 2).toFixed(1) + "px";
+        sp.style.width = size + "px";
+        sp.style.height = size + "px";
+        sp.style.fontSize = Math.round(size * 0.62) + "px";
         layer.appendChild(sp);
-        count++;
       }
     };
     place();

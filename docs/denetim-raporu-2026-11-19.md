@@ -611,3 +611,13 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 **Ölçümler**
 - Yatay taşma: 11 genişlik (320–1440) × 11 sayfa → **0 taşma**.
 - JS konsol hatası: 0. Harita modalında da etiketler çalışıyor (16 etiket).
+
+## v20 — haritada il adları yerine baş harf rozetleri
+
+**Kullanıcı geri bildirimi:** "Harita olmamış; isimler yerine tüm şehirlerin baş harfi olsun, doğru yerde."
+
+- 30 il adı etiketi kaldırıldı; yerine **81 ilin tamamı** için baş harf rozeti kondu (Türkçe büyük harf: İ, I, Ç, Ş).
+- Rozetler il koordinatlarından `getScreenCTM()` ile hesaplanıp HTML katmanına yerleştiriliyor; konumlar SVG noktalarıyla birebir aynı (doğrulama: Edirne x=12/y=34, Sinop x=241/y=17, Antalya x=132/y=173, Van x=473/y=127, Hakkari x=492/y=163).
+- Boyut ekrana göre: telefonda 9.5 px, tablette 11.5 px, masaüstünde 13 px (yazı 0.62 × boyut).
+- Çakışma: her rozet için 21 aday konum denenir; hiçbiri boş değilse rozet tam koordinatına yerleştirilir — böylece **81 ilin hepsi her ekran boyutunda görünür** (320 px'te bile).
+- SVG'deki beyaz nokta gizlendi, kırmızı halka korundu; üzerine gelince tam il adı `<title>` ile görünür ve il sayfasına gider.
