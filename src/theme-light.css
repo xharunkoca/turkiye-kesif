@@ -1265,3 +1265,6 @@ html{scroll-padding-top:calc(var(--header-h) + 12px)}
 /* --- 64. Pencere kartı: dört köşe de yuvarlak (yarım kalan köşe düzeltmesi) --- */
 .modal-card{border-radius:18px!important}
 @media (max-width:899px){ .modal-card{border-radius:16px!important} }
+
+/* v26c — mobil menü açıkken KVKK şeridi panelin üstüne binmesin */
+body.nav-open .consent{display:none!important}
