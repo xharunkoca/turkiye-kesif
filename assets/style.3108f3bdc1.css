@@ -2449,3 +2449,11 @@ html{scroll-padding-top:calc(var(--header-h) + 12px)}
 .modal-map.map-scroll{padding:0;background:transparent;border:0}
 .modal-map .map-fit{width:820px}
 @media (min-width:900px){ .modal-map .map-fit{width:100%} }
+
+/* --- 59. Harita kartında dikey boşlukları sıkılaştır --- */
+.map-stage{gap:2px}
+.map-hint{margin:4px 0 0}
+@media (max-width:899px){
+  .map-panel .map-stage{padding-bottom:0}
+  .map-panel .panel-head{margin-bottom:2px}
+}

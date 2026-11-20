@@ -35,8 +35,8 @@ def main():
     mid = (lat0 + lat1) / 2
     kx = math.cos(math.radians(mid))
     W, H, PAD = 1000.0, 438.0, 6.0
-    sx = (W - 2 * PAD) / ((lon1 - lon0) * kx)
-    sy = sx * kx  # derece başına düşey ölçek (kosinüs telafisi)
+    sx = (W - 2 * PAD) / ((lon1 - lon0) * kx)   # 1 derece boylam = kaç piksel
+    sy = sx                                      # 1 derece enlem = kaç piksel (kosinüs yalnız yatayda)
     sheight = (lat1 - lat0) * sy
     if sheight > H - 2 * PAD:
         f = (H - 2 * PAD) / sheight

@@ -646,3 +646,8 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - `min-width:0` + `max-width:100%` ile kaydırma kabının kartı büyütmesi engellendi.
 
 **Ölçümler:** 9 genişlik (320–1440) × 10 sayfa → 0 yatay taşma; JS hatası 0.
+
+### v22.1 — projeksiyonda dikey ölçek hatası (düzeltildi)
+
+- `tools/make_provinces.py` dikey ölçeği `sy = sx * kx` alıyordu; doğrusu `sy = sx` (kosinüs yalnız yatay eksende). Bu yüzden harita %22 basık çiziliyor, viewBox'ın üstünde ve altında 57 birim boş bant kalıyordu.
+- Düzeltme sonrası iller poligon bbox'ı 1000×438 kutusunu neredeyse tamamen dolduruyor; kart içindeki ölü boşluk kalktı, adlar için daha fazla yer açıldı (masaüstü 81/81, telefon 81/81).
