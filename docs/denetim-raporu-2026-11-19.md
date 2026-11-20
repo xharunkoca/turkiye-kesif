@@ -651,3 +651,11 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 
 - `tools/make_provinces.py` dikey ölçeği `sy = sx * kx` alıyordu; doğrusu `sy = sx` (kosinüs yalnız yatay eksende). Bu yüzden harita %22 basık çiziliyor, viewBox'ın üstünde ve altında 57 birim boş bant kalıyordu.
 - Düzeltme sonrası iller poligon bbox'ı 1000×438 kutusunu neredeyse tamamen dolduruyor; kart içindeki ölü boşluk kalktı, adlar için daha fazla yer açıldı (masaüstü 81/81, telefon 81/81).
+
+## v23 — "Haritada gör": il haritada işaretlenir
+
+- İl sayfasındaki "Haritada gör" düğmesi artık `data-map-il` ile il indeksini taşıyor; tıklanınca `openMapModal(ilIdx)` çağrılıyor.
+- Modalda o ilin poligonu kırmızı konturla (`is-active`, 2.4 px) vurgulanıyor, merkezine nabız atan kırmızı işaret (halo + çekirdek) konuyor ve harita o ile ortalanacak şekilde kaydırılıyor.
+- İşaret ile il adı üst üste binmesin diye aktif ilin etiketi 15 px aşağıya/yukarıya kaydırılıyor.
+- Alt başlık dinamik: "<İl> haritada işaretlendi — başka bir ile dokunarak o ilin sayfasına gidebilirsiniz."
+- `prefers-reduced-motion` açıksa nabız animasyonu duruyor.

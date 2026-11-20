@@ -225,6 +225,9 @@
   const project = (lat, lon) => [MB.pad + (lon - MB.lon0) * MB.sx, MB.pad + (MB.lat1 - lat) * MB.sy];
 
   const PROV = (window.TR_PROVINCES || []);
+  const IL_NORM = (t) => t.replace(/İ/g, "i").replace(/I/g, "i").replace(/ı/g, "i").toLocaleLowerCase("tr")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ş/g, "s").replace(/ğ/g, "g")
+    .replace(/ç/g, "c").replace(/ö/g, "o").replace(/ü/g, "u");
   const IL_BY_NAME = {};
   ILS.forEach((il, i) => { IL_BY_NAME[il.n] = i; });
 
@@ -283,8 +286,10 @@
           if (cx < 0 || cy < 0 || cx > wr.width || cy > wr.height) continue;
           const text = names ? p.n : p.n.charAt(0).toLocaleUpperCase("tr");
           const tw = ctx.measureText(text).width;
+          const isActive = wrap.dataset.activeName && p.n === wrap.dataset.activeName;
+          const list = isActive ? [[0, 15], [0, -15], ...cands] : cands;
           let pick = null;
-          for (const [dx, dy] of cands) {
+          for (const [dx, dy] of list) {
             const r = { x: cx + dx - tw / 2 - 1, y: cy + dy - h / 2, w: tw + 2, h };
             if (r.x < 1 || r.y < 1 || r.x + r.w > wr.width - 1 || r.y + r.h > wr.height - 1) continue;
             const hit = used.some((u) => !(r.x + r.w + 1.5 < u.x || r.x > u.x + u.w + 1.5 || r.y + r.h + 1 < u.y || r.y > u.y + u.h + 1));
@@ -829,11 +834,13 @@
     mountWxLine(r.ilIdx);
   }
 
-  function openMapModal() {
+  function openMapModal(ilIdx) {
+    const active = (ilIdx != null && ILS[ilIdx]) ? ILS[ilIdx] : null;
+    const activeProv = active ? PROV.find((p) => IL_NORM(p.n) === IL_NORM(active.n)) : null;
     openModal(`
       <div class="modal-body" style="padding-top:26px">
         <h3 id="modalTitle">Türkiye Haritası — 81 İl</h3>
-        <p class="sub">İl işaretine dokunarak o ilin keşif sayfasına gidin</p>
+        <p class="sub">${active ? `<b>${esc(active.n)}</b> haritada işaretlendi — başka bir ile dokunarak o ilin sayfasına gidebilirsiniz.` : "İl işaretine dokunarak o ilin keşif sayfasına gidin"}</p>
         <div class="modal-map map-scroll">
           <div class="map-fit">
           <svg class="map-svg" viewBox="0 0 1000 438" role="img" aria-label="81 il haritası">
@@ -843,6 +850,10 @@
               </linearGradient>
             </defs>
             <g>${provPaths()}</g>
+            ${activeProv ? `<g class="map-marker" aria-hidden="true">
+              <circle class="mk-halo" cx="${activeProv.x}" cy="${activeProv.y}" r="8"/>
+              <circle class="mk-core" cx="${activeProv.x}" cy="${activeProv.y}" r="5.2"/>
+            </g>` : ""}
           </svg>
           </div>
         </div>
@@ -857,9 +868,24 @@
         </div>
       </div>`, "map-modal");
     requestAnimationFrame(() => {
-      mountMapLabels(document.querySelector(".modal-map .map-fit"), document.querySelector(".modal-map .map-svg"));
       const ms = document.querySelector(".modal-map");
-      if (ms) setTimeout(() => { if (ms.scrollWidth > ms.clientWidth + 4) ms.scrollLeft = (ms.scrollWidth - ms.clientWidth) / 2; }, 120);
+      const fitEl = ms && ms.querySelector(".map-fit");
+      if (fitEl && active) fitEl.dataset.activeName = active.n;
+      mountMapLabels(document.querySelector(".modal-map .map-fit"), document.querySelector(".modal-map .map-svg"));
+      if (!ms) return;
+      if (active) {
+        const fit = ms.querySelector(".map-fit");
+        const path = fit && [...fit.querySelectorAll(".prov")].find((p) => Number(p.dataset.il) === ilIdx);
+        if (path) path.classList.add("is-active");
+        setTimeout(() => {
+          if (ms.scrollWidth > ms.clientWidth + 4 && activeProv) {
+            const w = fit.getBoundingClientRect().width;
+            ms.scrollLeft = Math.max(0, (activeProv.x / 1000) * w - ms.clientWidth / 2);
+          }
+        }, 140);
+      } else {
+        setTimeout(() => { if (ms.scrollWidth > ms.clientWidth + 4) ms.scrollLeft = (ms.scrollWidth - ms.clientWidth) / 2; }, 120);
+      }
     });
   }
 
@@ -1156,7 +1182,7 @@
               <h1>${esc(il.n)}</h1>
               <p>${esc(il.r)} Bölgesi • ${nf(byIlUniq[ilIdx].length)} keşif noktası • ${nf(il.d.length)} ilçe • ${nf(koyN)} köy • ${nf(mahN)} mahalle</p>
             </div>
-            <button class="btn btn-red" data-open-map>${icon("i-map")}Haritada gör</button>
+            <button class="btn btn-red" data-open-map data-map-il="${ilIdx}">${icon("i-map")}Haritada gör</button>
           </div>
         </div>
       </div>
@@ -1838,7 +1864,8 @@
       if (!e.target.closest("#modal")) { e.preventDefault(); toast(toastEl.dataset.toast); return; }
     }
 
-    if (e.target.closest("[data-open-map]")) { openMapModal(); return; }
+    const mapBtn = e.target.closest("[data-open-map]");
+    if (mapBtn) { openMapModal(mapBtn.dataset.mapIl != null ? Number(mapBtn.dataset.mapIl) : null); return; }
     if (e.target.closest("[data-open-favs]")) { openFavs(); return; }
     if (e.target.closest("[data-nearby]")) {
       toast("Konum izni demo sürümde kullanılmıyor — Antalya yakınındaki keşifler listelendi");

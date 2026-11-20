@@ -1134,3 +1134,17 @@ html{scroll-padding-top:calc(var(--header-h) + 12px)}
   .map-panel .map-stage{padding-bottom:0}
   .map-panel .panel-head{margin-bottom:2px}
 }
+
+/* ================================================================
+   v23 — "Haritada gör": il haritada işaretlenir
+   ================================================================ */
+.map-svg .prov.is-active{
+  stroke:var(--accent);stroke-width:2.4;filter:brightness(.97) saturate(1.15);
+}
+.map-svg .prov.is-active:hover{filter:brightness(.92) saturate(1.3)}
+.map-marker{pointer-events:none}
+.map-marker .mk-core{fill:var(--accent);stroke:#fff;stroke-width:2.2}
+.map-marker .mk-halo{fill:var(--accent);fill-opacity:.45;transform-box:fill-box;transform-origin:center;animation:mk-pulse 2.1s cubic-bezier(.22,.61,.36,1) infinite}
+@keyframes mk-pulse{0%{transform:scale(.55);opacity:.75}70%{transform:scale(2.6);opacity:0}100%{transform:scale(2.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.map-marker .mk-halo{animation:none;opacity:.35}}
+.modal-map .map-fit .map-label{font-weight:650}
