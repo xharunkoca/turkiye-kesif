@@ -227,7 +227,7 @@ img,table,pre{max-width:100%}
   .crumbs{font-size:.78rem;margin-top:14px}
   .lead{font-size:.95rem}
   .cta{display:block;text-align:center;padding:14px 16px;margin:14px 0}
-  table{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;font-size:.86rem}
+  table{display:table;width:auto;min-width:100%;white-space:nowrap;font-size:.86rem}
   th,td{padding:9px 8px}
   .grid{grid-template-columns:1fr;gap:10px}
   .chips{gap:6px}
@@ -248,6 +248,9 @@ img,table,pre{max-width:100%}
   border-width:1.5px;
 }
 table th,table td{border-bottom-width:1.5px}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.tbl-hint{display:none;font-size:11.5px;color:var(--muted);margin:6px 0 0}
+@media (max-width:700px){.tbl-hint{display:block}}
 """
 
 
@@ -296,8 +299,18 @@ def page_shell(title, desc, canonical, body, rel, jsonld=None, robots="index,fol
 </html>"""
 
 
+def wrap_tables(html):
+    """statik sayfalarda tabloyu kaydırılabilir kaba al + ipucu ekle"""
+    if "<table" not in html:
+        return html
+    html = html.replace("<table", '<div class="tbl-scroll"><table').replace("</table>", '</table></div><p class="tbl-hint">Tabloyu yana kaydırarak tüm sütunları görebilirsiniz.</p>')
+    return html
+
+
 def write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.suffix == ".html":
+        text = wrap_tables(text)
     path.write_text(text, encoding="utf-8")
 
 

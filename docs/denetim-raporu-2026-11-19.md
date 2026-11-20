@@ -659,3 +659,17 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - İşaret ile il adı üst üste binmesin diye aktif ilin etiketi 15 px aşağıya/yukarıya kaydırılıyor.
 - Alt başlık dinamik: "<İl> haritada işaretlendi — başka bir ile dokunarak o ilin sayfasına gidebilirsiniz."
 - `prefers-reduced-motion` açıksa nabız animasyonu duruyor.
+
+## v24 — kategori sayfası envanter şeridi + statik tablo kaydırma
+
+**Kullanıcı geri bildirimi:** kategori sayfalarında "kayma ve bozukluk" — kırmızı rakamların altındaki açıklamalar görünmüyor, altında ~200 px boş alan.
+
+**Kök neden:** `.env-chip` / `.env-note` stilleri koyu temadan kalmıştı: etiketler `rgba(255,255,255,.78)` (beyaz zeminde görünmez), rakamlar altın/kırmızı; şerit `flex` + `max-width:320px` olduğu için telefonda tek sütuna düşüp yüksekliği şişiriyordu.
+
+**Yapılanlar**
+- `.env-row` ızgaraya çevrildi: telefonda 2, tablette 3, masaüstünde `auto-fit` sütun.
+- `.env-chip`: beyaz zemin, 1.5 px çizgi, 12 px köşe; rakam `--ink` 17 px, etiket `--ink-3` 11.5 px (artık okunur).
+- `.env-note` `--ink-3` 12 px — görünmez not satırı düzeldi.
+- Statik sayfalarda tablolar `.tbl-scroll` kabına alındı (`build.py` → `wrap_tables`), altına "Tabloyu yana kaydırarak…" ipucu eklendi; tablo `display:table` + `min-width:100%` ile kabın içinde kaydırılıyor (sayfa taşmıyor).
+
+**Doğrulama:** 16 rota × 2 genişlikte otomatik "görünmez yazı" taraması (kontrast < 1.9) → **0 bulgu**. Yatay taşma: 4 genişlik × 15 sayfa → 0.
