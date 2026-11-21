@@ -915,9 +915,10 @@
   /* ---------------------------------------------------------------- ANA SAYFA */
   const CITY_PHOTOS = {
     Antalya: "assets/img/antalya-720.webp", "İstanbul": "assets/img/istanbul-720.webp", "İzmir": "assets/img/izmir-720.webp",
-    "Muğla": "assets/img/mugla-720.webp", "Nevşehir": "assets/img/nevsehir-720.webp"
+    "Muğla": "assets/img/mugla-720.webp", "Nevşehir": "assets/img/nevsehir-720.webp",
+    "Bursa": "assets/img/bursa-720.webp", "Trabzon": "assets/img/trabzon-720.webp", "Konya": "assets/img/konya-720.webp"
   };
-  const POPULAR = ["Antalya", "İstanbul", "İzmir", "Muğla", "Nevşehir"];
+  const POPULAR = ["Antalya", "İstanbul", "İzmir", "Muğla", "Nevşehir", "Bursa", "Trabzon", "Konya"];
 
   function renderHome() {
     // kategori şeridi

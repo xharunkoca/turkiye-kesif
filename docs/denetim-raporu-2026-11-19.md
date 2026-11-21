@@ -789,3 +789,15 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Tema katmanındaki `!important` mevsim kuralları ezilmesin diye yeni yerleşim kuralları `theme-light.css` sonuna (en son yüklenen katman) yazıldı.
 
 **Doğrulama:** 390 / 768 / 1200 / 1440 — kart ölçüleri `174×120` (2 sütun) / `172×150` (4 sütun) / `270×176` (4 sütun); yatay taşma **0**; bölüm hero'dan hemen sonra (390: y=1074, 1440: y=845); JS hatası 0.
+
+## v31 — Popüler Şehirler 8 adet (4×2 düzen)
+
+**Kullanıcı isteği:** "Popüler şehirler 8 adet olsun."
+
+- Liste 5'ten **8 ile** çıkarıldı: Antalya · İstanbul · İzmir · Muğla · Nevşehir · **Bursa** · **Trabzon** · **Konya**. Seçim, veri setindeki keşif sayısı ve turizm bilinirliğine göre yapıldı (Konya 128, Bursa 107, Trabzon 88 kayıt).
+- Yeni şehir fotoğrafları Wikimedia Commons'tan alındı, 3:2 oranında kırpılıp 720×480 WebP'ye çevrildi: `assets/img/bursa-720.webp` (Cumalıkızık), `trabzon-720.webp` (Uzungöl), `konya-720.webp` (şehir silueti). Dosya boyutları 68–108 KB.
+- Izgara 8 karta göre dengelendi: ≥600 px **4 sütun × 2 satır**, <600 px **2 sütun × 4 satır** (eskiden masaüstünde 5 sütundu ve 8 kart 5+3 diye kırılıyordu).
+- `#cityGrid` yer rezervleri yeni yüksekliğe göre güncellendi (636 / 320 / 322 px) — açılışta zıplama yok.
+- "Kaynaklar ve lisanslar" sayfasına fotoğraf lisansı satırı eklendi (Wikimedia Commons, CC BY-SA / kamu malı).
+
+**Doğrulama:** 390 (8 kart, 173×150, 2 sütun, 636 px) · 768 (169×150, 4 sütun) · 1440 (264×150, 4 sütun, 4×2); kartlar doğru sayfalara gidiyor (`#/il/bursa`, `#/il/trabzon`, `#/il/konya`); yatay taşma yok; JS hatası 0.
