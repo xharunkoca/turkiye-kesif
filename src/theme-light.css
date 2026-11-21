@@ -1407,3 +1407,7 @@ body.nav-open .consent{display:none!important}
 /* ---------------------------------------------- v36: slogan ortalandı */
 .hero-content,.hero .hero-slogan,.hero .lead{text-align:center!important}
 .hero .lead{margin-inline:auto!important}
+
+/* ---------------------------------------------- v38: yeni logo (rota pini) */
+.brand-logo{width:34px!important;height:34px!important;color:var(--ink)!important}
+@media (max-width:759px){.brand-logo{width:30px!important;height:30px!important}}

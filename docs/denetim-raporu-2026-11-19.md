@@ -867,3 +867,15 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 
 - Üst çubuktaki marka bloğundan `.brand-tag` satırı ("Keşfet • Planla • Gez") kaldırıldı; yalnız "Türkiye Keşif" kelime markası kaldı. Header yüksekliği ve hizalama değişmedi.
 - Alt bilgideki marka bloğunda etiket duruyor (istenirse oradan da kaldırılabilir).
+
+## v38 — yeni logo (rota pini)
+
+**Karar:** 4 aday (rota pini / K+rota noktası / pusula iğnesi / dağ+güneş) önizleme sayfasıyla sunuldu (`logo-onerileri.html`); kullanıcı **A — Rota pini**'yi seçti.
+
+- `#i-logo` sembolü yenilendi: `viewBox="0 0 40 40"`, gövde `currentColor` (tema rengine uyar), iç nokta vurgu kırmızısı `#c8102e` — çizgi kalınlığı 2.8, küçük boyutta net.
+- `.brand-logo` kare ölçüye alındı: masaüstü/tablet 34 px, ≤759 px 30 px (eski 44×32 dikdörtgendi).
+- Favicon aynı markayla yeniden üretildi (beyaz yuvarlatılmış kare + pin), tüm statik sayfalarda geçerli.
+- Header yüksekliği: 65 px (masaüstü) / 59 px (telefon) — öncekiyle aynı; taşma yok.
+- Alt bilgideki marka logosu da otomatik olarak yeni işareti kullanıyor.
+
+**Doğrulama:** 390 / 768 / 1440 → logo 30/34/34 px, `brand-tag` yok, taşma yok, JS hatası 0.
