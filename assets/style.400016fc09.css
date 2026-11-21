@@ -2752,3 +2752,17 @@ body.nav-open .consent{display:none!important}
 }
 .footer-bottom{border-top:1px solid var(--line)!important;padding-top:16px!important;margin-top:4px}
 .footer-legal{border-top:0!important;padding-top:0!important;display:flex!important;flex-wrap:wrap;gap:8px 16px}
+
+/* ---------------------------------------------- v35: ana sayfa sloganı */
+.hero h1.hero-slogan{letter-spacing:-.035em!important;line-height:1.06!important}
+.hero h1.hero-slogan em{font-style:normal!important;color:var(--accent)!important}
+.hero .lead{margin-top:10px!important;letter-spacing:-.01em}
+.hero h1.hero-slogan em{white-space:nowrap}
+.hero h1.hero-slogan{text-wrap:balance}
+@media (max-width:599px){
+  .hero h1.hero-slogan{font-size:clamp(26px,7.2vw,32px)!important;line-height:1.12!important}
+  .hero .lead{font-size:15px!important}
+}
+@media (max-width:599px){
+  .hero h1.hero-slogan{font-size:clamp(31px,9.4vw,40px)!important;line-height:1.08!important}
+}

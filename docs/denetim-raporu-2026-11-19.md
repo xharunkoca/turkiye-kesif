@@ -844,3 +844,14 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Alt bilgi hukuk satırının çizgisi tam genişliğe alındı, bağlantılar tek satır akışında toplandı.
 
 **Doğrulama:** 390 / 768 / 1440 — banner kartı istatistik bandıyla aynı sol kenar ve genişlik, `flex-direction` masaüstünde `row` / telefonda `column`, alt bilgi 2 ve 4 sütun düzeninde, `#loginForm` yok, footer düğmeleri modalı doğru modda açıyor (`Giriş yap` → "Giriş yap", `Üye ol` → "Hesap oluştur"), yatay taşma yok, JS hatası 0.
+
+## v35 — ana sayfa başlığı: slogan
+
+**Kullanıcı isteği:** işaretli başlığı ("Türkiye'yi Keşfet" + "81 il, binlerce güzellik…") kaldır, sade bir slogan koy; önce 10 aday sunuldu, kullanıcı **2 ve 3**'ü seçti → ikisi birlikte kullanıldı.
+
+- **H1:** "Türkiye, **adım adım.**" (vurgu kırmızı, nokta dahil), **alt satır:** "Her köşede yeni bir hikâye."
+- Tipografi: `letter-spacing:-.035em`, satır yüksekliği 1.06–1.12; masaüstü 64 px, tablet 44 px, telefonda `clamp(31px, 9.4vw, 40px)`.
+- Telefonda başlık **iki satıra dengeli** kırılıyor ("Türkiye," / "adım adım.") — `em` içinde satır kırılması engellendi (`white-space:nowrap`), `text-wrap:balance`.
+- Eski uzun açıklama satırı kaldırıldı; yerine tek satırlık slogan geçti. Sayfa `<title>` ve meta açıklamaları SEO için "Türkiye Keşif" ifadesini korumaya devam ediyor.
+
+**Doğrulama:** 320 / 360 / 390 / 430 / 768 / 1440 — başlık taşmıyor, 1440'ta tek satır (64 px), telefonda iki dengeli satır, yatay taşma yok, JS hatası 0.
