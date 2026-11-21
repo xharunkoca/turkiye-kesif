@@ -2766,3 +2766,7 @@ body.nav-open .consent{display:none!important}
 @media (max-width:599px){
   .hero h1.hero-slogan{font-size:clamp(31px,9.4vw,40px)!important;line-height:1.08!important}
 }
+
+/* ---------------------------------------------- v36: slogan ortalandı */
+.hero-content,.hero .hero-slogan,.hero .lead{text-align:center!important}
+.hero .lead{margin-inline:auto!important}

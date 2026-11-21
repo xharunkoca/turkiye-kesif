@@ -855,3 +855,10 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Eski uzun açıklama satırı kaldırıldı; yerine tek satırlık slogan geçti. Sayfa `<title>` ve meta açıklamaları SEO için "Türkiye Keşif" ifadesini korumaya devam ediyor.
 
 **Doğrulama:** 320 / 360 / 390 / 430 / 768 / 1440 — başlık taşmıyor, 1440'ta tek satır (64 px), telefonda iki dengeli satır, yatay taşma yok, JS hatası 0.
+
+## v36 — slogan ortalandı
+
+- `.hero-content`, slogan (`h1`) ve alt satır telefonda ve tablette de **ortalandı** (önceden yalnız ≥1100 px'te ortalıydı, altta sola yaslıydı).
+- `margin-inline:auto` ile alt satır ortalanıyor; iki satırlı telefon görünümü de ortadan kırılıyor. Arama çubuğu, hızlı çipler ve kategori kartı düzeni değişmedi.
+
+**Doğrulama:** 390 / 768 / 1440 → `text-align:center`, taşma yok, JS hatası 0.
