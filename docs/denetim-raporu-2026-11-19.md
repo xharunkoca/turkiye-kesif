@@ -862,3 +862,8 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - `margin-inline:auto` ile alt satır ortalanıyor; iki satırlı telefon görünümü de ortadan kırılıyor. Arama çubuğu, hızlı çipler ve kategori kartı düzeni değişmedi.
 
 **Doğrulama:** 390 / 768 / 1440 → `text-align:center`, taşma yok, JS hatası 0.
+
+## v37 — başlıktaki "Keşfet • Planla • Gez" satırı kaldırıldı
+
+- Üst çubuktaki marka bloğundan `.brand-tag` satırı ("Keşfet • Planla • Gez") kaldırıldı; yalnız "Türkiye Keşif" kelime markası kaldı. Header yüksekliği ve hizalama değişmedi.
+- Alt bilgideki marka bloğunda etiket duruyor (istenirse oradan da kaldırılabilir).
