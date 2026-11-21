@@ -801,3 +801,16 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - "Kaynaklar ve lisanslar" sayfasına fotoğraf lisansı satırı eklendi (Wikimedia Commons, CC BY-SA / kamu malı).
 
 **Doğrulama:** 390 (8 kart, 173×150, 2 sütun, 636 px) · 768 (169×150, 4 sütun) · 1440 (264×150, 4 sütun, 4×2); kartlar doğru sayfalara gidiyor (`#/il/bursa`, `#/il/trabzon`, `#/il/konya`); yatay taşma yok; JS hatası 0.
+
+## v32 — popüler şehir kartı: tam fotoğraf, altında yazı yok
+
+**Kullanıcı geri bildirimi (ekran görüntüsü):** "Popüler şehirlerde fotoğraflar yarım oldu, altındaki bilgi yazıları olmasın."
+
+- Kart, açık temada "üstte yarım foto — altta beyaz metin bloğu" düzenindeydi (`.city-card::after{background:#fff;height:44%}`). Bu, fotoğrafın yarısını beyaz bloğa bırakıyordu.
+- Artık kart **tam fotoğraf**: görsel kartın tamamını kaplıyor (`object-fit:cover`), alt köşede yumuşak koyu gradyan ve üzerinde **yalnızca şehir adı** (beyaz, hafif gölgeli). Plaka rozeti cam efektli beyaz kutu olarak sol üstte kaldı.
+- **"140 keşif • 18 ilçe" satırı kaldırıldı** (kullanıcı isteği). Keşif sayıları il sayfasında ve 81 İl listesinde görünmeye devam ediyor.
+- Kart oranı `4/3`; masaüstü 264×198, tablet 169×126, telefon 173×129. Izgara ≥600 px 4 sütun, altında 2 sütun.
+- `#cityGrid` yer rezervleri yeni yüksekliklere göre güncellendi (554 / 250 / 330 / 417 px).
+- Erişilebilirlik: kart `aria-label="<Şehir> — il sayfası"`, görselin `alt` metni şehir adı.
+
+**Doğrulama:** 320 · 390 · 600 · 768 · 1024 · 1440 → 8 kart, görseller tam kart, alt yazı yok, yatay taşma yok, JS hatası 0.

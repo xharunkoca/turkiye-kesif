@@ -934,12 +934,11 @@ window.__DATA__={"cats":[{"id":"antik","label":"Antik Kentler","icon":"i-columns
     $("#cityGrid").innerHTML = POPULAR.map((name) => {
       const i = ilByName[name];
       const il = ILS[i];
-      const villages = il.d.reduce((a, d) => a + d.k.length, 0);
-      return `<a class="city-card" href="#/il/${IL_SLUG[i]}">
+      void il.d.reduce((a, d) => a + d.k.length, 0);
+      return `<a class="city-card" href="#/il/${IL_SLUG[i]}" aria-label="${esc(name)} — il sayfası">
         <img src="${CITY_PHOTOS[name]}" alt="${esc(name)}" width="720" height="480" loading="lazy" decoding="async" fetchpriority="low">
         <div class="city-body">
           <div class="city-name">${esc(name)}</div>
-          <div class="city-meta">${icon("i-pin")}${nf(byIlUniq[i].length)} keşif • ${nf(il.d.length)} ilçe</div>
         </div>
         <span class="city-plate">${String(il.p).padStart(2, "0")}</span>
       </a>`;
