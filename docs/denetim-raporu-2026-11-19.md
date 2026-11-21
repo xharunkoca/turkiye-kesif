@@ -826,3 +826,21 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Bölüm sırası: Mevsimler → Popüler Şehirler → **Türkiye Haritası** → **Hazır Rotalar** → İstatistik bandı.
 
 **Doğrulama:** 390 / 768 / 1024 / 1440 — harita paneli tam genişlik (357 / 728 / 976 / 1120), rotalar her zaman haritanın altında (`altAlta: true`), etiketler 81/81, yatay taşma yok, JS hatası 0.
+
+## v34 — alt bölge düzeni: CTA bandı + alt bilgi (işaretli alan)
+
+**Kullanıcı isteği (ekran görüntüsü, daire içine alınmış alt bölüm):** "İşaretli alanı düzenle."
+
+**Sorunlar**
+- CTA bandı açık temada **boş, neredeyse beyaz bir şerit**ti: görsel katmanı kapatılmış (`display:none`), metin Georgia italik ve geniş harf aralıklı büyük harf — sayfada "bitmemiş" görünüyordu.
+- Profil kartı iç içe gri kutuydu, düğme siyah (`btn-navy`).
+- Alt bilgide **eski şifresiz giriş formu** duruyordu: "E-posta adresiniz" alanı + **"Giriş bağlantısı gönder"** düğmesi. Tablet/masaüstünde input taşıyor, `flex-wrap:nowrap` yüzünden düğme kartın dışına çıkıyordu; ayrıca v28'de kaldırılan magic-link akışını yeniden vaat ediyordu.
+
+**Yapılanlar**
+- **CTA bandı** artık sayfadaki diğer kartlarla aynı hizada beyaz kart (1 px çizgi, 20 px köşe): başlık sistem fontu 26 px yarı kalın, altında üç bilgi çipi ("81 il", "15 kategori", "405 rota"); sağda açık gri profil paneli (40 px ikon, başlık + açıklama) ve **kırmızı "Profilim"** düğmesi (`#/hesabim`).
+- Banner'ın genişliği `.container` içine alındı → istatistik bandıyla **birebir aynı hiza** (390: 16→373, 768: 20→748, 1440: 160→1280).
+- Masaüstünde başlık solda / profil kartı sağda (tek satır), telefonda alt alta.
+- **Alt bilgi:** "Favorilerinizi taşıyın + e-posta formu" sütunu **"Hesabınız"** olarak değişti: kısa açıklama + **"Giriş yap" / "Üye ol"** düğmeleri (v28 şifreli akışı doğru sekmede açıyor). Ölü `#loginForm`, `#loginEmail`, `#loginNote` kaldırıldı.
+- Alt bilgi hukuk satırının çizgisi tam genişliğe alındı, bağlantılar tek satır akışında toplandı.
+
+**Doğrulama:** 390 / 768 / 1440 — banner kartı istatistik bandıyla aynı sol kenar ve genişlik, `flex-direction` masaüstünde `row` / telefonda `column`, alt bilgi 2 ve 4 sütun düzeninde, `#loginForm` yok, footer düğmeleri modalı doğru modda açıyor (`Giriş yap` → "Giriş yap", `Üye ol` → "Hesap oluştur"), yatay taşma yok, JS hatası 0.

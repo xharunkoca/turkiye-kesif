@@ -265,17 +265,17 @@
 
     <section class="banner">
       <div class="banner-bg"><img src="assets/img/hero-800.webp" width="1600" height="672" loading="lazy" decoding="async" fetchpriority="low" alt=""></div>
-      <div class="container banner-inner">
+      <div class="container"><div class="banner-inner">
         <div class="banner-script">
-          Türkiye'nin Her Köşesinde Keşif Sizi Bekliyor…
-          <small>81 il • 15 kategori • 405 rota</small>
+          <span class="bs-title">Türkiye'nin her köşesinde keşif sizi bekliyor</span>
+          <span class="bs-meta"><i>81 il</i><i>15 kategori</i><i>405 rota</i></span>
         </div>
         <div class="profile-card">
           <div class="pc-ic"><svg><use href="#i-user"/></svg></div>
-          <div><h3>Kişisel Keşif Alanınız</h3><p>Favorilerinize, rotalarınıza ve keşif haritanıza ulaşın.</p></div>
-          <button class="btn btn-navy" data-open-favs>Profilim <svg><use href="#i-arrow-right"/></svg></button>
+          <div class="pc-txt"><b>Kişisel keşif alanınız</b><small>Favoriler, rotalar ve ilerleme tek yerde</small></div>
+          <a class="btn btn-navy pc-btn" href="#/hesabim">Profilim <svg><use href="#i-arrow-right"/></svg></a>
         </div>
-      </div>
+      </div></div>
     </section>
   </div>
 
@@ -308,15 +308,13 @@
         <button type="button" class="footer-btn" data-open-map>Türkiye Haritası</button>
         <button type="button" class="footer-btn" data-open-favs>Favorilerim</button>
       </div>
-      <div>
-        <h4>Favorilerinizi taşıyın</h4>
-        <p style="margin:0 0 4px;line-height:1.6">E-posta ile giriş yapın; favorileriniz ve rota ilerlemeniz tüm cihazlarınızda senkron kalsın.</p>
-        <form class="newsletter" id="loginForm">
-          <label class="sr-only" for="loginEmail">E-posta adresiniz</label>
-          <input id="loginEmail" type="email" autocomplete="email" placeholder="E-posta adresiniz" required>
-          <button class="btn btn-red" type="submit">Giriş bağlantısı gönder</button>
-        </form>
-        <p class="form-note" id="loginNote" role="status" aria-live="polite"></p>
+      <div class="footer-account">
+        <h4>Hesabınız</h4>
+        <p>E-posta ve şifre ile giriş yapın; favorileriniz ve rota ilerlemeniz tüm cihazlarınızda aynı kalsın.</p>
+        <div class="footer-auth">
+          <button type="button" class="btn btn-red" data-auth-open="login"><svg><use href="#i-user"/></svg>Giriş yap</button>
+          <button type="button" class="btn btn-ghost" data-auth-open="signup"><svg><use href="#i-check"/></svg>Üye ol</button>
+        </div>
       </div>
     </div>
     <div class="footer-bottom">
