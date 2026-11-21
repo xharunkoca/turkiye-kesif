@@ -1311,3 +1311,20 @@ body.nav-open .consent{display:none!important}
 .city-card:hover{border-color:transparent!important;box-shadow:0 10px 26px -14px rgba(10,44,82,.5)!important}
 .city-card:hover::after{background:linear-gradient(180deg,rgba(8,24,42,.06) 30%,rgba(8,24,42,.86) 100%)!important}
 @media (min-width:900px){.city-card .city-name{font-size:17px!important}}
+
+/* ---------------------------------------------- v33: harita tam genişlik, hazır rotalar haritanın altında */
+.explore-grid{grid-template-columns:1fr!important;gap:clamp(16px,2vw,26px)!important}
+.explore-grid .map-panel,.explore-grid .routes-panel{grid-column:1/-1!important;width:100%!important;max-width:100%!important}
+.explore-grid .map-stage{height:auto!important;min-height:0!important}
+.explore-grid .map-stage .map-svg{max-width:100%!important;max-height:none!important;height:auto}
+@media (min-width:900px){
+  .explore-grid .route-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+  .explore-grid .route-list .route-item+.route-item{margin-top:0}
+}
+/* CLS: tam genişlik harita + 3 sütun rota */
+@media (min-width:900px){#routeList{min-height:250px}}
+@media (min-width:600px) and (max-width:899px){
+  .explore-grid .map-fit{width:100%!important}
+  .explore-grid .map-stage::before,.explore-grid .map-stage::after{display:none!important}
+  .explore-grid .map-hint{display:none!important}
+}

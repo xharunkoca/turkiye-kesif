@@ -814,3 +814,15 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Erişilebilirlik: kart `aria-label="<Şehir> — il sayfası"`, görselin `alt` metni şehir adı.
 
 **Doğrulama:** 320 · 390 · 600 · 768 · 1024 · 1440 → 8 kart, görseller tam kart, alt yazı yok, yatay taşma yok, JS hatası 0.
+
+## v33 — harita tam genişlik, hazır rotalar haritanın altına
+
+**Kullanıcı isteği (ekran görüntüsü, tablet):** "Türkiye haritasını sağa büyüt, hazır rotaları haritanın altına al."
+
+- `explore-grid` tek sütuna alındı: **harita paneli tam genişlik**, "Hazır Gezi Rotaları" paneli **haritanın altında** (eskiden yan yana iki sütundu, harita yarım genişlikteydi).
+- Harita artık panel genişliğine yayılıyor: 1440'ta **1078×472 px** (önce ~yarım genişlik), 1024'te 934×409, telefonda 820 px kaydırmalı görünüm korundu (etiket okunurluğu için).
+- **600–899 px:** harita artık kaydırmasız, panel genişliğine tam oturuyor (686×300); kaydırma ipucu ve kenar geçişleri bu aralıkta gizlendi. Böylece tablette yarım kalan harita görüntüsü bitti.
+- Rotalar tam genişlikte: **≥900 px'te 3 sütun** (346 px kart), altında tek sütun listeye dönüyor; `#routeList` yer rezervi yeni düzene göre 250 px.
+- Bölüm sırası: Mevsimler → Popüler Şehirler → **Türkiye Haritası** → **Hazır Rotalar** → İstatistik bandı.
+
+**Doğrulama:** 390 / 768 / 1024 / 1440 — harita paneli tam genişlik (357 / 728 / 976 / 1120), rotalar her zaman haritanın altında (`altAlta: true`), etiketler 81/81, yatay taşma yok, JS hatası 0.
