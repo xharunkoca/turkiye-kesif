@@ -1339,3 +1339,24 @@ a.dist-name:hover{color:var(--red);text-decoration:underline}
 footer .footer-btn{color:#c9d8e6;font-size:13px}
 footer .footer-btn:hover{color:#fff}
 footer nav .footer-btn + .footer-btn{margin-top:2px}
+
+/* ---------------------------------------------- v30: mevsimler arama çubuğunun altına taşındı */
+.seasons-top{padding-top:clamp(18px,2.4vw,28px)}
+.explore-grid{grid-template-columns:1fr 1.3fr}
+.season-grid.season-grid-top{grid-template-columns:1fr 1fr;gap:10px}
+.season-grid.season-grid-top .season-card{min-height:120px;border-radius:14px;padding:12px}
+.season-grid.season-grid-top .season-card .sc-name{font-size:14px}
+.season-grid.season-grid-top .season-card .sc-link{font-size:11px;gap:5px}
+@media (min-width:760px){
+  .season-grid.season-grid-top{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,16px)}
+  .season-grid.season-grid-top .season-card{min-height:150px}
+  .season-grid.season-grid-top .season-card .sc-name{font-size:15px}
+}
+@media (min-width:1000px){
+  .season-grid.season-grid-top .season-card{min-height:176px;border-radius:16px;padding:14px}
+  .season-grid.season-grid-top .season-card .sc-name{font-size:16px}
+}
+/* CLS rezervleri yeni yerleşime göre */
+@media (max-width:759px){#seasonGrid{min-height:250px}}
+@media (min-width:760px) and (max-width:999px){#seasonGrid{min-height:150px}}
+@media (min-width:1000px){#seasonGrid{min-height:176px}}

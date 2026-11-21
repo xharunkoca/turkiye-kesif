@@ -777,3 +777,15 @@ Kontrast taraması (9 sayfa, 1280 px): **0 ihlal**. Mobil yatay taşma: **0**.
 - Giriş yapmış kullanıcıda "Devam eden rotalar" bölümü eskisi gibi çalışıyor (değişmedi).
 
 **Doğrulama:** 390 px — girişsiz hesabım sayfasında "Bu cihazdaki ilerleme" metni **yok**, sayfada hiç `%` göstergesi yok; `localStorage` içindeki ilerleme kaydı (`{"6-0":1}`) korunuyor; JS hatası 0.
+
+## v30 — "Mevsime Göre Keşfet" arama çubuğunun altına taşındı
+
+**Kullanıcı isteği:** "Mevsimlere göre arama barının altında olsun." (yerleşim tercihi bana bırakıldı: "Sen seç".)
+
+- Mevsim paneli ana sayfanın ortasındaki `explore-grid` içinden çıkarıldı ve **hero'nun (arama çubuğu + hızlı çipler + kategori kartı) hemen altına**, `#mevsimler` bölümü olarak taşındı. Sayfa akışı: arama → mevsimler → Popüler Şehirler → Türkiye Haritası → Rotalar.
+- Kartlar bölüm başlığıyla (ikon + "Mevsime Göre Keşfet" + "Tüm Keşifler" bağlantısı) birlikte geliyor; masaüstünde **4'lü tek sıra** (176 px), tablette 4 sütun (150 px), telefonda **2×2** (120 px) — tümü eşit boy.
+- `explore-grid` artık iki panelli (harita + rotalar); mevsim paneli çıkınca oluşacak boş sütun olmadığı doğrulandı (harita ve rotalar mevcut kurallarla aynı genişlikte: 1120 px, tam genişlik).
+- CLS rezervleri yeni yerleşime göre güncellendi (`#seasonGrid` yükseklikleri 250/150/176 px); eski 640 px rezervi kaldırıldı, böylece açılışta boşluk oluşmuyor.
+- Tema katmanındaki `!important` mevsim kuralları ezilmesin diye yeni yerleşim kuralları `theme-light.css` sonuna (en son yüklenen katman) yazıldı.
+
+**Doğrulama:** 390 / 768 / 1200 / 1440 — kart ölçüleri `174×120` (2 sütun) / `172×150` (4 sütun) / `270×176` (4 sütun); yatay taşma **0**; bölüm hero'dan hemen sonra (390: y=1074, 1440: y=845); JS hatası 0.

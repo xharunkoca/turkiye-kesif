@@ -1268,3 +1268,17 @@ html{scroll-padding-top:calc(var(--header-h) + 12px)}
 
 /* v26c — mobil menü açıkken KVKK şeridi panelin üstüne binmesin */
 body.nav-open .consent{display:none!important}
+
+/* ---------------------------------------------- v30: mevsim şeridi arama çubuğunun altında */
+.season-grid.season-grid-top{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:auto!important;gap:10px!important}
+.season-grid.season-grid-top .season-card{min-height:120px;border-radius:14px;padding:12px}
+.season-grid.season-grid-top .season-card .sc-name{font-size:14px}
+@media (min-width:760px){
+  .season-grid.season-grid-top{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important}
+  .season-grid.season-grid-top .season-card{min-height:150px}
+  .season-grid.season-grid-top .season-card .sc-name{font-size:15px}
+}
+@media (min-width:1000px){
+  .season-grid.season-grid-top .season-card{min-height:176px;border-radius:16px;padding:14px}
+  .season-grid.season-grid-top .season-card .sc-name{font-size:16px}
+}
